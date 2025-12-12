@@ -388,7 +388,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
               {/* Progress Overview */}
               <div className="bg-gradient-to-r from-gray-50 dark:from-slate-700 to-blue-50 dark:to-blue-900/20 p-6 rounded-lg border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>📊 Progression globale</h3>
+                  <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}> Progression globale</h3>
                   <div className="flex items-center gap-2">
                     <TrendingUp size={20} className="text-green-500 dark:text-green-400" />
                     <span className="text-2xl font-bold text-green-600 dark:text-green-400">{progress}%</span>
