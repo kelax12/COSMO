@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Target, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, Circle, BarChart3, Settings, X, Minus, Clock } from 'lucide-react';
 import OKRModal from '../components/OKRModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type KeyResult = {
   id: string;
@@ -279,126 +280,146 @@ const OKRPage: React.FC = () => {
   const getCategoryById = (id: string) => categories.find(cat => cat.id === id);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-8 max-w-7xl mx-auto" 
+      style={{ backgroundColor: 'rgb(var(--color-background))' }}
+    >
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+        className="flex justify-between items-start mb-8"
+      >
         <div>
-          <h1 className="text-3xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>OKR - Objectifs & Résultats Clés</h1>
-          <p style={{ color: 'rgb(var(--color-text-secondary))' }}>Définissez et suivez vos objectifs avec des résultats mesurables</p>
+          <motion.h1 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-3xl font-bold mb-2" 
+            style={{ color: 'rgb(var(--color-text-primary))' }}
+          >
+            OKR - Objectifs & Résultats Clés
+          </motion.h1>
+          <motion.p 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            style={{ color: 'rgb(var(--color-text-secondary))' }}
+          >
+            Définissez et suivez vos objectifs avec des résultats mesurables
+          </motion.p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
+        <motion.div 
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-3"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowCategoryManager(true)}
-            className="flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border rounded-lg transition-all shadow-sm"
             style={{
               borderColor: 'rgb(var(--color-border))',
               color: 'rgb(var(--color-text-secondary))',
               backgroundColor: 'rgb(var(--color-surface))'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))'}
           >
             <Settings size={20} />
             <span>Gérer les catégories</span>
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowAddObjective(true)}
             className="btn-primary flex items-center gap-2"
           >
             <Plus size={20} />
             <span>Nouvel Objectif</span>
-          </button>
-        </div>
-      </div>
+          </motion.button>
+        </motion.div>
+      </motion.div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="p-6 rounded-lg shadow-sm border transition-colors" style={{
-          backgroundColor: 'rgb(var(--color-surface))',
-          borderColor: 'rgb(var(--color-border))'
-        }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Target size={24} className="text-blue-600 dark:text-blue-400" />
+        {[
+          { icon: Target, color: 'blue', label: 'Total Objectifs', value: stats.total },
+          { icon: CheckCircle, color: 'green', label: 'Complétés', value: stats.completed },
+          { icon: TrendingUp, color: 'orange', label: 'En Cours', value: stats.inProgress },
+          { icon: BarChart3, color: 'purple', label: 'Progression Moy.', value: `${stats.avgProgress}%` }
+        ].map((stat, index) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 + index * 0.1 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            className="p-6 rounded-lg shadow-sm border transition-all cursor-pointer"
+            style={{
+              backgroundColor: 'rgb(var(--color-surface))',
+              borderColor: 'rgb(var(--color-border))'
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <motion.div 
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.5 }}
+                className={`p-2 bg-${stat.color}-100 dark:bg-${stat.color}-900/30 rounded-lg`}
+              >
+                <stat.icon size={24} className={`text-${stat.color}-600 dark:text-${stat.color}-400`} />
+              </motion.div>
+              <div>
+                <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{stat.label}</p>
+                <motion.p 
+                  key={stat.value}
+                  initial={{ scale: 1.2, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-2xl font-bold" 
+                  style={{ color: 'rgb(var(--color-text-primary))' }}
+                >
+                  {stat.value}
+                </motion.p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Total Objectifs</p>
-              <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{stats.total}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-lg shadow-sm border transition-colors" style={{
-          backgroundColor: 'rgb(var(--color-surface))',
-          borderColor: 'rgb(var(--color-border))'
-        }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-              <CheckCircle size={24} className="text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Complétés</p>
-              <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{stats.completed}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-lg shadow-sm border transition-colors" style={{
-          backgroundColor: 'rgb(var(--color-surface))',
-          borderColor: 'rgb(var(--color-border))'
-        }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-              <TrendingUp size={24} className="text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>En Cours</p>
-              <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{stats.inProgress}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-lg shadow-sm border transition-colors" style={{
-          backgroundColor: 'rgb(var(--color-surface))',
-          borderColor: 'rgb(var(--color-border))'
-        }}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-              <BarChart3 size={24} className="text-purple-600 dark:text-purple-400" />
-            </div>
-            <div>
-              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression Moy.</p>
-              <p className="text-2xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{stats.avgProgress}%</p>
-            </div>
-          </div>
-        </div>
+          </motion.div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.5 }}
+        className="flex items-center gap-4 mb-6"
+      >
         <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Filtrer par catégorie :</span>
-        <div className="flex gap-2">
-          <button
+        <div className="flex gap-2 flex-wrap">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setSelectedCategory('all')}
-            className="px-3 py-1 rounded-full text-sm font-medium transition-colors"
+            className="px-3 py-1 rounded-full text-sm font-medium transition-all"
             style={{
               backgroundColor: selectedCategory === 'all' ? 'rgb(var(--color-accent) / 0.1)' : 'rgb(var(--color-hover))',
               color: selectedCategory === 'all' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-secondary))'
             }}
-            onMouseEnter={(e) => {
-              if (selectedCategory !== 'all') e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))';
-            }}
-            onMouseLeave={(e) => {
-              if (selectedCategory !== 'all') e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-            }}
           >
             Tous
-          </button>
-          {categories.map((category) => (
-            <button
+          </motion.button>
+          {categories.map((category, index) => (
+            <motion.button
               key={category.id}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 + index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedCategory(category.id)}
-              className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all"
               style={{
                 backgroundColor: selectedCategory === category.id 
                   ? `${categoryColors[category.color as keyof typeof categoryColors]?.bg || 'rgb(var(--color-accent) / 0.1)'}`
@@ -407,384 +428,479 @@ const OKRPage: React.FC = () => {
                   ? `${categoryColors[category.color as keyof typeof categoryColors]?.text || 'rgb(var(--color-accent))'}`
                   : 'rgb(var(--color-text-secondary))'
               }}
-              onMouseEnter={(e) => {
-                if (selectedCategory !== category.id) e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))';
-              }}
-              onMouseLeave={(e) => {
-                if (selectedCategory !== category.id) e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-              }}
             >
               {category.icon && <span>{category.icon}</span>}
               <span>{category.name}</span>
-            </button>
+            </motion.button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Objectives Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredObjectives.map(objective => {
-          const progress = getProgress(objective.keyResults);
-          const category = getCategoryById(objective.category);
-          const categoryStyle = category ? categoryColors[category.color as keyof typeof categoryColors] : categoryColors.blue;
-          
-          return (
-            <div key={objective.id} className="rounded-lg shadow-sm border p-6 transition-colors" style={{
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))'
-            }}>
-              {/* Objective Header */}
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${categoryStyle.bg} ${categoryStyle.text}`}>
-                      {category?.icon && <span>{category.icon}</span>}
-                      <span>{category?.name}</span>
-                    </span>
-                    <span className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
-                    </span>
-                    {/* AJOUT: Affichage du temps estimé */}
-                    <span className="text-sm flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      <Clock size={14} />
-                      {objective.estimatedTime} min
-                    </span>
+        <AnimatePresence mode="popLayout">
+          {filteredObjectives.map((objective, index) => {
+            const progress = getProgress(objective.keyResults);
+            const category = getCategoryById(objective.category);
+            const categoryStyle = category ? categoryColors[category.color as keyof typeof categoryColors] : categoryColors.blue;
+            
+            return (
+              <motion.div
+                key={objective.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.02, y: -4 }}
+                className="rounded-lg shadow-sm border p-6 transition-all"
+                style={{
+                  backgroundColor: 'rgb(var(--color-surface))',
+                  borderColor: 'rgb(var(--color-border))'
+                }}
+              >
+                {/* Objective Header */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <motion.span 
+                        whileHover={{ scale: 1.05 }}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${categoryStyle.bg} ${categoryStyle.text}`}
+                      >
+                        {category?.icon && <span>{category.icon}</span>}
+                        <span>{category?.name}</span>
+                      </motion.span>
+                      <span className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
+                      </span>
+                      <motion.span 
+                        whileHover={{ scale: 1.1 }}
+                        className="text-sm flex items-center gap-1" 
+                        style={{ color: 'rgb(var(--color-text-muted))' }}
+                      >
+                        <Clock size={14} />
+                        {objective.estimatedTime} min
+                      </motion.span>
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
+                    <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
                   </div>
-                  <h3 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
-                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
+                  <div className="flex items-center gap-2 ml-4">
+                    <motion.button 
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setEditingObjective(objective.id)}
+                      className="p-1 transition-colors"
+                      style={{ color: 'rgb(var(--color-text-muted))' }}
+                      title="Modifier l'objectif"
+                    >
+                      <Edit2 size={16} />
+                    </motion.button>
+                    <motion.button 
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="p-1 transition-colors" 
+                      style={{ color: 'rgb(var(--color-text-muted))' }}
+                    >
+                      <Trash2 size={16} />
+                    </motion.button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button 
-                    onClick={() => setEditingObjective(objective.id)}
-                    className="p-1 transition-colors"
-                    style={{ color: 'rgb(var(--color-text-muted))' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-secondary))'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
-                    title="Modifier l'objectif"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button className="p-1 transition-colors" style={{ color: 'rgb(var(--color-text-muted))' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'rgb(var(--color-error))'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'rgb(var(--color-text-muted))'}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
-                  <span className="text-sm font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
-                </div>
-                <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                  <div
-                    className="h-2 rounded-full transition-all duration-300"
-                    style={{ backgroundColor: 'rgb(var(--color-accent))', width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Key Results */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
-                {objective.keyResults.map(keyResult => {
-                  const krProgress = Math.min((keyResult.currentValue / keyResult.targetValue) * 100, 100);
+                {/* Circular Progress Visualization */}
+                <div className="mb-4 flex items-center gap-6">
+                  <div className="relative">
+                    <svg className="transform -rotate-90" width="80" height="80">
+                      {/* Background circle */}
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="32"
+                        stroke="rgb(var(--color-border-muted))"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      {/* Progress circle */}
+                      <motion.circle
+                        cx="40"
+                        cy="40"
+                        r="32"
+                        stroke="rgb(var(--color-accent))"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        initial={{ strokeDasharray: "0 251.2" }}
+                        animate={{ strokeDasharray: `${(progress / 100) * 251.2} 251.2` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <motion.span 
+                        key={progress}
+                        initial={{ scale: 1.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-xl font-bold" 
+                        style={{ color: 'rgb(var(--color-text-primary))' }}
+                      >
+                        {progress}%
+                      </motion.span>
+                    </div>
+                  </div>
                   
-                  return (
-                    <div key={keyResult.id} className="rounded-lg p-3 transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
-                        <div className="flex items-center gap-2">
-                          {/* AJOUT: Affichage du temps estimé pour chaque résultat clé */}
-                          <span className="text-xs flex items-center gap-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            <Clock size={12} />
-                            {keyResult.estimatedTime}min
-                          </span>
-                          {keyResult.completed ? (
-                            <CheckCircle size={16} className="text-green-500 dark:text-green-400" />
-                          ) : (
-                            <Circle size={16} style={{ color: 'rgb(var(--color-text-muted))' }} />
-                          )}
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Progression globale</span>
+                      <motion.span 
+                        key={progress}
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        className="text-sm font-bold" 
+                        style={{ color: 'rgb(var(--color-text-primary))' }}
+                      >
+                        {progress}%
+                      </motion.span>
+                    </div>
+                    <div className="w-full rounded-full h-2" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                      <motion.div
+                        className="h-2 rounded-full"
+                        style={{ backgroundColor: 'rgb(var(--color-accent))' }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Results */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultats Clés</h4>
+                  {objective.keyResults.map((keyResult, krIndex) => {
+                    const krProgress = Math.min((keyResult.currentValue / keyResult.targetValue) * 100, 100);
+                    
+                    return (
+                      <motion.div
+                        key={keyResult.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: krIndex * 0.1 }}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        className="rounded-lg p-3 transition-all" 
+                        style={{ backgroundColor: 'rgb(var(--color-hover))' }}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                          <div className="flex items-center gap-2">
+                            <motion.span 
+                              whileHover={{ scale: 1.1 }}
+                              className="text-xs flex items-center gap-1" 
+                              style={{ color: 'rgb(var(--color-text-muted))' }}
+                            >
+                              <Clock size={12} />
+                              {keyResult.estimatedTime}min
+                            </motion.span>
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: krIndex * 0.1 + 0.2 }}
+                            >
+                              {keyResult.completed ? (
+                                <CheckCircle size={16} className="text-green-500 dark:text-green-400" />
+                              ) : (
+                                <Circle size={16} style={{ color: 'rgb(var(--color-text-muted))' }} />
+                              )}
+                            </motion.div>
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
+                        
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="number"
+                            value={keyResult.currentValue}
+                            onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
+                            className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-surface))',
+                              color: 'rgb(var(--color-text-primary))',
+                              borderColor: 'rgb(var(--color-border))'
+                            }}
+                          />
+                          <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
+                          <div className="flex-1 rounded-full h-1.5 ml-3" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                            <motion.div 
+                              className={`h-1.5 rounded-full ${
+                                keyResult.completed ? 'bg-green-500 dark:bg-green-400' : 'bg-primary-600 dark:bg-primary-500'
+                              }`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${krProgress}%` }}
+                              transition={{ duration: 0.8, ease: "easeOut", delay: krIndex * 0.1 }}
+                            />
+                          </div>
+                          <motion.span 
+                            key={krProgress}
+                            initial={{ scale: 1.3, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="text-xs font-medium w-10 text-right" 
+                            style={{ color: 'rgb(var(--color-text-secondary))' }}
+                          >
+                            {Math.round(krProgress)}%
+                          </motion.span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
+      {/* Modals with animations */}
+      <AnimatePresence>
+        {showCategoryManager && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <CategoryManagerModal
+              categories={categories}
+              onAddCategory={addCategory}
+              onUpdateCategory={updateCategory}
+              onDeleteCategory={deleteCategory}
+              onClose={() => setShowCategoryManager(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingObjective && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <OKRModal
+              okr={objectives.find(obj => obj.id === editingObjective)!}
+              isOpen={!!editingObjective}
+              onClose={() => setEditingObjective(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Objective Modal with animations */}
+      <AnimatePresence>
+        {showAddObjective && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-colors" 
+              style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+            >
+              <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-primary-50 dark:from-primary-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Nouvel Objectif</h2>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowAddObjective(false)}
+                  className="p-1 rounded-lg transition-colors"
+                  style={{ color: 'rgb(var(--color-text-muted))' }}
+                >
+                  <X size={20} />
+                </motion.button>
+              </div>
+
+              <form onSubmit={handleSubmitObjective} className="p-6 space-y-6">
+                {/* Informations principales */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                         Titre de l'objectif *
+                      </label>
+                      <input
+                        type="text"
+                        value={newObjective.title}
+                        onChange={(e) => setNewObjective({...newObjective, title: e.target.value})}
+                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg transition-colors"
+                        style={{
+                          backgroundColor: 'rgb(var(--color-surface))',
+                          color: 'rgb(var(--color-text-primary))',
+                          borderColor: 'rgb(var(--color-border))'
+                        }}
+                        placeholder="Ex: Améliorer mes compétences en français"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                         Description
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={newObjective.description}
+                        onChange={(e) => setNewObjective({...newObjective, description: e.target.value})}
+                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none transition-colors"
+                        style={{
+                          backgroundColor: 'rgb(var(--color-surface))',
+                          color: 'rgb(var(--color-text-primary))',
+                          borderColor: 'rgb(var(--color-border))'
+                        }}
+                        placeholder="Décrivez votre objectif en détail..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                         Catégorie
+                      </label>
+                      <select 
+                        value={newObjective.category}
+                        onChange={(e) => setNewObjective({...newObjective, category: e.target.value})}
+                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                        style={{
+                          backgroundColor: 'rgb(var(--color-surface))',
+                          color: 'rgb(var(--color-text-primary))',
+                          borderColor: 'rgb(var(--color-border))'
+                        }}
+                      >
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.icon ? `${category.icon} ${category.name}` : category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                           Date début
+                        </label>
                         <input
-                          type="number"
-                          value={keyResult.currentValue}
-                          onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
-                          className="w-20 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                          type="date"
+                          value={newObjective.startDate}
+                          onChange={(e) => setNewObjective({...newObjective, startDate: e.target.value})}
+                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',
                             borderColor: 'rgb(var(--color-border))'
                           }}
                         />
-                        <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
-                        <div className="flex-1 rounded-full h-1.5 ml-3" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
-                          <div 
-                            className={`h-1.5 rounded-full transition-all duration-300 ${
-                              keyResult.completed ? 'bg-green-500 dark:bg-green-400' : 'bg-primary-600 dark:bg-primary-500'
-                            }`}
-                            style={{ width: `${krProgress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium w-10 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          {Math.round(krProgress)}%
-                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                           Date fin
+                        </label>
+                        <input
+                          type="date"
+                          value={newObjective.endDate}
+                          onChange={(e) => setNewObjective({...newObjective, endDate: e.target.value})}
+                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            color: 'rgb(var(--color-text-primary))',
+                            borderColor: 'rgb(var(--color-border))'
+                          }}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
 
-      {/* Category Manager Modal */}
-      {showCategoryManager && (
-        <CategoryManagerModal
-          categories={categories}
-          onAddCategory={addCategory}
-          onUpdateCategory={updateCategory}
-          onDeleteCategory={deleteCategory}
-          onClose={() => setShowCategoryManager(false)}
-        />
-      )}
-
-      {/* Edit Objective Modal */}
-      {editingObjective && (
-        <OKRModal
-          okr={objectives.find(obj => obj.id === editingObjective)!}
-          isOpen={!!editingObjective}
-          onClose={() => setEditingObjective(null)}
-        />
-      )}
-
-      {/* Add Objective Modal */}
-      {showAddObjective && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto transition-colors" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-            <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-primary-50 dark:from-primary-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-              <h2 className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Nouvel Objectif</h2>
-              <button 
-                onClick={() => setShowAddObjective(false)}
-                className="p-1 rounded-lg transition-colors"
-                style={{ color: 'rgb(var(--color-text-muted))' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = 'rgb(var(--color-text-primary))';
-                  e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmitObjective} className="p-6 space-y-6">
-              {/* Informations principales */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      🎯 Titre de l'objectif *
-                    </label>
-                    <input
-                      type="text"
-                      value={newObjective.title}
-                      onChange={(e) => setNewObjective({...newObjective, title: e.target.value})}
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-lg transition-colors"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-surface))',
-                        color: 'rgb(var(--color-text-primary))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}
-                      placeholder="Ex: Améliorer mes compétences en français"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      📝 Description
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={newObjective.description}
-                      onChange={(e) => setNewObjective({...newObjective, description: e.target.value})}
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none transition-colors"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-surface))',
-                        color: 'rgb(var(--color-text-primary))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}
-                      placeholder="Décrivez votre objectif en détail..."
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      🏷️ Catégorie
-                    </label>
-                    <select 
-                      value={newObjective.category}
-                      onChange={(e) => setNewObjective({...newObjective, category: e.target.value})}
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-surface))',
-                        color: 'rgb(var(--color-text-primary))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}
-                    >
-                      {categories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.icon ? `${category.icon} ${category.name}` : category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                    {/* AJOUT: Champ temps estimé pour l'objectif */}
                     <div>
                       <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        📅 Date début
+                         Temps estimé total (minutes) *
                       </label>
                       <input
-                        type="date"
-                        value={newObjective.startDate}
-                        onChange={(e) => setNewObjective({...newObjective, startDate: e.target.value})}
+                        type="number"
+                        value={newObjective.estimatedTime}
+                        onChange={(e) => setNewObjective({...newObjective, estimatedTime: Number(e.target.value)})}
+                        min="1"
+                        max="1440"
                         className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                         style={{
                           backgroundColor: 'rgb(var(--color-surface))',
                           color: 'rgb(var(--color-text-primary))',
                           borderColor: 'rgb(var(--color-border))'
                         }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        🏁 Date fin
-                      </label>
-                      <input
-                        type="date"
-                        value={newObjective.endDate}
-                        onChange={(e) => setNewObjective({...newObjective, endDate: e.target.value})}
-                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                        style={{
-                          backgroundColor: 'rgb(var(--color-surface))',
-                          color: 'rgb(var(--color-text-primary))',
-                          borderColor: 'rgb(var(--color-border))'
-                        }}
+                        placeholder="60"
+                        required
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* AJOUT: Champ temps estimé pour l'objectif */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      ⏱️ Temps estimé total (minutes) *
-                    </label>
-                    <input
-                      type="number"
-                      value={newObjective.estimatedTime}
-                      onChange={(e) => setNewObjective({...newObjective, estimatedTime: Number(e.target.value)})}
-                      min="1"
-                      max="1440"
-                      className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                      style={{
+                {/* Résultats Clés Dynamiques */}
+                <div className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-900/20 p-6 rounded-lg border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                       Résultats Clés
+                      <span className="text-sm font-normal" style={{ color: 'rgb(var(--color-text-muted))' }}>({keyResults.length}/10)</span>
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={addKeyResult}
+                        disabled={keyResults.length >= 10}
+                        className="flex items-center gap-1 px-3 py-1 bg-green-600 dark:bg-green-500 text-white rounded-lg text-sm hover:bg-green-700 dark:hover:bg-green-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Plus size={16} />
+                        <span>Ajouter</span>
+                      </motion.button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {keyResults.map((keyResult, index) => (
+                      <div key={index} className="p-4 rounded-lg border transition-colors" style={{
                         backgroundColor: 'rgb(var(--color-surface))',
-                        color: 'rgb(var(--color-text-primary))',
                         borderColor: 'rgb(var(--color-border))'
-                      }}
-                      placeholder="60"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Résultats Clés Dynamiques */}
-              <div className="bg-gradient-to-r from-gray-50 dark:from-gray-800 to-blue-50 dark:to-blue-900/20 p-6 rounded-lg border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    🎯 Résultats Clés
-                    <span className="text-sm font-normal" style={{ color: 'rgb(var(--color-text-muted))' }}>({keyResults.length}/10)</span>
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={addKeyResult}
-                      disabled={keyResults.length >= 10}
-                      className="flex items-center gap-1 px-3 py-1 bg-green-600 dark:bg-green-500 text-white rounded-lg text-sm hover:bg-green-700 dark:hover:bg-green-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <Plus size={16} />
-                      <span>Ajouter</span>
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  {keyResults.map((keyResult, index) => (
-                    <div key={index} className="p-4 rounded-lg border transition-colors" style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      borderColor: 'rgb(var(--color-border))'
-                    }}>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center text-sm font-bold">
-                          {index + 1}
-                        </div>
-                        <span className="font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultat clé {index + 1}</span>
-                        {keyResults.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeKeyResult(index)}
-                            className="ml-auto p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                            title="Supprimer ce résultat clé"
-                          >
-                            <Minus size={16} />
-                          </button>
-                        )}
-                      </div>
-                      
-                      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                        <div className="lg:col-span-2">
-                          <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            Description du résultat *
-                          </label>
-                          <input
-                            type="text"
-                            value={keyResult.title}
-                            onChange={(e) => updateKeyResultField(index, 'title', e.target.value)}
-                            placeholder={`Ex: Ficher ${index === 0 ? '20' : index === 1 ? '15' : '10'} textes littéraires`}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                            style={{
-                              backgroundColor: 'rgb(var(--color-surface))',
-                              color: 'rgb(var(--color-text-primary))',
-                              borderColor: 'rgb(var(--color-border))'
-                            }}
-                          />
+                      }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-6 h-6 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-full flex items-center justify-center text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <span className="font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultat clé {index + 1}</span>
+                          {keyResults.length > 1 && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              type="button"
+                              onClick={() => removeKeyResult(index)}
+                              className="ml-auto p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                              title="Supprimer ce résultat clé"
+                            >
+                              <Minus size={16} />
+                            </motion.button>
+                          )}
                         </div>
                         
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                          <div className="lg:col-span-2">
                             <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              Objectif *
+                              Description du résultat *
                             </label>
                             <input
-                              type="number"
-                              value={keyResult.targetValue}
-                              onChange={(e) => updateKeyResultField(index, 'targetValue', e.target.value)}
-                              placeholder="20"
-                              min="1"
+                              type="text"
+                              value={keyResult.title}
+                              onChange={(e) => updateKeyResultField(index, 'title', e.target.value)}
+                              placeholder={`Ex: Ficher ${index === 0 ? '20' : index === 1 ? '15' : '10'} textes littéraires`}
                               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
                               style={{
                                 backgroundColor: 'rgb(var(--color-surface))',
@@ -793,66 +909,89 @@ const OKRPage: React.FC = () => {
                               }}
                             />
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              Actuel
-                            </label>
-                            <input
-                              type="number"
-                              value={keyResult.currentValue}
-                              onChange={(e) => updateKeyResultField(index, 'currentValue', e.target.value)}
-                              placeholder="0"
-                              min="0"
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: 'rgb(var(--color-border))'
-                              }}
-                            />
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                Objectif *
+                              </label>
+                              <input
+                                type="number"
+                                value={keyResult.targetValue}
+                                onChange={(e) => updateKeyResultField(index, 'targetValue', e.target.value)}
+                                placeholder="20"
+                                min="1"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                  borderColor: 'rgb(var(--color-border))'
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                Actuel
+                              </label>
+                              <input
+                                type="number"
+                                value={keyResult.currentValue}
+                                onChange={(e) => updateKeyResultField(index, 'currentValue', e.target.value)}
+                                placeholder="0"
+                                min="0"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                  borderColor: 'rgb(var(--color-border))'
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
 
-                        {/* AJOUT: Champ temps estimé pour chaque résultat clé */}
-                        <div>
-                          <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                            Temps (min) *
-                          </label>
-                          <input
-                            type="number"
-                            value={keyResult.estimatedTime}
-                            onChange={(e) => updateKeyResultField(index, 'estimatedTime', e.target.value)}
-                            placeholder="30"
-                            min="1"
-                            max="480"
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-                            style={{
-                              backgroundColor: 'rgb(var(--color-surface))',
-                              color: 'rgb(var(--color-text-primary))',
-                              borderColor: 'rgb(var(--color-border))'
-                            }}
-                          />
+                          {/* AJOUT: Champ temps estimé pour chaque résultat clé */}
+                          <div>
+                            <label className="block text-sm font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                              Temps (min) *
+                            </label>
+                            <input
+                              type="number"
+                              value={keyResult.estimatedTime}
+                              onChange={(e) => updateKeyResultField(index, 'estimatedTime', e.target.value)}
+                              placeholder="30"
+                              min="1"
+                              max="480"
+                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+                              style={{
+                                backgroundColor: 'rgb(var(--color-surface))',
+                                color: 'rgb(var(--color-text-primary))',
+                                borderColor: 'rgb(var(--color-border))'
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Action - Bouton unique Valider */}
-              <div className="flex justify-center pt-4">
-                <button
-                  type="submit"
-                  className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg hover:shadow-xl transform hover:scale-105"
-                >
-                  ✅ Valider
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+                {/* Action Button */}
+                <div className="flex justify-center pt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all shadow-lg hover:shadow-xl"
+                  >
+                     Valider
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
