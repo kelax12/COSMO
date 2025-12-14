@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TaskTable from '../components/TaskTable';
 import TaskFilter from '../components/TaskFilter';
 import AddTaskForm from '../components/AddTaskForm';
@@ -7,15 +7,27 @@ import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListManager from '../components/ListManager';
 import { useTasks } from '../context/TaskContext';
 import { CalendarDays, List, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const TasksPage: React.FC = () => {
   const { tasks, lists } = useTasks();
+  const location = useLocation();
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
   const [showListManager, setShowListManager] = useState(false);
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const state = location.state as { openTaskId?: string } | null;
+    if (state?.openTaskId) {
+      setSelectedTaskId(state.openTaskId);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   
   const handleFilterChange = (value: string) => {
     setFilter(value);
@@ -60,160 +72,270 @@ const TasksPage: React.FC = () => {
   ];
 
   return (
-    <div className="p-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="p-8"
+    >
       <div className="flex flex-col gap-8">
-        <header className="flex justify-between items-center">
+        <motion.header 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex justify-between items-center"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">To do list</h1>
-            <p className="text-slate-600">Gérez vos tâches efficacement</p>
+            <motion.h1 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2"
+            >
+              To do list
+            </motion.h1>
+            <motion.p 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-slate-600 dark:text-slate-400"
+            >
+              Gérez vos tâches efficacement
+            </motion.p>
           </div>
           
-          <div className="flex items-center gap-4">
-            <button 
+          <motion.div 
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center gap-4"
+          >
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowListManager(!showListManager)}
-              className="flex items-center gap-2 text-slate-600 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
             >
               <List size={20} />
               <span>Gérer les listes</span>
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
-              className="flex items-center gap-2 text-slate-600 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-2 bg-white text-slate-700 border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 hover:border-slate-400 transition-all shadow-sm dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-700"
             >
               <CalendarDays size={20} />
               <span>Calendrier des deadlines</span>
-            </button>
-          </div>
-        </header>
+            </motion.button>
+          </motion.div>
+        </motion.header>
 
-        {showListManager && (
-          <ListManager />
-        )}
+        <AnimatePresence>
+          {showListManager && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ListManager />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {showDeadlineCalendar && (
-          <DeadlineCalendar />
-        )}
+        <AnimatePresence>
+          {showDeadlineCalendar && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <DeadlineCalendar />
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
+          <motion.div 
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="lg:col-span-3"
+          >
             <div className="card p-6">
-              {/* Quick List Access - Only show when not viewing completed tasks and not showing add form */}
               {!showCompleted && !showAddTaskForm && (
-                <div className="mb-8">
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="mb-8"
+                >
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Accès rapide aux listes</h3>
                   <div className="flex flex-wrap gap-3">
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={clearListFilter}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm border ${
                         !selectedListId
-                          ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600'
+                          ? 'bg-primary-100 text-primary-700 border-primary-200 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-200'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-600'
                       }`}
                     >
                       Toutes les tâches
-                    </button>
-                    {lists.map(list => {
+                    </motion.button>
+                    {lists.map((list, index) => {
                       const colorOption = colorOptions.find(c => c.value === list.color);
                       const isSelected = selectedListId === list.id;
                       
                       return (
-                        <button
+                        <motion.button
                           key={list.id}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.5 + index * 0.05 }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => handleListSelect(list.id)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-sm ${
                             isSelected
-                              ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-600'
+                              ? 'bg-primary-100 text-primary-700 border-primary-200 dark:bg-blue-500 dark:text-white dark:border-blue-600'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-600'
                           }`}
                         >
-                          <div 
+                          <motion.div 
+                            whileHover={{ rotate: 360 }}
+                            transition={{ duration: 0.5 }}
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: colorOption?.color || '#3B82F6' }}
                           />
                           <span>{list.name}</span>
-                          <span className="text-xs bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 px-2 py-1 rounded border border-slate-200 dark:border-slate-600">
+                          <span className="text-xs bg-white dark:bg-slate-900 text-gray-600 dark:text-slate-400 px-2 py-1 rounded border border-gray-300 dark:border-slate-600">
                             {list.taskIds.filter(taskId => {
                               const task = tasks.find(t => t.id === taskId);
                               return task && !task.completed;
                             }).length}
                           </span>
                           {isSelected && (
-                            <X size={14} className="ml-1 hover:text-red-500 dark:hover:text-red-400" />
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="text-gray-700 dark:text-slate-300"
+                            >
+                              <X size={14} className="ml-1 hover:text-red-500 dark:hover:text-red-400" />
+                            </motion.div>
                           )}
-                        </button>
+                        </motion.button>
                       );
                     })}
                   </div>
                   
-                  {selectedList && (
-                    <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: colorOptions.find(c => c.value === selectedList.color)?.color || '#3B82F6' }}
-                          />
-                          <span className="font-semibold text-slate-900 dark:text-slate-100">
-                            Liste active : {selectedList.name}
-                          </span>
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            ({filteredTasks.length} tâche{filteredTasks.length !== 1 ? 's' : ''})
-                          </span>
+                  <AnimatePresence>
+                    {selectedList && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <motion.div 
+                              animate={{ rotate: [0, 360] }}
+                              transition={{ duration: 1, repeat: Infinity, repeatDelay: 3 }}
+                              className="w-4 h-4 rounded-full"
+                              style={{ backgroundColor: colorOptions.find(c => c.value === selectedList.color)?.color || '#3B82F6' }}
+                            />
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">
+                              Liste active : {selectedList.name}
+                            </span>
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                              ({filteredTasks.length} tâche{filteredTasks.length !== 1 ? 's' : ''})
+                            </span>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.1, rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={clearListFilter}
+                            className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 p-1"
+                            title="Afficher toutes les tâches"
+                          >
+                            <X size={16} />
+                          </motion.button>
                         </div>
-                        <button
-                          onClick={clearListFilter}
-                          className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 p-1"
-                          title="Afficher toutes les tâches"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               )}
 
-              {/* Filter and Add Task - Hide when showing add form */}
               {!showAddTaskForm && (
-                <div className="flex justify-between items-center mb-8">
-                  <TaskFilter 
-                    onFilterChange={handleFilterChange} 
-                    currentFilter={filter}
-                    showCompleted={showCompleted}
-                    onShowCompletedChange={handleShowCompletedChange}
-                  />
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex justify-between items-start mb-8 gap-4"
+                >
+                  <div className="flex-1">
+                    <TaskFilter 
+                      onFilterChange={handleFilterChange} 
+                      currentFilter={filter}
+                      showCompleted={showCompleted}
+                      onShowCompletedChange={handleShowCompletedChange}
+                    />
+                  </div>
                   {!showCompleted && (
                     <AddTaskForm 
                       onFormToggle={setShowAddTaskForm}
                     />
                   )}
-                </div>
+                </motion.div>
               )}
 
-              {/* Add Task Form - Show when toggled */}
-              {showAddTaskForm && (
-                <div className="mb-8">
-                  <AddTaskForm 
-                    onFormToggle={setShowAddTaskForm}
-                    expanded={true}
-                  />
-                </div>
-              )}
+              <AnimatePresence>
+                {showAddTaskForm && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="mb-8"
+                  >
+                    <AddTaskForm 
+                      onFormToggle={setShowAddTaskForm}
+                      expanded={true}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
-              <TaskTable 
-                tasks={filteredTasks}
-                sortField={filter}
-                showCompleted={showCompleted}
-              />
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <TaskTable 
+                  tasks={filteredTasks}
+                  sortField={filter}
+                  showCompleted={showCompleted}
+                  selectedTaskId={selectedTaskId}
+                  onTaskModalClose={() => setSelectedTaskId(null)}
+                />
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="lg:col-span-1">
+          <motion.div 
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="lg:col-span-1"
+          >
             <TasksSummary />
-          </div>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
