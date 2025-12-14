@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, X, Save } from 'lucide-react';
 import { useTasks, Habit } from '../context/TaskContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface HabitCardProps {
   habit: Habit;
+  externalIsEditing?: boolean;
+  onExternalEditingChange?: (isEditing: boolean) => void;
 }
 
 const colorOptions = [
@@ -15,15 +28,30 @@ const colorOptions = [
   { value: 'pink', color: '#EC4899' },
 ];
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit }) => {
+const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExternalEditingChange }) => {
   const { toggleHabitCompletion, deleteHabit, updateHabit } = useTasks();
   const [showDetails, setShowDetails] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [internalIsEditing, setInternalIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: habit.name,
     estimatedTime: habit.estimatedTime,
     color: habit.color
   });
+
+  // Use external editing state if provided, otherwise use internal
+  const isEditing = externalIsEditing !== undefined ? externalIsEditing : internalIsEditing;
+  const setIsEditing = onExternalEditingChange || setInternalIsEditing;
+
+  // Auto-start editing mode if externalIsEditing is true
+  useEffect(() => {
+    if (externalIsEditing) {
+      setEditData({
+        name: habit.name,
+        estimatedTime: habit.estimatedTime,
+        color: habit.color
+      });
+    }
+  }, [externalIsEditing, habit]);
 
   const generateDays = (count: number, endAtToday = true) => {
     const today = new Date();
@@ -195,12 +223,32 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit }) => {
               >
                 <Edit2 size={16} />
               </button>
-              <button 
-                onClick={() => deleteHabit(habit.id)}
-                className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
-              >
-                <Trash2 size={16} />
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button 
+                    className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Êtes-vous sûr de vouloir supprimer l'habitude "{habit.name}" ? Cette action est irréversible.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteHabit(habit.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
 
