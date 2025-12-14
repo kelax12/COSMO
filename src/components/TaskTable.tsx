@@ -1,5 +1,5 @@
-import AnimatedList from './AnimatedList'; // si dans le même dossier que TaskTable.tsx
-import React, { useState } from 'react';
+import AnimatedList from './AnimatedList';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, Palette, UserPlus } from 'lucide-react';
@@ -15,9 +15,17 @@ type TaskTableProps = {
   tasks?: Task[];
   sortField?: string;
   showCompleted?: boolean;
+  selectedTaskId?: string | null;
+  onTaskModalClose?: () => void;
 };
 
-const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, showCompleted = false }) => {
+const TaskTable: React.FC<TaskTableProps> = ({ 
+  tasks: propTasks, 
+  sortField, 
+  showCompleted = false,
+  selectedTaskId: externalSelectedTaskId,
+  onTaskModalClose
+}) => {
   const { tasks: contextTasks, deleteTask, toggleBookmark, toggleComplete, addEvent } = useTasks();
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
@@ -29,6 +37,19 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, show
   const [showColorSettings, setShowColorSettings] = useState(false);
 
   const tasks = propTasks || contextTasks;
+
+  useEffect(() => {
+    if (externalSelectedTaskId) {
+      setSelectedTask(externalSelectedTaskId);
+    }
+  }, [externalSelectedTaskId]);
+
+  const handleCloseTaskModal = () => {
+    setSelectedTask(null);
+    if (onTaskModalClose) {
+      onTaskModalClose();
+    }
+  };
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -107,8 +128,8 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, show
             onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
               showBookmarkedOnly 
-                ? 'bg-primary-100 text-primary-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary-100 text-primary-700 dark:bg-slate-100 dark:text-slate-900' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             {showBookmarkedOnly ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
@@ -117,7 +138,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, show
 
           <button
             onClick={() => setShowColorSettings(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
           >
             <Palette size={20} />
             <span>Couleurs</span>
@@ -333,7 +354,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, show
         <TaskModal
           task={selectedTaskData}
           isOpen={!!selectedTask}
-          onClose={() => setSelectedTask(null)}
+          onClose={handleCloseTaskModal}
         />
       )}
 
@@ -365,7 +386,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks: propTasks, sortField, show
           isOpen={true}
           onClose={() => setTaskToEventModal(null)}
           task={taskToEventModal}
-          onCreateEvent={handleCreateEventFromTask}
+          onConvert={handleCreateEventFromTask}
         />
       )}
 
