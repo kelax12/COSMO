@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
-import { Search, Clock, Star, Filter, X } from 'lucide-react';
+import { Search, Clock, Star, Filter, X, CheckCircle2 } from 'lucide-react';
 
 const TaskSidebar: React.FC = () => {
-  const { tasks, colorSettings } = useTasks();
+  const { tasks, colorSettings, events } = useTasks();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
@@ -36,6 +36,10 @@ const TaskSidebar: React.FC = () => {
       5: 'bg-purple-100 text-purple-800'
     };
     return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const isTaskPlacedInCalendar = (taskId: string) => {
+    return events.some(event => event.taskId === taskId);
   };
 
   return (
@@ -107,59 +111,80 @@ const TaskSidebar: React.FC = () => {
             <p>Aucune tâche trouvée</p>
           </div>
         ) : (
-          availableTasks.map(task => (
-            <div
-              key={task.id}
-              className="external-event rounded-lg p-3 border cursor-move hover:shadow-md transition-all duration-200 group select-none"
-              style={{ 
-                backgroundColor: 'rgb(var(--color-surface))',
-                borderColor: 'rgb(var(--color-border))',
-                borderLeft: `4px solid ${getCategoryColor(task.category)}`
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))'}
-              data-task={JSON.stringify(task)}
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: getCategoryColor(task.category) }}
-                  />
-                  <span className="font-medium text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
-                  {task.bookmarked && (
-                    <Star size={14} className="favorite-icon filled" />
-                  )}
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
-                  P{task.priority}
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                <div className="flex items-center gap-1">
-                  <Clock size={12} />
-                  <span>{task.estimatedTime} min</span>
-                </div>
-                <span className="text-xs px-2 py-1 rounded border" style={{ 
-                  backgroundColor: 'rgb(var(--color-surface))',
+          availableTasks.map(task => {
+            const isPlaced = isTaskPlacedInCalendar(task.id);
+            
+            return (
+              <div
+                key={task.id}
+                className={`external-event rounded-lg p-3 border transition-all duration-200 group select-none ${
+                  isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'
+                }`}
+                style={{ 
+                  backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
                   borderColor: 'rgb(var(--color-border))',
-                  color: 'rgb(var(--color-text-secondary))'
-                }}>
-                  {colorSettings[task.category]}
-                </span>
+                  borderLeft: `4px solid ${getCategoryColor(task.category)}`,
+                  position: 'relative'
+                }}
+                onMouseEnter={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
+                onMouseLeave={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))')}
+                data-task={JSON.stringify(task)}
+              >
+                {isPlaced && (
+                  <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg flex items-center justify-center pointer-events-none">
+                    <div className="bg-white dark:bg-slate-800 rounded-full p-2 shadow-lg">
+                      <CheckCircle2 size={24} className="text-green-500" />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: getCategoryColor(task.category) }}
+                    />
+                    <span className={`font-medium text-sm ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
+                    {task.bookmarked && (
+                      <Star size={14} className="favorite-icon filled" />
+                    )}
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                    P{task.priority}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  <div className="flex items-center gap-1">
+                    <Clock size={12} />
+                    <span>{task.estimatedTime} min</span>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded border" style={{ 
+                    backgroundColor: 'rgb(var(--color-surface))',
+                    borderColor: 'rgb(var(--color-border))',
+                    color: 'rgb(var(--color-text-secondary))'
+                  }}>
+                    {colorSettings[task.category]}
+                  </span>
+                </div>
+                
+                <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                  Deadline: {new Date(task.deadline).toLocaleDateString('fr-FR')}
+                </div>
+                
+                {/* Drag indicator */}
+                {!isPlaced ? (
+                  <div className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'rgb(var(--color-accent))' }}>
+                    ↗ Glisser vers le calendrier
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs font-semibold" style={{ color: 'rgb(var(--color-success))' }}>
+                    ✓ Déjà planifiée
+                  </div>
+                )}
               </div>
-              
-              <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                Deadline: {new Date(task.deadline).toLocaleDateString('fr-FR')}
-              </div>
-              
-              {/* Drag indicator */}
-              <div className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'rgb(var(--color-accent))' }}>
-                ↗ Glisser vers le calendrier
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
