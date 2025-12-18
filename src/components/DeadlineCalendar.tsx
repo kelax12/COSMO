@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const DeadlineCalendar: React.FC = () => {
-  const { tasks, colorSettings } = useTasks();
+  const { tasks, colorSettings, categories } = useTasks();
   const [currentView, setCurrentView] = useState('dayGridMonth');
 
   // Convert tasks to calendar events based on deadlines
@@ -24,19 +24,12 @@ const DeadlineCalendar: React.FC = () => {
         priority: task.priority,
         category: task.category,
         estimatedTime: task.estimatedTime,
-        categoryName: colorSettings[task.category]
+        categoryName: colorSettings[task.category] || 'Sans catégorie'
       }
     }));
 
   function getCategoryColor(category: string) {
-    const colors = {
-      red: '#EF4444',
-      blue: '#3B82F6',
-      green: '#10B981',
-      purple: '#8B5CF6',
-      orange: '#F97316'
-    };
-    return colors[category as keyof typeof colors] || '#6B7280';
+    return categories.find(cat => cat.id === category)?.color || '#6B7280';
   }
 
   const renderEventContent = (eventInfo: any) => {
