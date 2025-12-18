@@ -11,7 +11,7 @@ import EditEventModal from '../components/EditEventModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AgendaPage: React.FC = () => {
-  const { events, addEvent, deleteEvent, updateEvent, colorSettings } = useTasks();
+  const { events, addEvent, deleteEvent, updateEvent, colorSettings, categories } = useTasks();
   const [currentView, setCurrentView] = useState('timeGridWeek');
   const [showTaskSidebar, setShowTaskSidebar] = useState(true);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
@@ -51,7 +51,7 @@ const AgendaPage: React.FC = () => {
                 priority: taskData.priority,
                 category: taskData.category,
                 estimatedTime: taskData.estimatedTime,
-                categoryName: colorSettings[taskData.category]
+                categoryName: colorSettings[taskData.category] || categories.find(c => c.id === taskData.category)?.name || 'Sans catégorie'
               }
             };
           }
@@ -67,7 +67,7 @@ const AgendaPage: React.FC = () => {
         draggableInstance = null;
       }
     };
-  }, [showTaskSidebar, colorSettings]);
+  }, [showTaskSidebar, colorSettings, categories]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -144,14 +144,7 @@ const AgendaPage: React.FC = () => {
   };
 
   const getCategoryColor = (category: string) => {
-    const colors = {
-      red: '#EF4444',
-      blue: '#3B82F6',
-      green: '#10B981',
-      purple: '#8B5CF6',
-      orange: '#F97316'
-    } as const;
-    return colors[category as keyof typeof colors] || '#6B7280';
+    return categories.find(cat => cat.id === category)?.color || '#6B7280';
   };
 
   const calendarEvents = events.map((event) => ({
