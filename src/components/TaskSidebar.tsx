@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
-import { Search, Clock, Star, Filter, X, CheckCircle2 } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2 } from 'lucide-react';
 
 const TaskSidebar: React.FC = () => {
   const { tasks, colorSettings, categories, events, priorityRange } = useTasks();
@@ -36,9 +36,9 @@ const TaskSidebar: React.FC = () => {
     return events.some(event => event.taskId === taskId);
   };
 
-  return (
-    <div className="w-80 border-r flex flex-col h-full" style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}>
-      {/* Sidebar Header */}
+    return (
+      <div className="w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full" style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}>
+        {/* Sidebar Header */}
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
         <h2 className="text-lg font-semibold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>Tâches disponibles</h2>
         
@@ -114,12 +114,13 @@ const TaskSidebar: React.FC = () => {
                 className={`external-event rounded-lg p-3 border transition-all duration-200 group select-none ${
                   isPlaced ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:shadow-md'
                 }`}
-                style={{ 
-                  backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
-                  borderColor: 'rgb(var(--color-border))',
-                  borderLeft: `4px solid ${getCategoryColor(task.category)}`,
-                  position: 'relative'
-                }}
+                  style={{ 
+                    backgroundColor: isPlaced ? 'rgb(var(--color-hover))' : 'rgb(var(--color-surface))',
+                    borderColor: 'rgb(var(--color-border))',
+                    borderLeft: `4px solid ${getCategoryColor(task.category)}`,
+                    position: 'relative',
+                    touchAction: 'none'
+                  }}
                 onMouseEnter={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
                 onMouseLeave={(e) => !isPlaced && (e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))')}
                 data-task={JSON.stringify(task)}
@@ -139,9 +140,9 @@ const TaskSidebar: React.FC = () => {
                       style={{ backgroundColor: getCategoryColor(task.category) }}
                     />
                     <span className={`font-medium text-sm ${isPlaced ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
-                    {task.bookmarked && (
-                      <Star size={14} className="favorite-icon filled" />
-                    )}
+                      {task.bookmarked && (
+                        <Bookmark size={14} className="favorite-icon filled" />
+                      )}
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
                     P{task.priority}
