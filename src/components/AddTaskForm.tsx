@@ -1,28 +1,73 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, X, Users, Search, UserPlus, Save, AlertCircle, CheckCircle, Calendar, Star, Bookmark } from 'lucide-react';
+import { Plus, X, Users, Search, UserPlus, AlertCircle, CheckCircle, Calendar, Star, Bookmark, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { useTasks } from '../context/TaskContext';
+import CollaboratorItem from './CollaboratorItem';
 
 type AddTaskFormProps = {
   onFormToggle?: (isOpen: boolean) => void;
   expanded?: boolean;
+    initialData?: {
+      name?: string;
+      estimatedTime?: number;
+      category?: string;
+      priority?: number;
+      isFromOKR?: boolean;
+    };
+
 };
 
-const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = false }) => {
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = false, initialData }) => {
   const { addTask, colorSettings, categories, friends, shareTask, isPremium } = useTasks();
   const [isFormOpen, setIsFormOpen] = useState(expanded);
-  const [formData, setFormData] = useState({
-    name: '',
-    priority: 3,
-    category: categories[0]?.id || '',
-    deadline: '',
-    estimatedTime: 30,
-    completed: false,
-    bookmarked: false
-  });
+
+  useEffect(() => {
+    setIsFormOpen(expanded);
+  }, [expanded]);
+    const [formData, setFormData] = useState({
+      name: initialData?.name || '',
+      priority: initialData?.priority || 0,
+      category: initialData?.category || '',
+      deadline: '',
+      estimatedTime: initialData?.estimatedTime || 0,
+      completed: false,
+      bookmarked: false,
+      isFromOKR: initialData?.isFromOKR || false
+    });
+
+    const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+      if (initialData) {
+        setFormData(prev => ({
+          ...prev,
+          name: initialData.name || prev.name,
+          estimatedTime: initialData.estimatedTime || prev.estimatedTime,
+          category: initialData.category || prev.category,
+          priority: initialData.priority || prev.priority,
+          isFromOKR: initialData.isFromOKR ?? prev.isFromOKR
+        }));
+        setHasChanges(true);
+
+        // Track which fields are from OKR
+        if (initialData.isFromOKR) {
+          setOkrFields({
+            name: !!initialData.name,
+            category: !!initialData.category,
+            estimatedTime: !!initialData.estimatedTime,
+          });
+        } else {
+          setOkrFields({});
+        }
+      }
+    }, [initialData]);
+
 
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [searchUser, setSearchUser] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string;}>({});
@@ -32,26 +77,37 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     return categories.find(cat => cat.id === id)?.color || '#9CA3AF';
   };
 
-  useEffect(() => {
-    if (!categories.length) return;
-    setFormData(prev => {
-      if (prev.category && categories.some(cat => cat.id === prev.category)) return prev;
-      return { ...prev, category: categories[0].id };
-    });
-  }, [categories]);
-
-  // Simuler une liste d'amis disponibles
-  const availableFriends = friends || [
-  { id: 'user2', name: 'Marie Dupont', email: 'marie@example.com', avatar: '👩‍💼' },
-  { id: 'user3', name: 'Jean Martin', email: 'jean@example.com', avatar: '👨‍💻' },
-  { id: 'user4', name: 'Sophie Bernard', email: 'sophie@example.com', avatar: '👩‍🔬' },
-  { id: 'user5', name: 'Alex Thompson', email: 'alex@example.com', avatar: '👨‍💼' }];
-
+  const availableFriends = friends || [];
 
   const filteredFriends = availableFriends.filter((friend) =>
-  friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
-  friend.email.toLowerCase().includes(searchUser.toLowerCase())
+    !collaborators.includes(friend.id) && (
+      friend.name.toLowerCase().includes(searchUser.toLowerCase()) ||
+      friend.email.toLowerCase().includes(searchUser.toLowerCase())
+    )
   );
+
+  const displayInfo = (id: string) => {
+    const friend = friends?.find((f) => f.id === id);
+    if (friend) {
+      return { name: friend.name, email: friend.email, avatar: friend.avatar };
+    }
+    if (emailRegex.test(id)) {
+      return { name: id.split('@')[0], email: id, avatar: undefined };
+    }
+    return { name: id, email: undefined, avatar: undefined };
+  };
+
+  const handleAddEmail = () => {
+    const value = emailInput.trim();
+    if (!value) return;
+    if (collaborators.includes(value)) {
+      setEmailInput('');
+      return;
+    }
+    setCollaborators([...collaborators, value]);
+    setEmailInput('');
+    setHasChanges(true);
+  };
 
   // Validation rules
   const validateForm = () => {
@@ -67,13 +123,25 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     }
 
     // Rule 2: Estimated time validation
-    if (formData.estimatedTime < 5) {
-      newErrors.estimatedTime = 'Le temps estimé doit être d\'au moins 5 minutes';
-    } else if (formData.estimatedTime > 480) {
-      newErrors.estimatedTime = 'Le temps estimé ne peut pas dépasser 8 heures (480 minutes)';
+    if (formData.estimatedTime === '' || formData.estimatedTime === null) {
+      newErrors.estimatedTime = 'Le temps estimé est obligatoire';
+    } else if (isNaN(Number(formData.estimatedTime))) {
+      newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
+    } else if (Number(formData.estimatedTime) < 0) {
+      newErrors.estimatedTime = 'Le temps estimé ne peut pas être négatif';
     }
 
-    // Rule 3: Deadline validation
+    // Rule 3: Priority validation
+    if (formData.priority === 0) {
+      newErrors.priority = 'Veuillez choisir une priorité';
+    }
+
+    // Rule 4: Category validation
+    if (!formData.category) {
+      newErrors.category = 'Veuillez choisir une catégorie';
+    }
+
+    // Rule 5: Deadline validation
     if (formData.deadline) {
       const deadlineDate = new Date(formData.deadline);
       const today = new Date();
@@ -88,37 +156,52 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setHasChanges(true);
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+    const isFormValid = () => {
+    const nameValid = formData.name.length >= 1 && formData.name.length <= 100;
+    const timeValid = formData.estimatedTime !== '' && formData.estimatedTime !== null && !isNaN(Number(formData.estimatedTime)) && Number(formData.estimatedTime) > 0;
+    const priorityValid = formData.priority !== 0;
+    const categoryValid = !!formData.category;
+    
+    let deadlineValid = !!formData.deadline;
+    if (formData.deadline) {
+      const deadlineDate = new Date(formData.deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      deadlineValid = deadlineDate >= today;
     }
+
+    return nameValid && timeValid && priorityValid && categoryValid && deadlineValid;
   };
 
-  const handleFormToggle = (open: boolean) => {
-    if (!open && hasChanges) {
-      if (window.confirm('Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?')) {
-        setIsFormOpen(open);
-        onFormToggle?.(open);
-        resetForm();
+  const handleInputChange = (field: string, value: any) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+      setHasChanges(true);
+
+      // Remove the special OKR styling for this field if it's modified
+      if (okrFields[field]) {
+        setOkrFields(prev => ({ ...prev, [field]: false }));
       }
-    } else {
-      setIsFormOpen(open);
-      onFormToggle?.(open);
-      if (!open) resetForm();
-    }
+
+      // Clear error when user starts typing
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: '' }));
+      }
+    };
+
+
+  const handleFormToggle = (open: boolean) => {
+    setIsFormOpen(open);
+    onFormToggle?.(open);
+    if (!open) resetForm();
   };
 
   const resetForm = () => {
     setFormData({
       name: '',
-      priority: 3,
-      category: categories[0]?.id || '',
+      priority: 0,
+      category: '',
       deadline: '',
-      estimatedTime: 30,
+      estimatedTime: 0,
       completed: false,
       bookmarked: false
     });
@@ -183,16 +266,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   return (
     <div>
       <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
-        <DialogTrigger asChild>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg transition-colors shadow-lg hover:shadow-xl"
-            aria-label="Créer une nouvelle tâche"
-          >
-            <Plus size={20} aria-hidden="true" />
-            <span>Nouvelle tâche</span>
-          </button>
-        </DialogTrigger>
+
 
         <DialogContent
           showCloseButton={false}
@@ -255,21 +329,24 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                       <label htmlFor="task-name" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                          Nom de la tâche *
                       </label>
-                      <input
-                        id="task-name"
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${errors.name ? 'border-red-300 dark:border-red-600' : ''}`}
-                        style={{
-                          backgroundColor: 'rgb(var(--color-surface))',
-                          color: 'rgb(var(--color-text-primary))',
-                          borderColor: errors.name ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))'
-                        }}
-                        placeholder="Entrez le nom de la tâche"
-                        aria-describedby={errors.name ? 'name-error' : undefined}
-                        aria-invalid={!!errors.name}
-                      />
+                        <input
+                          id="task-name"
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => handleInputChange('name', e.target.value)}
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                            errors.name ? 'border-red-300 dark:border-red-600' : ''
+                          } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                          style={{
+                            backgroundColor: okrFields.name ? undefined : 'rgb(var(--color-surface))',
+                            color: 'rgb(var(--color-text-primary))',
+                            borderColor: errors.name ? 'rgb(var(--color-error))' : (okrFields.name ? undefined : 'rgb(var(--color-border))')
+                          }}
+                          placeholder="Entrez le nom de la tâche"
+                          aria-describedby={errors.name ? 'name-error' : undefined}
+                          aria-invalid={!!errors.name}
+                        />
+
 
                       {errors.name &&
                         <div id="name-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
@@ -285,48 +362,64 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                         <label htmlFor="task-priority" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Priorité
                         </label>
-                        <select
-                          id="task-priority"
-                          value={formData.priority}
-                          onChange={(e) => handleInputChange('priority', Number(e.target.value))}
-                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            color: 'rgb(var(--color-text-primary))',
-                            borderColor: 'rgb(var(--color-border))'
-                          }}
-                          aria-label="Sélectionner la priorité de la tâche"
-                        >
-                          <option value="1">1 (Très haute)</option>
-                          <option value="2">2 (Haute)</option>
-                          <option value="3">3 (Moyenne)</option>
-                          <option value="4">4 (Basse)</option>
-                          <option value="5">5 (Très basse)</option>
+                          <select
+                            id="task-priority"
+                            value={formData.priority}
+                            onChange={(e) => handleInputChange('priority', Number(e.target.value))}
+                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-surface))',
+                                color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
+                              borderColor: 'rgb(var(--color-border))'
+                            }}
+                            aria-label="Sélectionner la priorité de la tâche"
+                          >
+                            <option value="0" disabled hidden>Choisir une priorité</option>
+                          <option value="1" style={{ color: 'rgb(var(--color-text-primary))' }}>1 (Très haute)</option>
+                          <option value="2" style={{ color: 'rgb(var(--color-text-primary))' }}>2 (Haute)</option>
+                          <option value="3" style={{ color: 'rgb(var(--color-text-primary))' }}>3 (Moyenne)</option>
+                          <option value="4" style={{ color: 'rgb(var(--color-text-primary))' }}>4 (Basse)</option>
+                          <option value="5" style={{ color: 'rgb(var(--color-text-primary))' }}>5 (Très basse)</option>
                         </select>
+                        {errors.priority &&
+                          <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
+                            <AlertCircle size={14} aria-hidden="true" />
+                            {errors.priority}
+                          </div>
+                        }
                       </div>
                       
                       <div>
                         <label htmlFor="task-category" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                          Catégorie
                         </label>
-                        <select
-                          id="task-category"
-                          value={formData.category}
-                          onChange={(e) => handleInputChange('category', e.target.value)}
-                          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            color: 'rgb(var(--color-text-primary))',
-                            borderColor: 'rgb(var(--color-border))'
-                          }}
-                          aria-label="Sélectionner la catégorie de la tâche"
-                        >
-                          {categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))}
-                        </select>
+                                  <select
+                                    id="task-category"
+                                    value={formData.category}
+                                    onChange={(e) => handleInputChange('category', e.target.value)}
+                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                                      errors.category ? 'border-red-300 dark:border-red-600' : ''
+                                    } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                                    style={{
+                                      backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
+                                        color: formData.category === '' ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
+                                      borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : 'rgb(var(--color-border))')
+                                    }}
+                                    aria-label="Sélectionner la catégorie de la tâche"
+                                  >
+                                    <option value="" disabled hidden>Choisir une catégorie</option>
+                                  {categories.map((category) => (
+                                    <option key={category.id} value={category.id} style={{ color: 'rgb(var(--color-text-primary))' }}>
+                                      {category.name}
+                                    </option>
+                                  ))}
+                                </select>
+                        {errors.category &&
+                          <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
+                            <AlertCircle size={14} aria-hidden="true" />
+                            {errors.category}
+                          </div>
+                        }
                         <div className="mt-2 flex items-center gap-2">
                           <div
                             className="w-4 h-4 rounded"
@@ -370,23 +463,25 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                         <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           Temps estimé (min)
                         </label>
-                        <input
-                          id="task-time"
-                          type="number"
-                          value={formData.estimatedTime}
-                          onChange={(e) => handleInputChange('estimatedTime', Number(e.target.value))}
-                          min="5"
-                          max="480"
-                          step="5"
-                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${errors.estimatedTime ? 'border-red-300 dark:border-red-600' : ''}`}
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            color: 'rgb(var(--color-text-primary))',
-                            borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))'
-                          }}
-                          aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
-                          aria-invalid={!!errors.estimatedTime}
-                        />
+                              <input
+                                  id="task-time"
+                                  type="number"
+                                  value={formData.estimatedTime === 0 && !hasChanges ? '' : formData.estimatedTime}
+                                  onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
+                                  placeholder="Estimation en minute"
+                                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                                  errors.estimatedTime ? 'border-red-300 dark:border-red-600' : ''
+                                } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                                style={{
+                                  backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                  borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : 'rgb(var(--color-border))')
+                                }}
+                                aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
+                                aria-invalid={!!errors.estimatedTime}
+                              />
+
+
 
                         {errors.estimatedTime &&
                           <div id="time-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
@@ -399,26 +494,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
 
                     {/* Status toggles */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center justify-between p-4 rounded-lg border transition-colors" style={{
-                        backgroundColor: 'rgb(var(--color-hover))',
-                        borderColor: 'rgb(var(--color-border))'
-                      }}>
-                        <div className="flex items-center gap-3">
-                          <CheckCircle size={20} className={formData.completed ? 'text-green-500' : 'text-gray-400 dark:text-gray-500'} aria-hidden="true" />
-                          <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>Complétée</span>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={formData.completed}
-                            onChange={(e) => handleInputChange('completed', e.target.checked)}
-                            aria-label="Marquer comme complétée"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                      </div>
-
+                    
                       <div className="flex items-center justify-between p-4 rounded-lg border transition-colors" style={{
                         backgroundColor: 'rgb(var(--color-hover))',
                         borderColor: 'rgb(var(--color-border))'
@@ -482,94 +558,103 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                               </div>
                             ) : (
                               <>
-                                {/* Search users */}
-                                <div className="relative mb-4">
-                                  <Search
-                                    size={16}
-                                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={searchUser}
-                                    onChange={(e) => setSearchUser(e.target.value)}
-                                    placeholder="Rechercher un utilisateur..."
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
-                                    style={{
-                                      backgroundColor: 'rgb(var(--color-surface))',
-                                      color: 'rgb(var(--color-text-primary))',
-                                      borderColor: 'rgb(var(--color-border))',
-                                    }}
-                                  />
-                                </div>
+                                  {/* Add collaborator by email/id */}
+                                  <div className="flex gap-2 mb-4">
+                                    <div className="relative flex-1">
+                                      <Mail
+                                        size={16}
+                                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={emailInput}
+                                        onChange={(e) => setEmailInput(e.target.value)}
+                                        placeholder="Email ou identifiant"
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
+                                        style={{
+                                          backgroundColor: 'rgb(var(--color-surface))',
+                                          color: 'rgb(var(--color-text-primary))',
+                                          borderColor: 'rgb(var(--color-border))',
+                                        }}
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={handleAddEmail}
+                                      disabled={!emailInput.trim()}
+                                      className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                    >
+                                      <UserPlus size={18} />
+                                    </button>
+                                  </div>
 
-                                {/* Friends list */}
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {filteredFriends.map((friend) => (
-                                    <div
-                                      key={friend.id}
-                                      className="flex items-center justify-between p-3 rounded-lg border transition-colors"
+                                  {/* Search users */}
+                                  <div className="relative mb-4">
+                                    <Search
+                                      size={16}
+                                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={searchUser}
+                                      onChange={(e) => setSearchUser(e.target.value)}
+                                      placeholder="Rechercher parmi vos amis..."
+                                      className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
                                       style={{
                                         backgroundColor: 'rgb(var(--color-surface))',
+                                        color: 'rgb(var(--color-text-primary))',
                                         borderColor: 'rgb(var(--color-border))',
                                       }}
-                                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgb(var(--color-text-muted))')}
-                                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgb(var(--color-border))')}
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div className="text-2xl">{friend.avatar}</div>
-                                        <div>
-                                          <div className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                                            {friend.name}
-                                          </div>
-                                          <div className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                                            {friend.email}
-                                          </div>
+                                    />
+                                  </div>
+
+                                    {/* Friends list */}
+                                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                      {filteredFriends.map((friend) => (
+                                        <CollaboratorItem
+                                          key={friend.id}
+                                          id={friend.id}
+                                          name={friend.name}
+                                          email={friend.email}
+                                          avatar={friend.avatar}
+                                          isSelected={collaborators.includes(friend.id)}
+                                          onAction={() => toggleCollaborator(friend.id)}
+                                          variant="toggle"
+                                        />
+                                      ))}
+                                      {filteredFriends.length === 0 && searchUser && (
+                                        <p className="text-center py-4 text-sm text-slate-500">Aucun contact trouvé</p>
+                                      )}
+                                    </div>
+
+                                    {/* Selected collaborators */}
+                                    {collaborators.length > 0 && (
+                                      <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                        <div className="flex items-center justify-between mb-3">
+                                          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                            Sélectionnés ({collaborators.length})
+                                          </h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-2">
+                                          {collaborators.map((userId) => {
+                                            const info = displayInfo(userId);
+                                            return (
+                                              <CollaboratorItem
+                                                key={userId}
+                                                id={userId}
+                                                name={info.name}
+                                                email={info.email}
+                                                avatar={info.avatar}
+                                                onAction={() => toggleCollaborator(userId)}
+                                                variant="remove"
+                                              />
+                                            );
+                                          })}
                                         </div>
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleCollaborator(friend.id)}
-                                        className={`p-2 rounded-lg transition-colors ${
-                                          collaborators.includes(friend.id)
-                                            ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                                        }`}
-                                      >
-                                        {collaborators.includes(friend.id) ? <X size={16} /> : <UserPlus size={16} />}
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
+                                    )}
 
-                                {/* Selected collaborators */}
-                                {collaborators.length > 0 && (
-                                  <div className="mt-4 pt-4 border-t" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                                    <div className="text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                                      Collaborateurs sélectionnés ({collaborators.length})
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {collaborators.map((userId) => {
-                                        const friend = availableFriends.find((f) => f.id === userId);
-                                        return friend ? (
-                                          <div
-                                            key={userId}
-                                            className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm"
-                                          >
-                                            <span>{friend.avatar}</span>
-                                            <span>{friend.name}</span>
-                                            <button
-                                              type="button"
-                                              onClick={() => toggleCollaborator(userId)}
-                                              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                                            >
-                                              <X size={14} />
-                                            </button>
-                                          </div>
-                                        ) : null;
-                                      })}
-                                    </div>
-                                  </div>
-                                )}
+
                               </>
                             )}
                           </div>
@@ -593,7 +678,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                           <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
                             {formData.name || 'Nom de la tâche'}
                           </span>
-                          {formData.bookmarked && <Star size={16} className="text-yellow-500" />}
+                          {formData.bookmarked && <Bookmark size={16} className="text-yellow-500" />}
                         </div>
                         <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           <span>Priorité {formData.priority}</span>
@@ -627,22 +712,21 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                     >
                       Annuler
                     </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading || !hasChanges || Object.keys(errors).length > 0}
-                      className="flex items-center gap-2 px-6 py-3 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Créer la tâche"
-                    >
+                        <button
+                          type="submit"
+                          disabled={isLoading || !isFormValid()}
+                          className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                          aria-label="Créer la tâche"
+                        >
                       {isLoading ? (
                         <>
                           <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" role="status" aria-label="Création en cours"></div>
                           Création...
                         </>
                       ) : (
-                        <>
-                          <Save size={16} aria-hidden="true" />
-                          Créer
-                        </>
+                          <>
+                           Créer
+                          </>
                       )}
                     </button>
                   </div>
