@@ -4,7 +4,7 @@ export type Task = {
   id: string;
   name: string;
   priority: number;
-  category: 'red' | 'blue' | 'green' | 'purple' | 'orange';
+  category: string;
   deadline: string;
   estimatedTime: number;
   createdAt: string;
@@ -35,12 +35,7 @@ export type CalendarEvent = {
 };
 
 export type ColorSettings = {
-  red: string;
-  blue: string;
-  green: string;
-  purple: string;
-  orange: string;
-  okr: string;
+  [key: string]: string;
 };
 
 export type User = {
@@ -430,32 +425,36 @@ const initialEvents: CalendarEvent[] = [
   }
 ];
 
-export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [lists, setLists] = useState<TaskList[]>(initialLists);
-  const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
-  const [colorSettings, setColorSettings] = useState<ColorSettings>(defaultColorSettings);
-  const [user, setUser] = useState<User | null>(defaultUser);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
-  const [habits, setHabits] = useState<Habit[]>(initialHabits);
-  const [okrs, setOkrs] = useState<OKR[]>(initialOKRs);
-  const [friends, setFriends] = useState<User[]>(initialFriends);
-  const [priorityRange, setPriorityRange] = useState<[number, number]>([1, 5]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [favoriteColors, setFavoriteColors] = useState<string[]>(['#3B82F6', '#EF4444', '#10B981', '#8B5CF6', '#F97316', '#F59E0B', '#EC4899', '#6366F1']);
+  const initialCategories: Category[] = [
+    { id: 'red', name: 'Réviser textes', color: '#EF4444' },
+    { id: 'blue', name: 'Texte à fichées', color: '#3B82F6' },
+    { id: 'green', name: 'Apprendre textes', color: '#10B981' },
+    { id: 'purple', name: 'Autres taches', color: '#8B5CF6' },
+    { id: 'orange', name: 'Entrainement dissert', color: '#F59E0B' },
+    { id: 'okr', name: 'Tâches depuis OKR', color: '#6366F1' },
+  ];
 
-  const categories: Category[] = Object.entries(colorSettings).map(([id, name]) => ({
-    id,
-    name,
-    color: id === 'red' ? '#EF4444' : 
-           id === 'blue' ? '#3B82F6' : 
-           id === 'green' ? '#10B981' : 
-           id === 'purple' ? '#8B5CF6' : 
-           id === 'orange' ? '#F59E0B' :
-           id === 'okr' ? '#6366F1' : '#9CA3AF'
-  }));
+  export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [tasks, setTasks] = useState<Task[]>(initialTasks);
+    const [lists, setLists] = useState<TaskList[]>(initialLists);
+    const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
+    const [categories, setCategories] = useState<Category[]>(initialCategories);
+    const [user, setUser] = useState<User | null>(defaultUser);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+    const [habits, setHabits] = useState<Habit[]>(initialHabits);
+    const [okrs, setOkrs] = useState<OKR[]>(initialOKRs);
+    const [friends, setFriends] = useState<User[]>(initialFriends);
+    const [priorityRange, setPriorityRange] = useState<[number, number]>([1, 5]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [favoriteColors, setFavoriteColors] = useState<string[]>(['#3B82F6', '#EF4444', '#10B981', '#8B5CF6', '#F97316', '#F59E0B', '#EC4899', '#6366F1']);
+
+    const colorSettings: ColorSettings = categories.reduce((acc, cat) => {
+      acc[cat.id] = cat.name;
+      return acc;
+    }, {} as ColorSettings);
+
 
   // Helper for formatting date as "YYYY-MM-DD" in local time
   const getLocalDateString = (date: Date) => {
@@ -465,36 +464,36 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return `${year}-${month}-${day}`;
   };
 
-  useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    const savedLists = localStorage.getItem('taskLists');
-    const savedEvents = localStorage.getItem('events');
-    const savedColorSettings = localStorage.getItem('colorSettings');
-    const savedUser = localStorage.getItem('user');
-    const savedHabits = localStorage.getItem('habits');
-      const savedOKRs = localStorage.getItem('okrs');
-      const savedFavoriteColors = localStorage.getItem('favoriteColors');
-      
-      if (savedTasks) setTasks(JSON.parse(savedTasks));
-      if (savedLists) setLists(JSON.parse(savedLists));
-      if (savedEvents) setEvents(JSON.parse(savedEvents));
-      if (savedColorSettings) setColorSettings(JSON.parse(savedColorSettings));
-      if (savedUser) setUser(JSON.parse(savedUser));
-      if (savedHabits) setHabits(JSON.parse(savedHabits));
-      if (savedOKRs) setOkrs(JSON.parse(savedOKRs));
-      if (savedFavoriteColors) setFavoriteColors(JSON.parse(savedFavoriteColors));
-    }, []);
-
     useEffect(() => {
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-      localStorage.setItem('taskLists', JSON.stringify(lists));
-      localStorage.setItem('events', JSON.stringify(events));
-      localStorage.setItem('colorSettings', JSON.stringify(colorSettings));
-      localStorage.setItem('habits', JSON.stringify(habits));
-      localStorage.setItem('okrs', JSON.stringify(okrs));
-      localStorage.setItem('favoriteColors', JSON.stringify(favoriteColors));
-      if (user) localStorage.setItem('user', JSON.stringify(user));
-    }, [tasks, lists, events, colorSettings, user, habits, okrs, favoriteColors]);
+      const savedTasks = localStorage.getItem('tasks');
+      const savedLists = localStorage.getItem('taskLists');
+      const savedEvents = localStorage.getItem('events');
+      const savedCategories = localStorage.getItem('categories');
+      const savedUser = localStorage.getItem('user');
+      const savedHabits = localStorage.getItem('habits');
+        const savedOKRs = localStorage.getItem('okrs');
+        const savedFavoriteColors = localStorage.getItem('favoriteColors');
+        
+        if (savedTasks) setTasks(JSON.parse(savedTasks));
+        if (savedLists) setLists(JSON.parse(savedLists));
+        if (savedEvents) setEvents(JSON.parse(savedEvents));
+        if (savedCategories) setCategories(JSON.parse(savedCategories));
+        if (savedUser) setUser(JSON.parse(savedUser));
+        if (savedHabits) setHabits(JSON.parse(savedHabits));
+        if (savedOKRs) setOkrs(JSON.parse(savedOKRs));
+        if (savedFavoriteColors) setFavoriteColors(JSON.parse(savedFavoriteColors));
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem('taskLists', JSON.stringify(lists));
+        localStorage.setItem('events', JSON.stringify(events));
+        localStorage.setItem('categories', JSON.stringify(categories));
+        localStorage.setItem('habits', JSON.stringify(habits));
+        localStorage.setItem('okrs', JSON.stringify(okrs));
+        localStorage.setItem('favoriteColors', JSON.stringify(favoriteColors));
+        if (user) localStorage.setItem('user', JSON.stringify(user));
+      }, [tasks, lists, events, categories, user, habits, okrs, favoriteColors]);
 
 
   const addTask = (task: Task) => setTasks(prev => [...prev, task]);
@@ -517,15 +516,25 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const removeTaskFromList = (taskId: string, listId: string) => setLists(prev => prev.map(l => l.id === listId ? { ...l, taskIds: l.taskIds.filter(id => id !== taskId) } : l));
   const deleteList = (id: string) => setLists(prev => prev.filter(l => l.id !== id));
   
-  const addEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
-    const newEvent: CalendarEvent = { ...eventData, id: `event_${Date.now()}` };
-    setEvents(prev => [...prev, newEvent]);
-  };
-  const deleteEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
-  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-  const updateColorSettings = (colors: ColorSettings) => setColorSettings(colors);
+    const addEvent = (eventData: Omit<CalendarEvent, 'id'>) => {
+      const newEvent: CalendarEvent = { ...eventData, id: `event_${Date.now()}` };
+      setEvents(prev => [...prev, newEvent]);
+    };
+    const deleteEvent = (id: string) => setEvents(prev => prev.filter(e => e.id !== id));
+    const updateEvent = (id: string, updates: Partial<CalendarEvent>) => setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+    
+    const updateColorSettings = (colors: ColorSettings) => {
+      setCategories(prev => prev.map(cat => ({
+        ...cat,
+        name: colors[cat.id] || cat.name
+      })));
+    };
 
-  const login = async (email: string, password: string) => {
+    const addCategory = (category: Category) => setCategories(prev => [...prev, category]);
+    const updateCategory = (id: string, updates: Partial<Category>) => setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    const deleteCategory = (id: string) => setCategories(prev => prev.filter(c => c.id !== id));
+
+    const login = async (email: string, password: string) => {
     if (email === 'demo@cosmo.app' && password === 'demo') {
       setUser(defaultUser);
       return true;
@@ -626,18 +635,19 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserSettings = (updates: Partial<User>) => setUser(prev => prev ? { ...prev, ...updates } : null);
 
-  const contextValue = {
-    tasks, lists, events, colorSettings, categories, priorityRange, searchTerm, selectedCategories,
-    user, messages, friendRequests, habits, okrs, friends, favoriteColors, setFavoriteColors,
-    addTask, deleteTask, toggleBookmark, toggleComplete, updateTask,
-    addList, addTaskToList, removeTaskFromList, deleteList, updateList,
-    addEvent, deleteEvent, updateEvent, updateColorSettings,
-    setPriorityRange, setSearchTerm, setSelectedCategories,
-    login, register, logout, watchAd, consumePremiumToken, isPremium,
-    sendMessage, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, shareTask,
-    addHabit, toggleHabitCompletion, updateHabit, deleteHabit,
-    addOKR, updateOKR, updateKeyResult, deleteOKR, updateUserSettings
-  };
+    const contextValue = {
+      tasks, lists, events, colorSettings, categories, priorityRange, searchTerm, selectedCategories,
+      user, messages, friendRequests, habits, okrs, friends, favoriteColors, setFavoriteColors,
+      addTask, deleteTask, toggleBookmark, toggleComplete, updateTask,
+      addList, addTaskToList, removeTaskFromList, deleteList, updateList,
+      addEvent, deleteEvent, updateEvent, updateColorSettings,
+      setPriorityRange, setSearchTerm, setSelectedCategories,
+      login, register, logout, watchAd, consumePremiumToken, isPremium,
+      sendMessage, sendFriendRequest, acceptFriendRequest, rejectFriendRequest, shareTask,
+      addHabit, toggleHabitCompletion, updateHabit, deleteHabit,
+      addOKR, updateOKR, updateKeyResult, deleteOKR, updateUserSettings,
+      addCategory, updateCategory, deleteCategory
+    };
 
   return (
     <TaskContext.Provider value={contextValue}>
