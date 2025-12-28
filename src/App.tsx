@@ -12,8 +12,11 @@ import MessagingPage from './pages/MessagingPage';
 import PremiumPage from './pages/PremiumPage';
 import SettingsPage from './pages/SettingsPage';
 import { TaskProvider, useTasks } from './context/TaskContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from 'sonner';
-import HoverReceiver from "./visual-edits/VisualEditsMessenger";
+import { BrowserRouter } from 'react-router-dom';
+import HoverReceiver from "@/visual-edits/VisualEditsMessenger";
 
 function AppContent() {
   const { user } = useTasks();
@@ -42,12 +45,18 @@ function AppContent() {
   );
 }
 
+const queryClient = new QueryClient();
+
 const App = () => (
-  <TaskProvider>
-    <Toaster />
-    <HoverReceiver />
-    <AppContent />
-  </TaskProvider>
+  <QueryClientProvider client={queryClient}>
+    <TaskProvider>
+      <TooltipProvider>
+        <Toaster />
+        <HoverReceiver />
+        <AppContent />
+      </TooltipProvider>
+    </TaskProvider>
+  </QueryClientProvider>
 );
 
 export default App;
