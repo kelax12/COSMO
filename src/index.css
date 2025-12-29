@@ -127,6 +127,35 @@
       --color-background: 0 0 0; /* Pure black */
     }
   }
+
+  /* Global Input Styles */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]), 
+  select, 
+  textarea,
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    @apply transition-all border-slate-200 dark:border-slate-700 outline-none border rounded-lg !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):hover, 
+  select:hover, 
+  textarea:hover,
+  [data-slot="input"]:hover,
+  [data-slot="textarea"]:hover,
+  [data-slot="select-trigger"]:hover {
+    @apply border-blue-500 !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):focus, 
+  select:focus, 
+  textarea:focus,
+  [data-slot="input"]:focus,
+  [data-slot="textarea"]:focus,
+  [data-slot="select-trigger"]:focus,
+  [data-state="open"][data-slot="select-trigger"] {
+    @apply border-2 border-blue-600 outline-none !ring-0 !ring-offset-0 !important;
+  }
 }
 
 @layer components {
