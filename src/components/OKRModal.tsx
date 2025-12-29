@@ -3,19 +3,19 @@ import { X, Target, TrendingUp, Save, AlertCircle, Plus, Minus, Clock, Edit2, Tr
 import { OKR, KeyResult, useTasks } from '../context/TaskContext';
 
 interface OKRModalProps {
-  okr: OKR;
+  okr?: OKR;
   isOpen: boolean;
   onClose: () => void;
 }
 
 const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
-  const { updateOKR, updateKeyResult } = useTasks();
+  const { updateOKR, addOKR, okrCategories: categories } = useTasks();
   
   // Form state with validation
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
+    category: 'personal',
     startDate: '',
     endDate: '',
     estimatedTime: 60
@@ -25,29 +25,42 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [hasChanges, setHasChanges] = useState(false);
-  const [editingKeyResult, setEditingKeyResult] = useState<string | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-  // Categories for OKR
-  const categories = [
-    { id: 'personal', name: 'Personnel', color: 'blue', icon: '👤' },
-    { id: 'professional', name: 'Professionnel', color: 'green', icon: '💼' },
-    { id: 'health', name: 'Santé', color: 'red', icon: '❤️' },
-    { id: 'learning', name: 'Apprentissage', color: 'purple', icon: '📚' },
-  ];
-
-  // Initialize form data when OKR changes
+  // Initialize form data
   useEffect(() => {
-    if (isOpen && okr) {
-      setFormData({
-        title: okr.title,
-        description: okr.description,
-        category: okr.category,
-        startDate: okr.startDate,
-        endDate: okr.endDate,
-        estimatedTime: okr.estimatedTime
-      });
-      setKeyResults([...okr.keyResults]);
+    if (isOpen) {
+      if (okr) {
+        setFormData({
+          title: okr.title,
+          description: okr.description,
+          category: okr.category,
+          startDate: okr.startDate,
+          endDate: okr.endDate,
+          estimatedTime: okr.estimatedTime
+        });
+        setKeyResults([...okr.keyResults]);
+      } else {
+        setFormData({
+          title: '',
+          description: '',
+          category: 'personal',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: '',
+          estimatedTime: 60
+        });
+        setKeyResults([
+          {
+            id: `kr-${Date.now()}-1`,
+            title: '',
+            currentValue: 0,
+            targetValue: 10,
+            unit: '',
+            completed: false,
+            estimatedTime: 30
+          }
+        ]);
+      }
       setHasChanges(false);
       setErrors({});
     }
@@ -55,19 +68,23 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
 
   // Track changes
   useEffect(() => {
-    if (!okr) return;
+    if (!isOpen) return;
     
-    const hasFormChanges = 
-      formData.title !== okr.title ||
-      formData.description !== okr.description ||
-      formData.category !== okr.category ||
-      formData.startDate !== okr.startDate ||
-      formData.endDate !== okr.endDate ||
-      formData.estimatedTime !== okr.estimatedTime ||
-      JSON.stringify(keyResults) !== JSON.stringify(okr.keyResults);
-    
-    setHasChanges(hasFormChanges);
-  }, [formData, keyResults, okr]);
+    if (okr) {
+      const hasFormChanges = 
+        formData.title !== okr.title ||
+        formData.description !== okr.description ||
+        formData.category !== okr.category ||
+        formData.startDate !== okr.startDate ||
+        formData.endDate !== okr.endDate ||
+        formData.estimatedTime !== okr.estimatedTime ||
+        JSON.stringify(keyResults) !== JSON.stringify(okr.keyResults);
+      
+      setHasChanges(hasFormChanges);
+    } else {
+      setHasChanges(formData.title !== '' || keyResults.some(kr => kr.title !== ''));
+    }
+  }, [formData, keyResults, okr, isOpen]);
 
   if (!isOpen) return null;
 
@@ -149,15 +166,25 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
     setIsLoading(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const validKeyResults = keyResults.filter(kr => kr.title.trim() && kr.targetValue > 0);
       
-      const updatedOKR: Partial<OKR> = {
+      const okrData: any = {
         ...formData,
-        keyResults: keyResults.filter(kr => kr.title.trim() && kr.targetValue > 0)
+        keyResults: validKeyResults.map(kr => ({
+          ...kr,
+          completed: kr.currentValue >= kr.targetValue
+        }))
       };
       
-      updateOKR(okr.id, updatedOKR);
+      if (okr) {
+        updateOKR(okr.id, okrData);
+      } else {
+        addOKR({
+          ...okrData,
+          id: `okr-${Date.now()}`,
+          completed: false
+        });
+      }
       onClose();
     } catch (error) {
       setErrors({ general: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
@@ -197,11 +224,8 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
               <h2 id="okr-modal-title" className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 Modifier l'objectif
               </h2>
-              <div className="flex items-center gap-4 mt-1">
-                <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                  Progression : {progress}%
-                </span>
-                {hasChanges && (
+                <div className="flex items-center gap-4 mt-1">
+                  {hasChanges && (
                   <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm">
                     <AlertCircle size={16} />
                     <span>Non sauvegardé</span>
@@ -292,7 +316,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
               </div>
 
               {/* Category and Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                      Catégorie
@@ -313,23 +337,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                     Date début
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      color: 'rgb(var(--color-text-primary))',
-                      borderColor: 'rgb(var(--color-border))'
-                    }}
-                  />
                 </div>
 
                 <div>
