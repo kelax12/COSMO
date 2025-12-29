@@ -81,23 +81,32 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+      <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl transition-colors" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/30">
               <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Collaborateurs</p>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'rgb(var(--color-text-muted))' }}>Collaborateurs</p>
+              <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                 {task.name}
               </h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'rgb(var(--color-text-primary))';
+              e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
             aria-label="Fermer la fenêtre des collaborateurs"
           >
             <X size={18} />
@@ -109,17 +118,17 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
             {/* Assigned collaborators */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Collaborateurs assignés</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>Collaborateurs assignés</h3>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
                   {assignedCollaborators.length}
                 </span>
               </div>
               {assignedCollaborators.length === 0 ? (
-                <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-center">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                <div className="p-8 rounded-2xl border-2 border-dashed text-center transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                     <Users className="w-6 h-6 text-slate-400" />
                   </div>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucun collaborateur pour l’instant.</p>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l’instant.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-3">
@@ -144,7 +153,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
 
           {/* Add collaborator by email/id */}
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Ajouter un collaborateur</h3>
+            <h3 className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>Ajouter un collaborateur</h3>
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
                 <input
@@ -152,7 +161,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Email ou identifiant"
-                  className="w-full px-4 py-3 pr-10 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 pr-10 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  style={{ 
+                    backgroundColor: 'rgb(var(--color-surface))', 
+                    borderColor: 'rgb(var(--color-border))',
+                    color: 'rgb(var(--color-text-primary))'
+                  }}
                 />
                 {input && (
                   <button
@@ -167,7 +181,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               <button
                 onClick={handleAdd}
                 disabled={!input.trim()}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <UserPlus size={16} />
                 Ajouter
@@ -181,7 +195,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
             {/* Available friends */}
             <section className="space-y-4">
               <div className="flex items-center justify-between gap-3 flex-wrap">
-                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Collaborateurs disponibles</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>Collaborateurs disponibles</h3>
                 <div className="relative w-full sm:w-72">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
@@ -189,7 +203,12 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Rechercher un contact"
-                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    style={{ 
+                      backgroundColor: 'rgb(var(--color-surface))', 
+                      borderColor: 'rgb(var(--color-border))',
+                      color: 'rgb(var(--color-text-primary))'
+                    }}
                   />
                   {search && (
                     <button
@@ -203,8 +222,8 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
               </div>
 
               {availableFriends.length === 0 ? (
-                <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-center">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucun contact trouvé.</p>
+                <div className="p-8 rounded-2xl text-center transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun contact trouvé.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -226,10 +245,13 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t transition-colors" style={{ backgroundColor: 'rgb(var(--color-hover))', borderColor: 'rgb(var(--color-border))' }}>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+            className="px-4 py-2 rounded-lg transition-colors"
+            style={{ color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-active))' }}
+            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(0.95)'}
+            onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
           >
             Fermer
           </button>
