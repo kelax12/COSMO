@@ -23,6 +23,17 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
     onClose();
   };
 
+  const colorMap: Record<string, string> = {
+    blue: '#3B82F6',
+    red: '#EF4444',
+    green: '#10B981',
+    purple: '#8B5CF6',
+    orange: '#F97316',
+    yellow: '#F59E0B',
+    pink: '#EC4899',
+    indigo: '#6366F1',
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50"
          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -63,8 +74,8 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                   onClick={() => handleAddToList(list.id)}
                   className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all"
                   style={{
-                    backgroundColor: isAlreadyInList ? 'rgba(var(--color-active), 0.1)' : 'rgb(var(--color-surface))',
-                    borderColor: isAlreadyInList ? 'rgb(var(--color-active))' : 'rgb(var(--color-border))',
+                    backgroundColor: isAlreadyInList ? `${colorMap[list.color] || list.color}1A` : 'rgb(var(--color-surface))',
+                    borderColor: isAlreadyInList ? colorMap[list.color] || list.color : 'rgb(var(--color-border))',
                     transform: isAlreadyInList ? 'scale(1.02)' : 'scale(1)'
                   }}
                   onMouseEnter={(e) => {
@@ -79,9 +90,13 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId
                       e.currentTarget.style.borderColor = 'rgb(var(--color-border))';
                     }
                   }}
-                >
-                  <div className={`w-1.5 h-8 rounded bg-${list.color}-500`} />
-                  <div className="flex items-center justify-between flex-1">
+                  >
+                    <div 
+                      className="w-1.5 h-8 rounded" 
+                      style={{ backgroundColor: colorMap[list.color] || list.color }} 
+                    />
+                    <div className="flex items-center justify-between flex-1">
+
                     <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
                       {list.name}
                     </span>
