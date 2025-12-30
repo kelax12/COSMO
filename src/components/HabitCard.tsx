@@ -324,14 +324,14 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExter
                                 : 'border-slate-200 dark:border-slate-700'
                             } ${
                               isCompleted 
-                                ? 'border-green-500 text-white' 
+                                ? 'border-blue-500 text-white' 
                                 : isBeforeCreation
                                   ? 'opacity-30 grayscale cursor-not-allowed bg-slate-100 dark:bg-slate-900 border-transparent'
                                   : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
-                            style={{
-                              backgroundColor: isCompleted ? '#10B981' : undefined
-                            }}
+style={{
+                                backgroundColor: isCompleted ? '#2563EB' : undefined
+                              }}
                           >
                             {isCompleted ? (
                               <CheckCircle size={14} />
