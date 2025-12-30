@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, Plus } from 'lucide-react';
 import { Task, useTasks } from '../context/TaskContext';
 import ColorSettingsModal from './ColorSettingsModal';
+import { DatePicker } from './ui/date-picker';
 
 type AddEventModalProps = {
   isOpen: boolean;
@@ -265,20 +266,14 @@ type AddEventModalProps = {
                       </div>
                       <div className="flex flex-col sm:flex-row gap-2">
                           <div className="relative flex-1">
-                              <input
-                                type="date"
+                              <DatePicker
                                 value={startDate}
-                                onChange={(e) => handleFieldChange('startDate', setStartDate, e.target.value)}
-                                placeholder="dd/mm/aaaa"
-                                className={`w-full px-3 py-2.5 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-blue-300 ${
+                                onChange={(date) => handleFieldChange('startDate', setStartDate, date)}
+                                placeholder="Sélectionner une date"
+                                className={`h-[42px] ${
                                   prefilledFields.has('startDate') ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800' : ''
                                 }`}
-                                style={{
-                                  backgroundColor: prefilledFields.has('startDate') ? undefined : 'rgb(var(--color-surface))',
-                                  color: 'rgb(var(--color-text-primary))',
-                                  borderColor: prefilledFields.has('startDate') ? undefined : 'rgb(var(--color-border))'
-                                }}
-                                required />
+                              />
                           </div>
 
                           <div className="relative w-full sm:w-36">
@@ -329,20 +324,14 @@ type AddEventModalProps = {
                       </div>
                           <div className="flex flex-col sm:flex-row gap-2">
                               <div className="relative flex-1">
-                                <input
-                                  type="date"
+                                <DatePicker
                                   value={endDate}
-                                  onChange={(e) => handleFieldChange('endDate', setEndDate, e.target.value)}
-                                  placeholder="dd/mm/aaaa"
-                                  className={`w-full px-3 py-2.5 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all hover:border-blue-300 ${
+                                  onChange={(date) => handleFieldChange('endDate', setEndDate, date)}
+                                  placeholder="Sélectionner une date"
+                                  className={`h-[42px] ${
                                     prefilledFields.has('endDate') ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800' : ''
                                   }`}
-                                  style={{
-                                    backgroundColor: prefilledFields.has('endDate') ? undefined : 'rgb(var(--color-surface))',
-                                    color: 'rgb(var(--color-text-primary))',
-                                    borderColor: prefilledFields.has('endDate') ? undefined : 'rgb(var(--color-border))'
-                                  }}
-                                  required />
+                                />
                               </div>
 
                               <div className="relative w-full sm:w-36">
