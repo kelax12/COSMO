@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Target, TrendingUp, Save, AlertCircle, Plus, Minus, Clock, Edit2, Trash2 } from 'lucide-react';
+import { X, Target, TrendingUp, Save, AlertCircle, Plus, Minus, Clock } from 'lucide-react';
 import { OKR, KeyResult, useTasks } from '../context/TaskContext';
+import { DatePicker } from './ui/date-picker';
 
 interface OKRModalProps {
   okr?: OKR;
@@ -16,9 +17,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
     title: '',
     description: '',
     category: 'personal',
-    startDate: '',
-    endDate: '',
-    estimatedTime: 60
+    endDate: ''
   });
   
   const [keyResults, setKeyResults] = useState<KeyResult[]>([]);
@@ -35,9 +34,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
           title: okr.title,
           description: okr.description,
           category: okr.category,
-          startDate: okr.startDate,
-          endDate: okr.endDate,
-          estimatedTime: okr.estimatedTime
+          endDate: okr.endDate
         });
         setKeyResults([...okr.keyResults]);
       } else {
@@ -45,9 +42,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
           title: '',
           description: '',
           category: 'personal',
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: '',
-          estimatedTime: 60
+          endDate: ''
         });
         setKeyResults([
           {
@@ -75,7 +70,6 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
         formData.title !== okr.title ||
         formData.description !== okr.description ||
         formData.category !== okr.category ||
-        formData.startDate !== okr.startDate ||
         formData.endDate !== okr.endDate ||
         formData.estimatedTime !== okr.estimatedTime ||
         JSON.stringify(keyResults) !== JSON.stringify(okr.keyResults);
@@ -100,12 +94,13 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
     }
     
     // Rule 2: Date validation
-    if (formData.startDate && formData.endDate) {
-      const startDate = new Date(formData.startDate);
+    if (formData.endDate) {
       const endDate = new Date(formData.endDate);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
       
-      if (endDate <= startDate) {
-        newErrors.endDate = 'La date de fin doit être après la date de début';
+      if (endDate < now) {
+        newErrors.endDate = 'La date de fin doit être dans le futur';
       }
     }
     
@@ -168,13 +163,14 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
     try {
       const validKeyResults = keyResults.filter(kr => kr.title.trim() && kr.targetValue > 0);
       
-      const okrData: any = {
-        ...formData,
-        keyResults: validKeyResults.map(kr => ({
-          ...kr,
-          completed: kr.currentValue >= kr.targetValue
-        }))
-      };
+        const okrData: any = {
+          ...formData,
+          estimatedTime: validKeyResults.reduce((sum, kr) => sum + (kr.estimatedTime * kr.targetValue), 0),
+          keyResults: validKeyResults.map(kr => ({
+            ...kr,
+            completed: kr.currentValue >= kr.targetValue
+          }))
+        };
       
       if (okr) {
         updateOKR(okr.id, okrData);
@@ -182,6 +178,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
         addOKR({
           ...okrData,
           id: `okr-${Date.now()}`,
+          startDate: new Date().toISOString(), // Rule: creation date
           completed: false
         });
       }
@@ -214,29 +211,27 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="okr-modal-title">
       <div className="rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto transition-colors" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-green-50 dark:from-green-900/20 to-blue-50 dark:to-blue-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        {/* Header - Compact */}
+        <div className="flex justify-between items-center px-6 py-3 border-b bg-gradient-to-r from-green-50 dark:from-green-900/20 to-blue-50 dark:to-blue-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-xl">
-              <Target size={24} className="text-green-600 dark:text-green-400" />
+            <div className="p-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Target size={20} className="text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <h2 id="okr-modal-title" className="text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                Modifier l'objectif
+              <h2 id="okr-modal-title" className="text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {okr ? 'Modifier l\'objectif' : 'Ajouter un objectif'}
               </h2>
-                <div className="flex items-center gap-4 mt-1">
-                  {hasChanges && (
-                  <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm">
-                    <AlertCircle size={16} />
-                    <span>Non sauvegardé</span>
-                  </div>
-                )}
-              </div>
             </div>
+            {hasChanges && (
+              <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-xs font-medium ml-2">
+                <AlertCircle size={14} />
+                <span>Non sauvegardé</span>
+              </div>
+            )}
           </div>
           <button 
             onClick={handleClose}
-            className="p-2 rounded-lg transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
             style={{ color: 'rgb(var(--color-text-muted))' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'rgb(var(--color-text-primary))';
@@ -248,7 +243,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
             }}
             aria-label="Fermer la modal"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -268,95 +263,85 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
             {/* Left Column - Basic Information */}
             <div className="space-y-6">
               
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                   Titre de l'objectif *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.title ? 'border-red-300 dark:border-red-600' : ''
-                  }`}
-                  style={{
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    color: 'rgb(var(--color-text-primary))',
-                    borderColor: errors.title ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))'
-                  }}
-                  placeholder="Ex: Améliorer mes compétences en français"
-                  aria-describedby={errors.title ? 'title-error' : undefined}
-                />
-                {errors.title && (
-                  <div id="title-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm">
-                    <AlertCircle size={14} />
-                    {errors.title}
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                   Description
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-colors"
-                  style={{
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    color: 'rgb(var(--color-text-primary))',
-                    borderColor: 'rgb(var(--color-border))'
-                  }}
-                  placeholder="Décrivez votre objectif en détail..."
-                />
-              </div>
-
-              {/* Category and Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Title */}
                 <div>
                   <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                     Catégorie
+                     Titre de l'objectif *
                   </label>
-                  <select 
-                    value={formData.category}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                    style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      color: 'rgb(var(--color-text-primary))',
-                      borderColor: 'rgb(var(--color-border))'
-                    }}
-                  >
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>
-                        {category.icon ? `${category.icon} ${category.name}` : category.name}
-                      </option>
-                    ))}
-                  </select>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => handleInputChange('title', e.target.value)}
+                        className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
+                          errors.title ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                        }`}
+                        style={{
+                          backgroundColor: 'rgb(var(--color-surface))',
+                          color: 'rgb(var(--color-text-primary))',
+                          borderColor: errors.title ? 'rgb(var(--color-error))' : (undefined)
+                        }}
+                        placeholder="Ex: Améliorer mes compétences en français"
+                        aria-describedby={errors.title ? 'title-error' : undefined}
+                      />
+                  {errors.title && (
+                    <div id="title-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm">
+                      <AlertCircle size={14} />
+                      {errors.title}
+                    </div>
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                     Date fin
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                      errors.endDate ? 'border-red-300 dark:border-red-600' : ''
-                    }`}
-                    style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
-                      color: 'rgb(var(--color-text-primary))',
-                      borderColor: errors.endDate ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))'
-                    }}
-                    aria-describedby={errors.endDate ? 'enddate-error' : undefined}
-                  />
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                       Description
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all resize-none text-base border-slate-200 dark:border-slate-700"
+                      style={{
+                        backgroundColor: 'rgb(var(--color-surface))',
+                        color: 'rgb(var(--color-text-primary))',
+                      }}
+                      placeholder="Décrivez votre objectif en détail..."
+                    />
+                  </div>
+
+                {/* Category and Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                         Catégorie
+                      </label>
+                            <select 
+                              value={formData.category}
+                              onChange={(e) => handleInputChange('category', e.target.value)}
+                              className="w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base border-slate-200 dark:border-slate-700"
+                              style={{
+                                backgroundColor: 'rgb(var(--color-surface))',
+                                color: 'rgb(var(--color-text-primary))',
+                              }}
+                            >
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.icon ? `${category.icon} ${category.name}` : category.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                         Date d'échéance *
+                      </label>
+                        <DatePicker
+                          value={formData.endDate}
+                          onChange={(date) => handleInputChange('endDate', date)}
+                          placeholder="Sélectionner une date"
+                          className={`h-12 ${errors.endDate ? 'border-red-300 dark:border-red-600' : ''}`}
+                        />
                   {errors.endDate && (
                     <div id="enddate-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm">
                       <AlertCircle size={14} />
@@ -366,84 +351,81 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Estimated Time */}
-              <div>
-                <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    Temps estimé total (minutes) *
-                </label>
-                <input
-                  type="number"
-                  value={formData.estimatedTime}
-                  onChange={(e) => handleInputChange('estimatedTime', Number(e.target.value))}
-                  min="1"
-                  max="1440"
-                  className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  style={{
-                    backgroundColor: 'rgb(var(--color-surface))',
-                    color: 'rgb(var(--color-text-primary))',
-                    borderColor: 'rgb(var(--color-border))'
-                  }}
-                  placeholder="60"
-                />
-              </div>
+                {/* Calculated Estimated Time Display */}
+                <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock size={18} className="text-blue-500" />
+                      <span className="text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        Temps réalisé / estimé
+                      </span>
+                    </div>
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {keyResults.reduce((sum, kr) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {keyResults.reduce((sum, kr) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
+                    </span>
+                  </div>
+                  <p className="text-[10px] mt-1 text-blue-500/70 italic">
+                    Calculé automatiquement: Σ (Valeur actuelle × Temps KR) / Σ (Objectif cible × Temps KR)
+                  </p>
+                </div>
             </div>
 
             {/* Right Column - Key Results */}
             <div className="space-y-6">
               
               {/* Progress Overview */}
-              <div className="bg-gradient-to-r from-gray-50 dark:from-slate-700 to-blue-50 dark:to-blue-900/20 p-6 rounded-lg border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}> Progression globale</h3>
+              <div className="bg-gradient-to-r from-gray-50 dark:from-slate-700 to-blue-50 dark:to-blue-900/20 p-5 rounded-xl border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}> Progression calculée</h3>
                   <div className="flex items-center gap-2">
-                    <TrendingUp size={20} className="text-green-500 dark:text-green-400" />
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">{progress}%</span>
+                    <TrendingUp size={18} className="text-green-500 dark:text-green-400" />
+                    <span className="text-xl font-bold text-green-600 dark:text-green-400">{progress}%</span>
                   </div>
                 </div>
-                <div className="w-full rounded-full h-3" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                <div className="w-full rounded-full h-2.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
                   <div 
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-2.5 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>
 
               {/* Key Results Management */}
-              <div className="bg-gradient-to-r from-gray-50 dark:from-slate-700 to-purple-50 dark:to-purple-900/20 p-6 rounded-lg border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+              <div className="bg-gradient-to-r from-gray-50 dark:from-slate-700 to-purple-50 dark:to-purple-900/20 p-5 rounded-xl border transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                  <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
                      Résultats Clés
-                    <span className="text-sm font-normal" style={{ color: 'rgb(var(--color-text-muted))' }}>({keyResults.length}/10)</span>
+                    <span className="text-xs font-normal" style={{ color: 'rgb(var(--color-text-muted))' }}>({keyResults.length}/10)</span>
                   </h3>
                   <button
                     type="button"
                     onClick={addKeyResult}
                     disabled={keyResults.length >= 10}
-                    className="flex items-center gap-1 px-3 py-1 bg-green-600 dark:bg-green-500 text-white rounded-lg text-sm hover:bg-green-700 dark:hover:bg-green-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-600 dark:bg-green-500 text-white rounded-lg text-xs font-bold hover:bg-green-700 dark:hover:bg-green-600 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                     <span>Ajouter</span>
                   </button>
                 </div>
                 
                 {errors.keyResults && (
-                  <div className="flex items-center gap-2 mb-4 text-red-600 dark:text-red-400 text-sm">
+                  <div className="flex items-center gap-2 mb-4 text-red-600 dark:text-red-400 text-xs">
                     <AlertCircle size={14} />
                     {errors.keyResults}
                   </div>
                 )}
                 
-                <div className="space-y-4 max-h-80 overflow-y-auto">
+                <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
                   {keyResults.map((keyResult, index) => (
-                    <div key={keyResult.id} className="rounded-lg p-4 border transition-colors" style={{
+                    <div key={keyResult.id} className="rounded-xl p-4 border transition-colors shadow-sm" style={{
                       backgroundColor: 'rgb(var(--color-surface))',
                       borderColor: 'rgb(var(--color-border))'
                     }}>
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-sm font-bold">
+                        <div className="w-5 h-5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center text-[10px] font-bold">
                           {index + 1}
                         </div>
-                        <span className="font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>Résultat clé {index + 1}</span>
+                        <span className="text-xs font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>KR {index + 1}</span>
                         {keyResults.length > 1 && (
                           <button
                             type="button"
@@ -451,85 +433,81 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
                             className="ml-auto p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                             title="Supprimer ce résultat clé"
                           >
-                            <Minus size={16} />
+                            <Minus size={14} />
                           </button>
                         )}
                       </div>
                       
                       <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={keyResult.title}
-                          onChange={(e) => handleKeyResultChange(index, 'title', e.target.value)}
-                          placeholder="Description du résultat clé"
-                          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            color: 'rgb(var(--color-text-primary))',
-                            borderColor: 'rgb(var(--color-border))'
-                          }}
-                        />
-                        
-                        <div className="grid grid-cols-3 gap-2">
-                          <div>
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              Valeur actuelle
-                            </label>
-                            <input
-                              type="number"
-                              value={keyResult.currentValue}
-                              onChange={(e) => handleKeyResultChange(index, 'currentValue', Number(e.target.value))}
-                              min="0"
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: 'rgb(var(--color-border))'
-                              }}
-                            />
+                          <input
+                            type="text"
+                            value={keyResult.title}
+                            onChange={(e) => handleKeyResultChange(index, 'title', e.target.value)}
+                            placeholder="Ex: Ficher 20 textes littéraires"
+                            className="w-full px-3 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-sm border-slate-200 dark:border-slate-700"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-surface))',
+                              color: 'rgb(var(--color-text-primary))',
+                            }}
+                          />
+                          
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                Actuel
+                              </label>
+                              <input
+                                type="number"
+                                value={keyResult.currentValue}
+                                onChange={(e) => handleKeyResultChange(index, 'currentValue', Number(e.target.value))}
+                                min="0"
+                                className="w-full px-2 py-1.5 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-xs text-center border-slate-200 dark:border-slate-700"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                Cible
+                              </label>
+                              <input
+                                type="number"
+                                value={keyResult.targetValue}
+                                onChange={(e) => handleKeyResultChange(index, 'targetValue', Number(e.target.value))}
+                                min="1"
+                                className="w-full px-2 py-1.5 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-xs text-center border-slate-200 dark:border-slate-700"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold mb-1 uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                                Tps (m)
+                              </label>
+                              <input
+                                type="number"
+                                value={keyResult.estimatedTime}
+                                onChange={(e) => handleKeyResultChange(index, 'estimatedTime', Number(e.target.value))}
+                                min="1"
+                                max="480"
+                                className="w-full px-2 py-1.5 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-xs text-center border-slate-200 dark:border-slate-700"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  color: 'rgb(var(--color-text-primary))',
+                                }}
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              Objectif
-                            </label>
-                            <input
-                              type="number"
-                              value={keyResult.targetValue}
-                              onChange={(e) => handleKeyResultChange(index, 'targetValue', Number(e.target.value))}
-                              min="1"
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: 'rgb(var(--color-border))'
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                              Temps (min)
-                            </label>
-                            <input
-                              type="number"
-                              value={keyResult.estimatedTime}
-                              onChange={(e) => handleKeyResultChange(index, 'estimatedTime', Number(e.target.value))}
-                              min="1"
-                              max="480"
-                              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                color: 'rgb(var(--color-text-primary))',
-                                borderColor: 'rgb(var(--color-border))'
-                              }}
-                            />
-                          </div>
-                        </div>
 
                         {/* Progress bar for this key result */}
                         <div className="mt-2">
                           <div className="flex justify-between items-center mb-1">
-                            <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>Progression</span>
-                            <span className="text-xs font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                            <span className="text-[10px] font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>Progression KR</span>
+                            <span className="text-[10px] font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
                               {Math.min(Math.round((keyResult.currentValue / keyResult.targetValue) * 100), 100)}%
                             </span>
                           </div>
@@ -551,16 +529,16 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-8 border-t mt-8 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
-            <div className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {keyResults.length} résultat{keyResults.length !== 1 ? 's' : ''} clé{keyResults.length !== 1 ? 's' : ''}
+          <div className="flex justify-between items-center pt-6 border-t mt-6 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
+            <div className="text-xs font-medium" style={{ color: 'rgb(var(--color-text-muted))' }}>
+              {keyResults.length} résultat{keyResults.length !== 1 ? 's' : ''} clé{keyResults.length !== 1 ? 's' : ''} défini{keyResults.length !== 1 ? 's' : ''}
             </div>
             
             <div className="flex gap-3">
               <button
                 onClick={handleClose}
                 disabled={isLoading}
-                className="px-6 py-3 rounded-lg transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl transition-colors disabled:opacity-50 text-sm font-semibold"
                 style={{
                   backgroundColor: 'rgb(var(--color-hover))',
                   color: 'rgb(var(--color-text-secondary))'
@@ -577,17 +555,17 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
               <button
                 onClick={handleSave}
                 disabled={isLoading || !hasChanges || Object.keys(errors).length > 0}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2.5 bg-green-600 dark:bg-green-500 hover:bg-green-700 dark:hover:bg-green-600 text-white rounded-xl transition-all shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-bold active:scale-95"
               >
                 {isLoading ? (
                   <>
                     <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    Sauvegarde...
+                    Enregistrement...
                   </>
                 ) : (
                   <>
-                    <Save size={16} />
-                    Sauvegarder les modifications
+                    <Save size={18} />
+                    {okr ? 'Sauvegarder les modifications' : 'Créer l\'objectif'}
                   </>
                 )}
               </button>
@@ -602,7 +580,7 @@ const OKRModal: React.FC<OKRModalProps> = ({ okr, isOpen, onClose }) => {
             <div className="p-6">
               <h3 className="text-xl font-bold text-white mb-3">Modifications non sauvegardées</h3>
               <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?
+                Vous avez des modifications en cours. Voulez-vous vraiment fermer sans enregistrer ?
               </p>
               <div className="flex gap-3">
                 <button
