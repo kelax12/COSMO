@@ -62,44 +62,28 @@ const DashboardPage: React.FC = () => {
       label: 'Tâches complétées',
       value: completedTasksToday,
       subtitle: "Aujourd'hui",
-      gradient: 'from-blue-500 via-blue-600 to-cyan-600',
-      borderGradient: 'from-blue-400/50 to-cyan-400/50',
-      glowColor: 'group-hover:shadow-blue-500/40 dark:group-hover:shadow-blue-400/30',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      bgPattern: 'bg-gradient-to-br from-blue-500/5 via-transparent to-cyan-500/5 dark:from-blue-400/10 dark:via-transparent dark:to-cyan-400/10'
+      color: 'blue'
     },
     {
       icon: Target,
       label: 'OKR actifs',
       value: activeOKRs.length,
       subtitle: 'En cours',
-      gradient: 'from-emerald-500 via-green-600 to-teal-600',
-      borderGradient: 'from-emerald-400/50 to-teal-400/50',
-      glowColor: 'group-hover:shadow-emerald-500/40 dark:group-hover:shadow-emerald-400/30',
-      iconColor: 'text-emerald-600 dark:text-emerald-400',
-      bgPattern: 'bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 dark:from-emerald-400/10 dark:via-transparent dark:to-teal-400/10'
+      color: 'blue'
     },
     {
       icon: Clock,
       label: 'Habitudes',
       value: todayHabits.length,
       subtitle: 'Réalisées',
-      gradient: 'from-purple-500 via-fuchsia-600 to-pink-600',
-      borderGradient: 'from-purple-400/50 to-pink-400/50',
-      glowColor: 'group-hover:shadow-purple-500/40 dark:group-hover:shadow-purple-400/30',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      bgPattern: 'bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 dark:from-purple-400/10 dark:via-transparent dark:to-pink-400/10'
+      color: 'blue'
     },
     {
       icon: TrendingUp,
       label: 'Productivité',
       value: '+12%',
       subtitle: 'Cette semaine',
-      gradient: 'from-orange-500 via-red-600 to-rose-600',
-      borderGradient: 'from-orange-400/50 to-rose-400/50',
-      glowColor: 'group-hover:shadow-orange-500/40 dark:group-hover:shadow-orange-400/30',
-      iconColor: 'text-orange-600 dark:text-orange-400',
-      bgPattern: 'bg-gradient-to-br from-orange-500/5 via-transparent to-rose-500/5 dark:from-orange-400/10 dark:via-transparent dark:to-rose-400/10'
+      color: 'blue'
     }
   ];
 
@@ -200,99 +184,44 @@ const DashboardPage: React.FC = () => {
         </motion.div>
 
         {/* Statistiques rapides */}
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6"
-          variants={containerVariants}
-        >
-          {statCards.map((stat, index) => (
-            <motion.div
-              key={index}
-              className={`relative overflow-hidden group cursor-pointer`}
-              variants={itemVariants}
-              whileHover={{ y: -8 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              {/* Glassmorphic card background */}
-              <div className="card p-6 lg:p-8 h-full backdrop-blur-xl bg-white/60 dark:bg-gray-900/60 border border-white/20 dark:border-gray-700/30 relative z-10">
-                {/* Animated gradient border overlay */}
-                <motion.div 
-                  className={`absolute inset-0 rounded-xl bg-gradient-to-r ${stat.borderGradient} opacity-0 group-hover:opacity-100 blur-sm -z-10 transition-opacity duration-500`}
-                  animate={{ 
-                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  style={{ backgroundSize: "200% 200%" }}
-                />
-
-                {/* Background pattern */}
-                <div className={`absolute inset-0 ${stat.bgPattern} rounded-xl transition-all duration-500`} />
-
-                {/* Floating orbs for depth */}
-                <motion.div
-                  className={`absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-20 dark:group-hover:opacity-30 transition-opacity duration-700`}
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 90, 0]
-                  }}
-                  transition={{ duration: 8, repeat: Infinity }}
-                />
-
-                <div className="relative z-10">
-                  {/* Icon with enhanced animation */}
-                  <motion.div 
-                    className="mb-4 inline-flex"
-                    whileHover={{ 
-                      rotate: [0, -10, 10, -10, 0],
-                      scale: 1.15
-                    }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${stat.gradient} shadow-lg ${stat.glowColor} transition-shadow duration-300`}>
-                      <stat.icon size={26} className="text-white" strokeWidth={2.5} />
-                    </div>
-                  </motion.div>
-
-                  {/* Content */}
-                  <div className="space-y-1">
-                    <p className="text-xs sm:text-sm text-[rgb(var(--color-text-secondary))] font-medium uppercase tracking-wider">
-                      {stat.label}
-                    </p>
-                    <motion.div
-                      className="flex items-baseline gap-2"
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
-                    >
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6"
+            variants={containerVariants}
+          >
+            {statCards.map((stat, index) => (
+              <motion.div
+                key={index}
+                className="relative overflow-hidden group cursor-pointer"
+                variants={itemVariants}
+                whileHover={{ y: -4, scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              >
+                <div className="card p-5 lg:p-6 h-full bg-white dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/50 rounded-2xl shadow-sm hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3">
+                      <p className="text-sm text-[rgb(var(--color-text-secondary))] font-medium">
+                        {stat.label}
+                      </p>
                       <motion.p 
-                        className={`text-3xl sm:text-4xl lg:text-5xl font-black bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
-                        whileHover={{ scale: 1.05 }}
+                        className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
                       >
                         {stat.value}
                       </motion.p>
-                    </motion.div>
-                    <p className={`text-xs font-semibold ${stat.iconColor} flex items-center gap-1`}>
-                      <motion.span
-                        animate={{ opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        •
-                      </motion.span>
-                      {stat.subtitle}
-                    </p>
+                      <p className="text-xs text-[rgb(var(--color-text-secondary))] flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        {stat.subtitle}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50">
+                      <stat.icon size={22} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                    </div>
                   </div>
                 </div>
-
-                {/* Shine effect on hover */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none"
-                  style={{ skewX: "-20deg" }}
-                />
-              </div>
-
-              {/* Outer glow shadow */}
-              <div className={`absolute inset-0 rounded-xl shadow-2xl ${stat.glowColor} opacity-0 group-hover:opacity-100 transition-all duration-500 blur-xl -z-20`} />
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
         </motion.div>
 
         {/* Contenu principal en grille */}
