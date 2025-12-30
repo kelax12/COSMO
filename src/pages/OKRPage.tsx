@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { useTasks } from '../context/TaskContext';
 import AddTaskForm from '../components/AddTaskForm';
 import AddEventModal from '../components/AddEventModal';
+import { DatePicker } from '../components/ui/date-picker';
 
 type KeyResult = {
   id: string;
@@ -57,14 +58,12 @@ const OKRPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
 
-  const [newObjective, setNewObjective] = useState({
-    title: '',
-    description: '',
-    category: 'personal',
-    startDate: '',
-    endDate: '',
-    estimatedTime: 60
-  });
+    const [newObjective, setNewObjective] = useState({
+      title: '',
+      description: '',
+      category: 'personal',
+      endDate: ''
+    });
 
   const [keyResults, setKeyResults] = useState([
   { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
@@ -161,84 +160,84 @@ const OKRPage: React.FC = () => {
     setDeletingObjective(null);
   };
 
-  const handleEditObjective = (id: string) => {
-    const objective = objectives.find(obj => obj.id === id);
-    if (objective) {
-      setEditingObjective(id);
-      setNewObjective({
-        title: objective.title,
-        description: objective.description,
-        category: objective.category,
-        startDate: objective.startDate,
-        endDate: objective.endDate,
-        estimatedTime: objective.estimatedTime
-      });
-      setKeyResults(objective.keyResults.map(kr => ({
-        title: kr.title,
-        targetValue: kr.targetValue.toString(),
-        currentValue: kr.currentValue.toString(),
-        estimatedTime: kr.estimatedTime.toString()
-      })));
-      setShowAddObjective(true);
-    }
-  };
-
-  const handleSubmitObjective = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newObjective.title.trim()) {
-      alert('Veuillez saisir un titre pour l\'objectif');
-      return;
-    }
-
-    const validKeyResults = keyResults.filter((kr) =>
-    kr.title.trim() && kr.targetValue && Number(kr.targetValue) > 0
-    );
-
-    if (validKeyResults.length === 0) {
-      alert('Veuillez définir au moins un résultat clé valide');
-      return;
-    }
-
-    const objData: any = {
-      title: newObjective.title,
-      description: newObjective.description,
-      category: newObjective.category,
-      startDate: newObjective.startDate,
-      endDate: newObjective.endDate,
-      completed: false,
-      estimatedTime: newObjective.estimatedTime,
-      keyResults: validKeyResults.map((kr, index) => ({
-        id: editingObjective ? (objectives.find(o => o.id === editingObjective)?.keyResults[index]?.id || `${Date.now()}-${index}`) : `${Date.now()}-${index}`,
-        title: kr.title,
-        currentValue: Number(kr.currentValue) || 0,
-        targetValue: Number(kr.targetValue),
-        unit: '',
-        completed: Number(kr.currentValue) >= Number(kr.targetValue),
-        estimatedTime: Number(kr.estimatedTime) || 30,
-        history: editingObjective ? (objectives.find(o => o.id === editingObjective)?.keyResults[index]?.history || []) : []
-      }))
+    const handleEditObjective = (id: string) => {
+      const objective = objectives.find(obj => obj.id === id);
+      if (objective) {
+        setEditingObjective(id);
+        setNewObjective({
+          title: objective.title,
+          description: objective.description,
+          category: objective.category,
+          endDate: objective.endDate,
+          estimatedTime: objective.estimatedTime
+        });
+        setKeyResults(objective.keyResults.map(kr => ({
+          title: kr.title,
+          targetValue: kr.targetValue.toString(),
+          currentValue: kr.currentValue.toString(),
+          estimatedTime: kr.estimatedTime.toString()
+        })));
+        setShowAddObjective(true);
+      }
     };
 
-    if (editingObjective) {
-      updateOKR(editingObjective, objData);
-    } else {
-      addOKR({ ...objData, id: Date.now().toString() });
-    }
+    const handleSubmitObjective = (e: React.FormEvent) => {
+      e.preventDefault();
 
-    resetForm();
-    setShowAddObjective(false);
-  };
+      if (!newObjective.title.trim()) {
+        alert('Veuillez saisir un titre pour l\'objectif');
+        return;
+      }
 
-  const resetForm = () => {
-    setNewObjective({
-      title: '',
-      description: '',
-      category: 'personal',
-      startDate: '',
-      endDate: '',
-      estimatedTime: 60
-    });
+      const validKeyResults = keyResults.filter((kr) =>
+      kr.title.trim() && kr.targetValue && Number(kr.targetValue) > 0
+      );
+
+      if (validKeyResults.length === 0) {
+        alert('Veuillez définir au moins un résultat clé valide');
+        return;
+      }
+
+      const existingOKR = editingObjective ? objectives.find(o => o.id === editingObjective) : null;
+
+      const objData: any = {
+        title: newObjective.title,
+        description: newObjective.description,
+        category: newObjective.category,
+        startDate: existingOKR ? existingOKR.startDate : new Date().toISOString().split('T')[0],
+        endDate: newObjective.endDate,
+        completed: false,
+        estimatedTime: validKeyResults.reduce((sum, kr) => sum + (Number(kr.estimatedTime) * Number(kr.targetValue)), 0),
+        keyResults: validKeyResults.map((kr, index) => ({
+          id: editingObjective ? (existingOKR?.keyResults[index]?.id || `${Date.now()}-${index}`) : `${Date.now()}-${index}`,
+          title: kr.title,
+          currentValue: Number(kr.currentValue) || 0,
+          targetValue: Number(kr.targetValue),
+          unit: '',
+          completed: Number(kr.currentValue) >= Number(kr.targetValue),
+          estimatedTime: Number(kr.estimatedTime) || 30,
+          history: editingObjective ? (existingOKR?.keyResults[index]?.history || []) : []
+        }))
+      };
+
+      if (editingObjective) {
+        updateOKR(editingObjective, objData);
+      } else {
+        addOKR({ ...objData, id: Date.now().toString() });
+      }
+
+      resetForm();
+      setShowAddObjective(false);
+    };
+
+    const resetForm = () => {
+      setNewObjective({
+        title: '',
+        description: '',
+        category: 'personal',
+        endDate: '',
+        estimatedTime: 60
+      });
     setKeyResults([
       { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
       { title: '', targetValue: '', currentValue: '', estimatedTime: '' },
@@ -319,15 +318,15 @@ const OKRPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 mb-8">
         <button
           onClick={() => setShowCategoryManager(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 border rounded-lg transition-all shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+          className="flex items-center justify-center gap-2 px-4 py-2 border rounded-lg transition-all duration-300 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:scale-105 hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 active:scale-95 group relative overflow-hidden"
           style={{
             borderColor: 'rgb(var(--color-border))',
             color: 'rgb(var(--color-text-secondary))',
             backgroundColor: 'rgb(var(--color-surface))'
           }}>
-
-          <Settings size={20} />
-          <span className="whitespace-nowrap">Gérer les catégories</span>
+          <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Settings size={20} className="group-hover:rotate-180 transition-transform duration-500" />
+          <span className="whitespace-nowrap font-medium">Gérer les catégories</span>
         </button>
           <button
             onClick={() => setShowAddObjective(true)}
@@ -362,16 +361,16 @@ const OKRPage: React.FC = () => {
               <CheckCircle size={14} />
               <span>Finis</span>
             </button>
-          {categories.map((category) =>
-          <button
-            key={category.id}
-            onClick={() => setSelectedCategory(category.id)}
-            className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all"
-            style={{
-              backgroundColor: selectedCategory === category.id ? getColorHex(category.color) : 'rgb(var(--color-hover))',
-              color: selectedCategory === category.id ? '#ffffff' : 'rgb(var(--color-text-secondary))',
-              boxShadow: selectedCategory === category.id ? `0 4px 12px ${getColorHex(category.color)}40` : 'none'
-            }}>
+            {categories.map((category) =>
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className="flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition-all hover:scale-105 hover:brightness-110 active:scale-95 shadow-sm"
+              style={{
+                backgroundColor: selectedCategory === category.id ? getColorHex(category.color) : 'rgb(var(--color-hover))',
+                color: selectedCategory === category.id ? '#ffffff' : 'rgb(var(--color-text-secondary))',
+                boxShadow: selectedCategory === category.id ? `0 4px 12px ${getColorHex(category.color)}40` : 'none'
+              }}>
 
               {category.icon && <span>{category.icon}</span>}
               <span>{category.name}</span>
@@ -409,10 +408,10 @@ const OKRPage: React.FC = () => {
                         <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
                           {new Date(objective.startDate).toLocaleDateString('fr-FR')} - {new Date(objective.endDate).toLocaleDateString('fr-FR')}
                         </span>
-                        <span className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                          <Clock size={14} />
-                          {objective.estimatedTime} min
-                        </span>
+                            <span className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                              <Clock size={14} />
+                              {objective.keyResults.reduce((sum, kr) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {objective.keyResults.reduce((sum, kr) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
+                            </span>
                       </div>
                       <h3 className="text-base sm:text-lg font-semibold mb-1 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{objective.title}</h3>
                       <p className="text-xs sm:text-sm line-clamp-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{objective.description}</p>
@@ -545,7 +544,7 @@ const OKRPage: React.FC = () => {
                       type="text"
                       value={newObjective.title}
                       onChange={(e) => setNewObjective({ ...newObjective, title: e.target.value })}
-                      className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                      className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-500 focus:border-blue-600 focus:border-2 outline-none transition-all"
                       placeholder="Ex: Maîtriser le développement Fullstack"
                       required />
 
@@ -557,7 +556,7 @@ const OKRPage: React.FC = () => {
                         <textarea
                       value={newObjective.description}
                       onChange={(e) => setNewObjective({ ...newObjective, description: e.target.value })}
-                      className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                      className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-blue-500 focus:border-blue-600 focus:border-2 outline-none transition-all resize-none"
                       placeholder="Quels sont les enjeux et la motivation derrière cet objectif ?"
                       rows={4} />
 
@@ -577,34 +576,26 @@ const OKRPage: React.FC = () => {
                           {categories.map((c) => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
                         </select>
                       </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
-                              Date de début
-                            </label>
-                          <input
-                        type="date"
-                        value={newObjective.startDate}
-                        onChange={(e) => setNewObjective({ ...newObjective, startDate: e.target.value })}
-                        className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
+                          <div className="grid grid-cols-1 gap-4">
+                            <div>
+                              <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
+                                Date d'échéance
+                              </label>
+                              <DatePicker
+                                value={newObjective.endDate}
+                                onChange={(date) => setNewObjective({ ...newObjective, endDate: date })}
+                                placeholder="Sélectionner une date"
+                              />
 
+                          </div>
                         </div>
-                          <div>
-                            <label className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-200 block">
-                              Date d'échéance
-                            </label>
-                          <input
-                        type="date"
-                        value={newObjective.endDate}
-                        onChange={(e) => setNewObjective({ ...newObjective, endDate: e.target.value })}
-                        className="w-full p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
-
-                        </div>
-                      </div>
                       {(() => {
-                    const duration = calculateDuration(newObjective.startDate, newObjective.endDate);
-                    if (!duration) return null;
-                    return (
+                        const startDate = editingObjective 
+                          ? objectives.find(o => o.id === editingObjective)?.startDate 
+                          : new Date().toISOString().split('T')[0];
+                        const duration = calculateDuration(startDate || '', newObjective.endDate);
+                        if (!duration) return null;
+                        return (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -688,16 +679,15 @@ const OKRPage: React.FC = () => {
                               <Clock size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             </div>
                           </div>
-                          {keyResults.length > 1 &&
-                    <button
-                      type="button"
-                      onClick={() => removeKeyResult(idx)}
-                      className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                      title="Supprimer ce résultat">
-
-                              <Trash2 size={20} />
-                            </button>
-                    }
+{keyResults.length > 1 &&
+                     <button
+                       type="button"
+                       onClick={() => removeKeyResult(idx)}
+                       className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all self-center"
+                       title="Supprimer ce résultat">
+                               <Trash2 size={20} />
+                             </button>
+                     }
                         </motion.div>
                   )}
                     </div>
@@ -793,5 +783,4 @@ const OKRPage: React.FC = () => {
 
 };
 
-export default OKRPage;
 export default OKRPage;
