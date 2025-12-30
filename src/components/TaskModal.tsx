@@ -6,9 +6,11 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import CollaboratorItem from './CollaboratorItem';
+import { DatePicker } from './ui/date-picker';
 
 interface TaskModalProps {
   task: Task;
@@ -365,13 +367,13 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                        errors.name ? 'border-red-300 dark:border-red-600' : ''
+                      className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
+                        errors.name ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
                       } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                       style={{
                         backgroundColor: okrFields.name ? undefined : 'rgb(var(--color-surface))',
                         color: 'rgb(var(--color-text-primary))',
-                        borderColor: errors.name ? 'rgb(var(--color-error))' : (okrFields.name ? undefined : 'rgb(var(--color-border))')
+                        borderColor: errors.name ? 'rgb(var(--color-error))' : (okrFields.name ? undefined : undefined)
                       }}
                       placeholder="Entrez le nom de la tâche"
                       aria-describedby={errors.name ? 'name-error' : undefined}
@@ -388,22 +390,21 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
                   {/* Priority and Category */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="task-priority" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Priorité
-                      </label>
-                      <select
-                        id="task-priority"
-                        value={formData.priority}
-                        onChange={(e) => handleInputChange('priority', Number(e.target.value))}
-                        className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                        style={{
-                          backgroundColor: 'rgb(var(--color-surface))',
-                          color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
-                          borderColor: 'rgb(var(--color-border))'
-                        }}
-                        aria-label="Sélectionner la priorité de la tâche"
-                      >
+                      <div>
+                        <label htmlFor="task-priority" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          Priorité
+                        </label>
+                        <select
+                          id="task-priority"
+                          value={formData.priority}
+                          onChange={(e) => handleInputChange('priority', Number(e.target.value))}
+                          className="w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base border-slate-200 dark:border-slate-700"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            color: formData.priority === 0 ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
+                          }}
+                          aria-label="Sélectionner la priorité de la tâche"
+                        >
                         <option value="0" disabled hidden>Choisir une priorité</option>
                         <option value="1" style={{ color: 'rgb(var(--color-text-primary))' }}>1 (Très haute)</option>
                         <option value="2" style={{ color: 'rgb(var(--color-text-primary))' }}>2 (Haute)</option>
@@ -419,97 +420,113 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                       }
                     </div>
 
-                    <div>
-                      <label htmlFor="task-category" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Catégorie
-                      </label>
-                      <select
-                        id="task-category"
-                        value={formData.category}
-                        onChange={(e) => handleInputChange('category', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                          errors.category ? 'border-red-300 dark:border-red-600' : ''
-                        } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                        style={{
-                          backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
-                          color: formData.category === '' ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))',
-                          borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : 'rgb(var(--color-border))')
-                        }}
-                        aria-label="Sélectionner la catégorie de la tâche"
-                      >
-                        <option value="" disabled hidden>Choisir une catégorie</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id} style={{ color: 'rgb(var(--color-text-primary))' }}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors.category &&
-                        <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                          <AlertCircle size={14} aria-hidden="true" />
-                          {errors.category}
-                        </div>
-                      }
-                      <div className="mt-2 flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded"
-                          style={{ backgroundColor: getCategoryColor(formData.category) }}
-                        />
-                        <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{colorSettings[formData.category] || 'Sans catégorie'}</span>
+                            <div>
+                              <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                                Catégorie
+                              </label>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                        <button
+                                          type="button"
+                                          className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 data-[state=open]:border-blue-600 data-[state=open]:border-2 transition-all text-base ${
+                                            errors.category ? 'border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
+                                          } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+                                          style={{
+                                          backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
+                                          color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+                                          borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : undefined)
+                                        }}
+                                      >
+                                      <span>{categories.find(c => c.id === formData.category)?.name || (formData.category === 'okr' ? 'OKR' : 'Choisir...')}</span>
+                                      <ChevronDown size={18} className="text-blue-500" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                <DropdownMenuContent 
+                                  align="start" 
+                                  className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                                >
+                                  {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
+                                    <DropdownMenuItem asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleInputChange('category', 'okr')}
+                                        className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-blue-600 text-white shadow-sm"
+                                      >
+                                        <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                        OKR
+                                      </button>
+                                    </DropdownMenuItem>
+                                  )}
+                                  {categories.map((cat) => (
+                                    <DropdownMenuItem key={cat.id} asChild>
+                                      <button
+                                        key={cat.id}
+                                        type="button"
+                                        onClick={() => handleInputChange('category', cat.id)}
+                                        className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
+                                          formData.category === cat.id
+                                            ? 'bg-blue-600 text-white shadow-sm'
+                                            : 'text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600'
+                                        }`}
+                                      >
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                        {cat.name}
+                                      </button>
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                        {errors.category &&
+                          <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
+                            <AlertCircle size={14} aria-hidden="true" />
+                            {errors.category}
+                          </div>
+                        }
                       </div>
-                    </div>
                   </div>
 
                   {/* Deadline and Estimated Time */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="task-deadline" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Échéance
-                      </label>
-                      <input
-                        id="task-deadline"
-                        type="date"
-                        value={formData.deadline}
-                        onChange={(e) => handleInputChange('deadline', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${errors.deadline ? 'border-red-300 dark:border-red-600' : ''}`}
-                        style={{
-                          backgroundColor: 'rgb(var(--color-surface))',
-                          color: 'rgb(var(--color-text-primary))',
-                          borderColor: errors.deadline ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))'
-                        }}
-                        aria-describedby={errors.deadline ? 'deadline-error' : undefined}
-                        aria-invalid={!!errors.deadline}
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="task-deadline" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          Échéance
+                        </label>
+                        <DatePicker
+                          value={formData.deadline}
+                          onChange={(date) => handleInputChange('deadline', date)}
+                          placeholder="Sélectionner une date"
+                          className={`h-12 ${errors.deadline ? 'border-red-300 dark:border-red-600' : ''}`}
+                        />
 
-                      {errors.deadline &&
-                        <div id="deadline-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                          <AlertCircle size={14} aria-hidden="true" />
-                          {errors.deadline}
-                        </div>
-                      }
-                    </div>
+                        {errors.deadline &&
+                          <div id="deadline-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
+                            <AlertCircle size={14} aria-hidden="true" />
+                            {errors.deadline}
+                          </div>
+                        }
+                      </div>
 
-                    <div>
-                      <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Temps estimé (min)
-                      </label>
-                      <input
-                        id="task-time"
-                        type="number"
-                        value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
-                        onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
-                        placeholder="Estimation en minute"
-                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-                          errors.estimatedTime ? 'border-red-300 dark:border-red-600' : ''
-                        } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
-                        style={{
-                          backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
-                          color: 'rgb(var(--color-text-primary))',
-                          borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : 'rgb(var(--color-border))')
-                        }}
-                        aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
-                        aria-invalid={!!errors.estimatedTime}
-                      />
+                      <div>
+                        <label htmlFor="task-time" className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          Temps estimé (min)
+                        </label>
+                          <input
+                            id="task-time"
+                            type="number"
+                            value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
+                            onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
+                            placeholder="Estimation en minute"
+                            className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 transition-all text-base ${
+                              errors.estimatedTime ? 'border-red-300 dark:border-red-600' : 'border-slate-200 dark:border-slate-700'
+                            } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
+                            style={{
+                              backgroundColor: okrFields.estimatedTime ? undefined : 'rgb(var(--color-surface))',
+                              color: 'rgb(var(--color-text-primary))',
+                              borderColor: errors.estimatedTime ? 'rgb(var(--color-error))' : (okrFields.estimatedTime ? undefined : undefined)
+                            }}
+                            aria-describedby={errors.estimatedTime ? 'time-error' : undefined}
+                            aria-invalid={!!errors.estimatedTime}
+                          />
 
                       {errors.estimatedTime &&
                         <div id="time-error" className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
@@ -668,11 +685,10 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                                   value={emailInput}
                                   onChange={(e) => setEmailInput(e.target.value)}
                                   placeholder="Email ou identifiant"
-                                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
+                                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
                                   style={{
                                     backgroundColor: 'rgb(var(--color-surface))',
                                     color: 'rgb(var(--color-text-primary))',
-                                    borderColor: 'rgb(var(--color-border))',
                                   }}
                                 />
                               </div>
@@ -697,12 +713,11 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                                 value={searchUser}
                                 onChange={(e) => setSearchUser(e.target.value)}
                                 placeholder="Rechercher parmi vos amis..."
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition-colors"
-                                style={{
-                                  backgroundColor: 'rgb(var(--color-surface))',
-                                  color: 'rgb(var(--color-text-primary))',
-                                  borderColor: 'rgb(var(--color-border))',
-                                }}
+                                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 text-sm transition-colors border-slate-200 dark:border-slate-700"
+                                  style={{
+                                    backgroundColor: 'rgb(var(--color-surface))',
+                                    color: 'rgb(var(--color-text-primary))',
+                                  }}
                               />
                             </div>
 
