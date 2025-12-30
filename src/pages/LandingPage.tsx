@@ -1,33 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useTasks } from '../context/TaskContext';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowRight, 
   CheckCircle, 
-  Users, 
-  BarChart3, 
   Calendar, 
   Target, 
   Zap, 
-  Star,
-  Play,
-  ChevronRight,
-  Globe,
-  Shield,
-  Smartphone,
-  Layers,
-  TrendingUp,
-  Clock,
-  Brain,
-  Sparkles,
-  Award,
-  MessageCircle,
-  Eye,
-  Rocket,
-  Infinity,
-  Database,
-  Workflow,
-  X
+  Users, 
+  Shield, 
+  Globe, 
+  Star, 
+  Sparkles, 
+  ChevronRight, 
+  Rocket, 
+  ArrowRight, 
+  X, 
+  Brain, 
+  Workflow, 
+  Database, 
+  Layers, 
+  Infinity 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // --- DONNÉES STATIQUES (Optimisation) ---
 
@@ -192,7 +185,40 @@ const ADVANCED_FEATURES = [
 // --- COMPOSANTS INTERNES (Pour l'autonomie) ---
 
 const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: 'login' | 'register' }) => {
+  const { login, register } = useTasks();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      if (mode === 'login') {
+        const success = await login(email, password);
+        if (!success) setError('Email ou mot de passe incorrect. Astuce: utilisez demo/demo');
+      } else {
+        await register(name || 'Nouvel Utilisateur', email, password);
+      }
+    } catch (err) {
+      setError('Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    await login('demo@cosmo.app', 'demo');
+    setLoading(false);
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <motion.div 
@@ -207,19 +233,60 @@ const MockLoginModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: (
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
           {mode === 'login' ? 'Connexion' : 'Créer un compte'}
         </h2>
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'register' && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-slate-400">Nom</label>
+              <input 
+                type="text" 
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Votre nom" 
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+              />
+            </div>
+          )}
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-400">Email</label>
-            <input type="email" placeholder="exemple@cosmo.app" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="exemple@cosmo.app" 
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+            />
           </div>
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-400">Mot de passe</label>
-            <input type="password" placeholder="••••••••" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••" 
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+            />
           </div>
-          <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all transform active:scale-95">
-            {mode === 'login' ? 'Se connecter' : "S'inscrire"}
+
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3.5 rounded-xl hover:shadow-lg hover:shadow-blue-500/25 transition-all transform active:scale-95 disabled:opacity-50"
+          >
+            {loading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : "S'inscrire")}
           </button>
-        </div>
+
+          {mode === 'login' && (
+            <button 
+              type="button"
+              onClick={handleDemoLogin}
+              className="w-full bg-slate-700/50 text-slate-300 font-medium py-2 rounded-xl hover:bg-slate-700 transition-all border border-slate-600"
+            >
+              Mode Démo (Connexion rapide)
+            </button>
+          )}
+        </form>
       </motion.div>
     </div>
   );
