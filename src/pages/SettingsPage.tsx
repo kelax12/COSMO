@@ -1,81 +1,91 @@
 import React, { useState } from 'react';
-import { Settings, User, Bell, Palette, Shield } from 'lucide-react';
+import { User, Bell, Palette, Shield, LogOut } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import ThemeToggle from '../components/ThemeToggle';
 
 const SettingsPage: React.FC = () => {
-  const { user, updateUserSettings } = useTasks();
+  const { user, updateUserSettings, logout } = useTasks();
   const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'appearance' | 'privacy'>('profile');
 
   if (!user) return null;
 
   const handleAutoValidationChange = (autoValidation: boolean) => {
-    updateUserSettings({ autoValidation });
-  };
+      updateUserSettings({ autoValidation });
+    };
 
-  return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-primary-900 mb-2">Paramètres</h1>
-          <p className="text-gray-600">Personnalisez votre expérience Cosmo</p>
+    return (
+      <div className="p-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-primary-900 mb-2">Paramètres</h1>
+            <p className="text-gray-600">Personnalisez votre expérience Cosmo</p>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-12 gap-6">
-        
-        {/* Menu latéral */}
-        <div className="col-span-3 card p-6">
-          <nav className="space-y-2">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
-                activeTab === 'profile' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <User size={20} />
-              <span className="font-bold">Profil</span>
-            </button>
-            
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
-                activeTab === 'notifications' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Bell size={20} />
-              <span className="font-bold">Notifications</span>
-            </button>
-            
-            <button
-              onClick={() => setActiveTab('appearance')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
-                activeTab === 'appearance' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Palette size={20} />
-              <span className="font-bold">Apparence</span>
-            </button>
-            
-            <button
-              onClick={() => setActiveTab('privacy')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
-                activeTab === 'privacy' 
-                  ? 'bg-primary-100 text-primary-700' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Shield size={20} />
-              <span className="font-bold">Confidentialité</span>
-            </button>
-          </nav>
-        </div>
+        <div className="grid grid-cols-12 gap-6">
+          
+          {/* Menu latéral */}
+          <div className="col-span-3 card p-6">
+            <nav className="space-y-2">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
+                  activeTab === 'profile' 
+                    ? 'bg-primary-100 text-primary-700' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <User size={20} />
+                <span className="font-bold">Profil</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('notifications')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
+                  activeTab === 'notifications' 
+                    ? 'bg-primary-100 text-primary-700' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Bell size={20} />
+                <span className="font-bold">Notifications</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('appearance')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
+                  activeTab === 'appearance' 
+                    ? 'bg-primary-100 text-primary-700' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Palette size={20} />
+                <span className="font-bold">Apparence</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('privacy')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors ${
+                  activeTab === 'privacy' 
+                    ? 'bg-primary-100 text-primary-700' 
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Shield size={20} />
+                <span className="font-bold">Confidentialité</span>
+              </button>
+
+              <div className="pt-4 mt-4 border-t border-gray-100">
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut size={20} />
+                  <span className="font-bold">Déconnexion</span>
+                </button>
+              </div>
+            </nav>
+          </div>
 
         {/* Contenu principal */}
         <div className="col-span-9 card p-8">
