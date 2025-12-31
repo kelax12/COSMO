@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Calendar, Clock, Flame, CheckCircle, Circle, X, Edit2, Trash2, Grid3X3, List } from 'lucide-react';
+import { Plus, Calendar, Grid3X3, List } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
