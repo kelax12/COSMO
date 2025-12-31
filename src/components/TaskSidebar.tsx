@@ -2,11 +2,16 @@ import React, { useState } from 'react';
 import { useTasks } from '../context/TaskContext';
 import { Search, Clock, Bookmark, Filter, X, CheckCircle2 } from 'lucide-react';
 
-const TaskSidebar: React.FC = () => {
+interface TaskSidebarProps {
+  onClose?: () => void;
+}
+
+const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose }) => {
   const { tasks, colorSettings, categories, events, priorityRange } = useTasks();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  const [showTutorial, setShowTutorial] = useState(true);
 
   // Filter tasks (exclude completed ones and respect priority range)
   const availableTasks = tasks.filter(task => 
@@ -40,7 +45,18 @@ const TaskSidebar: React.FC = () => {
       <div className="w-56 lg:w-72 lg:sm:w-80 border-r flex flex-col h-full" style={{ backgroundColor: 'rgb(var(--nav-bg))', borderColor: 'rgb(var(--nav-border))' }}>
         {/* Sidebar Header */}
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
-        <h2 className="text-lg font-semibold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>Tâches disponibles</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>Tâches disponibles</h2>
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              style={{ color: 'rgb(var(--color-text-secondary))' }}
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
         
         {/* Search */}
         <div className="relative mb-3">
@@ -184,14 +200,24 @@ const TaskSidebar: React.FC = () => {
       </div>
 
       {/* Instructions */}
-      <div className="p-4 border-t" style={{ borderColor: 'rgb(var(--nav-border))', backgroundColor: 'rgb(var(--color-hover))' }}>
-        <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <p className="font-medium mb-1">💡 Comment utiliser :</p>
-          <p>• Glissez une tâche vers le calendrier</p>
-          <p>• Les propriétés se transfèrent automatiquement</p>
-          <p>• La durée définit la longueur de l'événement</p>
+      {showTutorial && (
+        <div className="p-4 border-t relative group/tuto" style={{ borderColor: 'rgb(var(--nav-border))', backgroundColor: 'rgb(var(--color-hover))' }}>
+          <button 
+            onClick={() => setShowTutorial(false)}
+            className="absolute top-2 right-2 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-60 hover:opacity-100"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+            title="Fermer le tutoriel"
+          >
+            <X size={14} />
+          </button>
+          <div className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <p className="font-medium mb-1">💡 Comment utiliser :</p>
+            <p>• Glissez une tâche vers le calendrier</p>
+            <p>• Les propriétés se transfèrent automatiquement</p>
+            <p>• La durée définit la longueur de l'événement</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
