@@ -106,10 +106,12 @@ const TaskToEventModal: React.FC<TaskToEventModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 opacity-0 animate-modal-backdrop" onClick={onClose}>
       <div
-        className="modal-content rounded-2xl shadow-2xl w-full max-w-4xl h-auto transition-colors"
-        style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+        className="rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden opacity-0 scale-95 animate-modal-content"
+        style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Header */}
         <div
@@ -325,39 +327,39 @@ const TaskToEventModal: React.FC<TaskToEventModalProps> = ({
                     className="flex justify-between items-center text-sm font-semibold mb-2"
                     style={{ color: 'rgb(var(--color-text-secondary))' }}>
                     <span>Couleur de l'événement</span>
-                    <Plus 
-                      className="w-4 h-4 text-blue-500 cursor-pointer hover:scale-125 transition-transform" 
-                      onClick={() => setIsColorSettingsOpen(true)}
-                    />
+<Plus 
+                        className="w-6 h-6 text-blue-500 cursor-pointer hover:scale-125 transition-transform" 
+                        onClick={() => setIsColorSettingsOpen(true)}
+                      />
                 </label>
 
                 <div className="grid grid-cols-4 gap-1.5 mb-2">
-                  {favoriteColors.map((favColor, index) => (
+                  {categories.map((cat) => (
                     <button
-                      key={`${favColor}-${index}`}
+                      key={cat.id}
                       type="button"
-                      onClick={() => setColor(favColor)}
-                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105"
+                      onClick={() => setColor(cat.color)}
+                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 group"
                       style={{
-                        backgroundColor: favColor,
+                        backgroundColor: cat.color,
                         borderColor:
-                        color === favColor ?
+                        color === cat.color ?
                         'rgb(var(--color-text-primary))' :
                         'rgb(var(--color-border))',
-                        boxShadow: color === favColor ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
-                      }}>
-
-                        {color === favColor && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div
-                              className="w-3.5 h-3.5 rounded-full"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
-                              }} 
-                            />
-                          </div>
-                        )}
+                        boxShadow: color === cat.color ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
+                      }}
+                      title={cat.name}>
+                      {color === cat.color && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div
+                            className="w-3.5 h-3.5 rounded-full"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-surface))',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
+                            }} 
+                          />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -423,7 +425,7 @@ const TaskToEventModal: React.FC<TaskToEventModalProps> = ({
                 <div className="pt-2 space-y-2">
                   <button
                     type="submit"
-                    className="w-full px-4 py-3 rounded-lg font-semibold text-base transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 bg-green-600 hover:bg-green-700 text-white">
+                    className="w-full px-4 py-3 rounded-lg font-semibold text-base transition-colors shadow-lg hover:shadow-xl transform hover:scale-105 bg-blue-600 hover:bg-blue-700 text-white">
 
                      Convertir en événement
                   </button>
