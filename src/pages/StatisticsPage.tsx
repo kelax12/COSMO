@@ -558,7 +558,7 @@ const TasksStatistics: React.FC<{ tasks: any[], colorSettings: any }> = ({ tasks
   const maxPriorityCount = Math.max(...priorityDistribution.map(p => p.count), 1);
   const avgPriority = tasks.length > 0 ? (priorityDistribution.reduce((acc, item) => acc + (item.priority * item.count), 0) / tasks.length).toFixed(1) : "0";
   const getColorValue = (colorKey: string) => ({ red: '#EF4444', blue: '#3B82F6', green: '#10B981', purple: '#8B5CF6', orange: '#F97316' }[colorKey] || '#64748B');
-  const priorityColors = ['#EF4444', '#F97316', '#F59E0B', '#3B82F6', '#6B7280'];
+  const priorityColors = ['#DC2626', '#F97316', '#F59E0B', '#3B82F6', '#6B7280'];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
