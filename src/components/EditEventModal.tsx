@@ -29,7 +29,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
   onUpdateEvent,
   onDeleteEvent,
 }) => {
-  const { categories, favoriteColors } = useTasks();
+  const { categories } = useTasks();
   
   // State initialization
   const [title, setTitle] = useState("");
@@ -331,72 +331,77 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
                   style={{ color: 'rgb(var(--color-text-secondary))' }}>
                   <span>Couleur de l'événement</span>
                   <Plus 
-                    className="w-4 h-4 text-blue-500 cursor-pointer hover:scale-125 transition-transform" 
-                    onClick={() => setIsColorSettingsOpen(true)}
-                  />
+                      className="w-6 h-6 text-blue-500 cursor-pointer hover:scale-125 transition-transform" 
+                      onClick={() => setIsColorSettingsOpen(true)}
+                    />
                 </label>
 
-                <div className="grid grid-cols-4 gap-1.5 mb-2">
-                  {favoriteColors.map((favColor, index) => (
-                    <button
-                      key={`${favColor}-${index}`}
-                      type="button"
-                      onClick={() => setColor(favColor)}
-                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105"
-                      style={{
-                        backgroundColor: favColor,
-                        borderColor:
-                        color === favColor ?
-                        'rgb(var(--color-text-primary))' :
-                        'rgb(var(--color-border))',
-                        boxShadow: color === favColor ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
-                      }}>
-                        {color === favColor && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div
-                              className="w-3.5 h-3.5 rounded-full"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
-                              }} 
-                            />
-                          </div>
-                        )}
-                    </button>
-                  ))}
-                </div>
-
-                {categories.length > 0 && (
-                  <div
-                    className="p-2.5 rounded-xl border bg-opacity-30 transition-colors"
-                    style={{ borderColor: 'rgb(var(--color-border))' }}
-                  >
-                    <h4
-                      className="text-[12px] font-bold uppercase tracking-widest mb-2"
-                      style={{ color: 'rgb(var(--color-text-muted))' }}
-                    >
-                      Légende des catégories
-                    </h4>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                      {categories.map((cat) => (
-                        <div key={cat.id} className="flex items-center gap-1.5">
-                          <div
-                            className="w-2 h-2 rounded-full shadow-sm"
-                            style={{ backgroundColor: cat.color }} />
-                          <span
-                            className="text-[13px] font-medium truncate"
-                            style={{ color: 'rgb(var(--color-text-primary))' }}
-                          >
+                  <div className="grid grid-cols-4 gap-1.5 mb-2">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setColor(cat.color)}
+                        className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 group"
+                        style={{
+                          backgroundColor: cat.color,
+                          borderColor:
+                          color === cat.color ?
+                          'rgb(var(--color-text-primary))' :
+                          'rgb(var(--color-border))',
+                          boxShadow: color === cat.color ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'
+                        }}
+                        title={cat.name}>
+                          {color === cat.color && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div
+                                className="w-3.5 h-3.5 rounded-full"
+                                style={{
+                                  backgroundColor: 'rgb(var(--color-surface))',
+                                  boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
+                                }} 
+                              />
+                            </div>
+                          )}
+                          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
                             {cat.name}
                           </span>
-                        </div>
-                      ))}
-                    </div>
+                      </button>
+                    ))}
                   </div>
-                )}
-              </div>
 
-              {/* Aperçu */}
+                  {categories.length > 0 &&
+                  <div
+                    className="p-2.5 rounded-xl border bg-opacity-30 transition-colors"
+                    style={{
+                      borderColor: 'rgb(var(--color-border))'
+                    }}>
+
+                      <h4
+                        className="text-[12px] font-bold uppercase tracking-widest mb-2"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        Légende des catégories
+                      </h4>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        {categories.map((cat) =>
+                        <div key={cat.id} className="flex items-center gap-1.5">
+                            <div
+                            className="w-2 h-2 rounded-full shadow-sm"
+                            style={{ backgroundColor: cat.color }} />
+
+                            <span
+                            className="text-[13px] font-medium truncate"
+                            style={{ color: 'rgb(var(--color-text-primary))' }}>
+                            {cat.name}
+                          </span>
+                          </div>
+                        )}
+                      </div>
+                      </div>
+                      }
+                </div>
+
+                {/* Aperçu */}
               <div 
                 className="p-3 rounded-xl border transition-colors"
                 style={{ borderColor: 'rgb(var(--color-border))' }}>
