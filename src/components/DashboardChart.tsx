@@ -240,7 +240,7 @@ const DashboardChart: React.FC = () => {
             transition={{ delay: 0.5 + index * 0.1 }}
             whileHover={{ scale: 1.02 }}
           >
-            <div className="p-4 rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm hover:border-slate-600/50 transition-all duration-300">
+            <div className="p-4 rounded-2xl bg-slate-800/40 border border-slate-700/30 backdrop-blur-md hover:border-slate-600/50 transition-all duration-300 shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`p-1.5 rounded-lg bg-gradient-to-br ${stat.gradient}`}>
                   <stat.icon size={14} className="text-white" />
