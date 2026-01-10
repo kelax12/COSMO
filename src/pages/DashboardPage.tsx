@@ -119,7 +119,7 @@ const DashboardPage: React.FC = () => {
                   }}
                   transition={{ duration: 5, repeat: Infinity }}
                 >
-{user.name.split(' ')[0]}
+{user.name}
                  </motion.span>
               </motion.h1>
               <motion.p 
@@ -138,40 +138,40 @@ const DashboardPage: React.FC = () => {
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6"
             variants={containerVariants}
           >
-              {statCards.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  className="relative overflow-hidden group cursor-pointer"
-                  variants={itemVariants}
-                  whileHover={{ y: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                >
-                  <div className="p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <p className="text-sm text-[rgb(var(--color-text-secondary))] font-medium">
-                          {stat.label}
+                {statCards.map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    className="relative overflow-hidden group cursor-pointer"
+                    variants={itemVariants}
+                    whileHover={{ y: -4, scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    <div className="p-5 lg:p-6 h-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl transition-all duration-300 group-hover:shadow-xl group-hover:border-[rgb(var(--color-accent)/0.5)] group-hover:bg-[rgb(var(--color-accent)/0.02)]">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <p className="text-sm text-[rgb(var(--color-text-secondary))] font-bold group-hover:text-[rgb(var(--color-accent))] transition-colors">
+                            {stat.label}
+                          </p>
+                          <motion.p 
+                            className="text-3xl lg:text-4xl font-black text-[rgb(var(--color-text-primary))]"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
+                          >
+                            {stat.value}
+                          </motion.p>
+                          <p className="text-xs text-[rgb(var(--color-text-muted))] flex items-center gap-1.5 font-medium group-hover:text-[rgb(var(--color-text-secondary))]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--color-accent))]" />
+                            {stat.subtitle}
                         </p>
-                        <motion.p 
-                          className="text-3xl lg:text-4xl font-bold text-[rgb(var(--color-text-primary))]"
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
-                        >
-                          {stat.value}
-                        </motion.p>
-                        <p className="text-xs text-[rgb(var(--color-text-muted))] flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--color-accent))]" />
-                          {stat.subtitle}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[rgb(var(--color-accent)/0.1)] border border-[rgb(var(--color-accent)/0.2)]">
-                      <stat.icon size={22} className="text-[rgb(var(--color-accent))]" strokeWidth={2} />
+                      </div>
+                      <div className="p-3 rounded-xl bg-[rgb(var(--color-accent)/0.15)] border border-[rgb(var(--color-accent)/0.3)] group-hover:bg-[rgb(var(--color-accent))] group-hover:text-white transition-all duration-300">
+                        <stat.icon size={22} className="group-hover:text-white transition-colors" strokeWidth={2.5} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
         </motion.div>
 
         {/* Contenu principal en grille */}
