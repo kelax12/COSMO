@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
-import { MessageCircle, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import React, { useState, useEffect } from 'react';
+import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
+import { useTasks, Task } from '../context/TaskContext';
+import TaskModal from '../components/TaskModal';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
+  const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
+  
+  return (
+    <div className={`rounded-full flex items-center justify-center overflow-hidden shrink-0 transition-colors ${className}`}>
+      {isUrl ? (
+        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+      ) : (
+        <span className={textClassName}>{avatar || '👤'}</span>
+      )}
+    </div>
+  );
+};
 
 const MessagingPage: React.FC = () => {
-  const { 
-    user, 
-    messages, 
-    friendRequests, 
-    isPremium, 
-    sendMessage, 
-    sendFriendRequest, 
-    acceptFriendRequest, 
-    rejectFriendRequest 
+  const {
+    user,
+    messages,
+    friendRequests,
+    isPremium,
+    sendMessage,
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    friends,
+    tasks
   } = useTasks();
-  
-  const [selectedConversation, setSelectedConversation] = useState<string>('user2');
+
+  const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchFriend, setSearchFriend] = useState('');
@@ -22,154 +40,239 @@ const MessagingPage: React.FC = () => {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [activeTab, setActiveTab] = useState<'messages' | 'friends'>('messages');
   const [showAddFriendForm, setShowAddFriendForm] = useState(false);
-  const [showRightSidebar, setShowRightSidebar] = useState(true);
+  const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const [showLeftSidebar, setShowLeftSidebar] = useState(window.innerWidth >= 1024);
   const [pinnedConversations, setPinnedConversations] = useState<string[]>(['equipe-design']);
   const [deletedConversations, setDeletedConversations] = useState<string[]>([]);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [selectedFriendsForGroup, setSelectedFriendsForGroup] = useState<string[]>([]);
   const [groupName, setGroupName] = useState('');
-  
-  // État pour les conversations
-  const [allConversations, setAllConversations] = useState([
-    { 
-      id: 'equipe-design', 
-      name: 'Équipe Design', 
-      type: 'group',
-      members: ['👨‍💻', '👩‍🎨', '👨‍🎨'],
+  const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
+
+  const clearGroupChanges = (groupId: string) => {
+    setGroupConversations(prev => prev.map(g => {
+      if (g.id === groupId) {
+        let members = g.members;
+        if (groupId === 'equipe-design') {
+          members = [
+            { id: 'user1', name: 'Utilisateur Demo', avatar: '👤' },
+            { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
+            { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' }
+          ];
+        } else if (groupId === 'dev-produit') {
+          members = [
+            { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
+            { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' },
+            { id: 'sophia-martin', name: 'Sophia Martin', avatar: '👩‍🔬' }
+          ];
+        }
+        return { ...g, unread: 0, members };
+      }
+      return g;
+    }));
+    setPinnedConversations(prev => prev.filter(id => id !== groupId));
+  };
+
+  // État pour les conversations de groupe
+  const [groupConversations, setGroupConversations] = useState([
+    {
+      id: 'equipe-design',
+      name: 'Équipe Design',
+      type: 'group' as const,
+      ownerId: 'user1',
+      members: [
+        { id: 'user1', name: 'Utilisateur Demo', avatar: '👤' },
+        { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
+        { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' }
+      ],
       lastMessage: 'Bonjour à tous ! J\'ai terminé la première version de la maquette pour le dashboard',
       time: '14:34',
-      unread: 0,
-      online: true
+      unread: 0
     },
-    { 
-      id: 'dev-produit', 
-      name: 'Développement Produit', 
-      type: 'group',
-      members: ['👨‍💻', '👩‍💻', '👨‍🔬'],
+    {
+      id: 'dev-produit',
+      name: 'Développement Produit',
+      type: 'group' as const,
+      ownerId: 'marie-dupont',
+      members: [
+        { id: 'marie-dupont', name: 'Marie Dupont', avatar: '👩‍💼' },
+        { id: 'thomas-laurent', name: 'Thomas Laurent', avatar: '👨‍💻' },
+        { id: 'sophia-martin', name: 'Sophia Martin', avatar: '👩‍🔬' }
+      ],
       lastMessage: 'Marie : Réunion à 15h demain',
       time: '14:34',
-      unread: 0,
-      online: true
-    }
-  ]);
-  
-  // État pour les amis (personnes avec qui on peut discuter)
-  const [friendsList, setFriendsList] = useState([
-    { 
-      id: 'marie-dupont', 
-      name: 'Marie Dupont', 
-      email: 'marie@example.com', 
-      avatar: '👩‍💼',
-      online: true,
-      role: 'Designer UI/UX'
-    },
-    { 
-      id: 'thomas-laurent', 
-      name: 'Thomas Laurent', 
-      email: 'thomas@example.com', 
-      avatar: '👨‍💻',
-      online: false,
-      role: 'Développeur Frontend'
-    },
-    { 
-      id: 'sophia-martin', 
-      name: 'Sophia Martin', 
-      email: 'sophia@example.com', 
-      avatar: '👩‍🔬',
-      online: true,
-      role: 'Data Scientist'
-    }
-  ]);
-  
-  // Conversations directes avec les amis
-  const [friendConversations, setFriendConversations] = useState([
-    {
-      friendId: 'marie-dupont',
-      lastMessage: 'Dashboard_v1.fig',
-      time: '10:24',
       unread: 0
-    },
-    {
-      friendId: 'thomas-laurent',
-      lastMessage: 'Pouvez-vous me partager le docum...',
-      time: '14:34',
-      unread: 0
-    },
-    {
-      friendId: 'sophia-martin',
-      lastMessage: 'Merci pour votre aide',
-      time: '14:34',
-      unread: 0
-    }
-  ]);
+    }]
+  );
 
-  const [pendingRequests, setPendingRequests] = useState([
-    {
-      id: '1',
-      name: 'Pierre Dupont',
-      email: 'pierre@example.com',
-      role: 'Développeur Frontend',
-      avatar: '👨‍💻',
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Lucas Bernard',
-      email: 'lucas@example.com',
-      role: 'Chef de projet',
-      avatar: '👨‍💼',
-      timestamp: new Date().toISOString()
+    const allConversations = [
+      ...friends.map(f => {
+        const convoMessages = messages.filter(m => m.senderId === f.id || m.receiverId === f.id)
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        const lastM = convoMessages[0];
+        return {
+          id: f.id,
+          name: f.name,
+          avatar: f.avatar,
+          type: 'individual' as const,
+          lastMessage: lastM?.content || 'Commencer la discussion',
+          time: lastM ? new Date(lastM.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+          timestamp: lastM ? new Date(lastM.timestamp).getTime() : 0,
+          unread: messages.filter(m => m.senderId === f.id && !m.read).length
+        };
+      }),
+      ...groupConversations.map(group => {
+        const groupMsgs = messages.filter(m => m.receiverId === group.id)
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        const lastM = groupMsgs[0];
+        const updatedMembers = group.members.map(member => 
+          member.id === user.id ? { ...member, avatar: user.avatar || '👤', name: user.name } : member
+        );
+        return {
+          ...group,
+          members: updatedMembers,
+          lastMessage: lastM ? lastM.content : group.lastMessage,
+          time: lastM ? new Date(lastM.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : group.time,
+          timestamp: lastM ? new Date(lastM.timestamp).getTime() : 0,
+        };
+      })
+    ];
+
+    const sortedConversations = [...allConversations].sort((a, b) => {
+      const aPinned = pinnedConversations.includes(a.id);
+      const bPinned = pinnedConversations.includes(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return b.timestamp - a.timestamp;
+    });
+
+    useEffect(() => {
+      if (window.innerWidth < 1024 && !selectedConversation && sortedConversations.length > 0) {
+        setSelectedConversation(sortedConversations[0].id);
+        setShowLeftSidebar(false);
+      }
+    }, [sortedConversations.length, selectedConversation]);
+
+  const emojiCategories = {
+    smileys: ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘'],
+    gestures: ['👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤏', '👈', '👉', '👆', '👇'],
+    hearts: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖'],
+    hearts2: ['🎉', '🎊', '🎈', '🎂', '🎁', '🧨', '🧧', '🎇', '🎆', '🎐', '🎑', '🎍', '🎋', '🎏', '💎', '💍']
+  };
+
+  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof emojiCategories>('smileys');
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
+
+  const emojiCategoryLabels = {
+    smileys: '😀', gestures: '👍', hearts: '❤️', hearts2: '🎉'
+  };
+
+  const pendingRequests = friendRequests.filter(r => r.status === 'pending');
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedConversation) return;
+    sendMessage(selectedConversation, newMessage);
+    setNewMessage('');
+    setShowEmojiPicker(false);
+  };
+
+  const handleCreateGroup = () => {
+    setShowCreateGroupModal(true);
+  };
+
+  const handleCreateGroupSubmit = () => {
+    if (!groupName.trim() || selectedFriendsForGroup.length === 0) return;
+    
+    const newGroup = {
+      id: `group-${Date.now()}`,
+      name: groupName,
+      type: 'group' as const,
+      ownerId: user.id,
+      members: [
+        { id: user.id, name: user.name, avatar: user.avatar || '👤' },
+        ...selectedFriendsForGroup.map(id => {
+          const friend = friends.find(f => f.id === id);
+          return { id: friend?.id || id, name: friend?.name || 'Ami', avatar: friend?.avatar || '👤' };
+        })
+      ],
+      lastMessage: 'Groupe créé',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      unread: 0
+    };
+
+    setGroupConversations(prev => [newGroup, ...prev]);
+    setShowCreateGroupModal(false);
+    setGroupName('');
+    setSelectedFriendsForGroup([]);
+    setSelectedConversation(newGroup.id);
+  };
+
+  const toggleFriendSelection = (friendId: string) => {
+    setSelectedFriendsForGroup(prev => 
+      prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]
+    );
+  };
+
+  const handleTogglePinFromList = (id: string) => {
+    setPinnedConversations(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
+  const handleTogglePin = () => {
+    if (!selectedConversation) return;
+    handleTogglePinFromList(selectedConversation);
+    setShowMoreOptions(false);
+  };
+
+  const handleDeleteConversation = () => {
+    if (!selectedConversation) return;
+    setDeletedConversations(prev => [...prev, selectedConversation]);
+    setSelectedConversation('');
+    setShowMoreOptions(false);
+  };
+
+  const handleAcceptRequest = (id: string) => {
+    acceptFriendRequest(id);
+  };
+
+  const handleRejectRequest = (id: string) => {
+    rejectFriendRequest(id);
+  };
+
+  const handleSendFriendRequest = () => {
+    if (!searchFriend.trim()) return;
+    // In this demo, we assume the user finds an ID or email
+    const foundFriend = friends.find(f => f.email === searchFriend);
+    if (foundFriend) {
+      sendFriendRequest(foundFriend.id);
+      setSearchFriend('');
+      setShowAddFriendForm(false);
+    } else {
+      alert('Utilisateur non trouvé');
     }
-  ]);
-  const [conversationMessages, setConversationMessages] = useState([
-    {
-      id: '1',
-      sender: 'Marie',
-      avatar: '👩‍💼',
-      content: 'Bonjour à tous ! J\'ai terminé la première version de la maquette pour le dashboard',
-      time: '10:24',
-      isOwn: false
-    },
-    {
-      id: '2',
-      sender: 'Vous',
-      content: 'Super travail ! J\'aime beaucoup les couleurs utilisées.',
-      time: '10:25',
-      isOwn: true
-    },
-    {
-      id: '3',
-      sender: 'Thomas',
-      avatar: '👨‍💻',
-      content: 'Avez-vous terminé la maquette pour la section des statistiques aussi ?',
-      time: '10:26',
-      isOwn: false
-    }
-  ]);
+  };
+
+  const currentConversation = allConversations.find(c => c.id === selectedConversation);
+  const totalUnreadCount = sortedConversations.reduce((acc, conv) => acc + (conv.unread || 0), 0);
+
+  const currentConversationMessages = messages
+    .filter(m => m.senderId === selectedConversation || m.receiverId === selectedConversation)
+    .map(m => ({
+      id: m.id,
+      sender: m.senderId === user.id ? user.name : (friends.find(f => f.id === m.senderId)?.name || 'Inconnu'),
+      content: m.content,
+      time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isOwn: m.senderId === user.id,
+      avatar: m.senderId === user.id ? user.avatar : friends.find(f => f.id === m.senderId)?.avatar,
+      taskId: m.taskId
+    }));
+
+  const switchToFriendsTab = () => setActiveTab('friends');
+  const switchToMessagesTab = () => setActiveTab('messages');
 
   if (!user) return null;
-
-  const premium = isPremium();
-  
-  // Combiner les conversations de groupe et les conversations d'amis
-  const allDisplayConversations = [
-    ...allConversations,
-    ...friendsList.map(friend => {
-      const conversation = friendConversations.find(conv => conv.friendId === friend.id);
-      return {
-        id: friend.id,
-        name: friend.name,
-        type: 'direct',
-        avatar: friend.avatar,
-        lastMessage: conversation?.lastMessage || 'Aucun message',
-        time: conversation?.time || '',
-        unread: conversation?.unread || 0,
-        online: friend.online
-      };
-    })
-  ];
-
-  if (!premium) {
+  if (!isPremium()) {
     return (
       <div className="p-8">
         <div className="card p-16 text-center">
@@ -184,591 +287,327 @@ const MessagingPage: React.FC = () => {
             Débloquer Premium
           </button>
         </div>
-      </div>
-    );
+      </div>);
   }
 
-
-  // Filtrer les conversations selon leur état
-  const activeConversations = allDisplayConversations.filter(conv => 
-    !deletedConversations.includes(conv.id)
-  );
-  
-  // Trier les conversations : épinglées en premier, puis les autres
-  const sortedConversations = activeConversations.sort((a, b) => {
-    const aIsPinned = pinnedConversations.includes(a.id);
-    const bIsPinned = pinnedConversations.includes(b.id);
-    
-    if (aIsPinned && !bIsPinned) return -1;
-    if (!aIsPinned && bIsPinned) return 1;
-    return 0;
-  });
-
-  const activityHistory = [
-    {
-      id: '1',
-      type: 'group_access',
-      message: 'Vous avez accepté la demande d\'ami de Sophie Martin',
-      time: 'Aujourd\'hui à 14h45',
-      icon: '✅'
-    },
-    {
-      id: '2',
-      type: 'new_message',
-      message: 'Nouveau message dans Équipe Design',
-      time: 'Aujourd\'hui à 14h30',
-      icon: '💬'
-    },
-    {
-      id: '3',
-      type: 'group_created',
-      message: 'Vous avez créé le groupe Développement Produit',
-      time: 'Hier à 16h20',
-      icon: '👥'
-    },
-    {
-      id: '4',
-      type: 'friend_request',
-      message: 'Vous avez refusé la demande d\'ami de Alex Martin',
-      time: 'Hier à 14h15',
-      icon: '❌'
-    }
-  ];
-
-
-  const currentConversation = allDisplayConversations.find(c => c.id === selectedConversation);
-
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    
-    // Créer le nouveau message
-    const newMsg = {
-      id: Date.now().toString(),
-      sender: 'Vous',
-      content: newMessage.trim(),
-      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true
-    };
-    
-    // Ajouter le message à la conversation
-    setConversationMessages(prev => [...prev, newMsg]);
-    
-    // Envoyer le message via le contexte (pour la persistance)
-    sendMessage(selectedConversation, newMessage.trim());
-    
-    setNewMessage('');
-    setShowEmojiPicker(false);
-  };
-
-  const handleAcceptRequest = (requestId: string) => {
-    // Trouver la demande
-    const request = pendingRequests.find(req => req.id === requestId);
-    if (request) {
-      // Supprimer de la liste des demandes en attente
-      setPendingRequests(prev => prev.filter(req => req.id !== requestId));
-      
-      // Ajouter à la liste des amis
-      const newFriend = {
-        id: `friend-${Date.now()}`,
-        name: request.name,
-        email: request.email,
-        avatar: request.avatar,
-        online: Math.random() > 0.5,
-        role: request.role
-      };
-      
-      setFriendsList(prev => [...prev, newFriend]);
-      
-      // Créer une nouvelle conversation d'ami
-      const newFriendConversation = {
-        friendId: newFriend.id,
-        lastMessage: 'Vous êtes maintenant amis !',
-        time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-        unread: 0
-      };
-      
-      setFriendConversations(prev => [...prev, newFriendConversation]);
-      
-      // Appeler la fonction du contexte
-      acceptFriendRequest(requestId);
-    }
-  };
-
-  const handleRejectRequest = (requestId: string) => {
-    // Trouver la demande
-    const request = pendingRequests.find(req => req.id === requestId);
-    if (request) {
-      // Supprimer de la liste des demandes en attente
-      setPendingRequests(prev => prev.filter(req => req.id !== requestId));
-      
-      // Appeler la fonction du contexte
-      rejectFriendRequest(requestId);
-    }
-  };
-
-  const handleSendFriendRequest = () => {
-    if (!searchFriend.trim()) return;
-    
-    sendFriendRequest(searchFriend);
-    setSearchFriend('');
-    setShowAddFriendForm(false);
-  };
-
-  const handleCreateGroup = () => {
-    setShowCreateGroupModal(true);
-    setSelectedFriendsForGroup([]);
-    setGroupName('');
-  };
-
-  const handleArchiveConversation = () => {
-    if (!selectedConversation) return;
-    
-    // Fermer le menu et sélectionner une autre conversation
-    setShowMoreOptions(false);
-    
-    // Sélectionner la première conversation non archivée disponible
-    const availableConversations = allDisplayConversations.filter(conv => 
-      conv.id !== selectedConversation && 
-      !deletedConversations.includes(conv.id)
-    );
-    
-    if (availableConversations.length > 0) {
-      setSelectedConversation(availableConversations[0].id);
-    } else {
-      setSelectedConversation('');
-    }
-    
-  };
-
-  const handleDeleteConversation = () => {
-    if (!selectedConversation) return;
-    
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer définitivement cette conversation ? Cette action est irréversible.')) {
-      // Ajouter à la liste des conversations supprimées
-      setDeletedConversations(prev => [...prev, selectedConversation]);
-      
-      // Retirer des conversations épinglées si elle y était
-      setPinnedConversations(prev => prev.filter(id => id !== selectedConversation));
-      
-      // Fermer le menu et sélectionner une autre conversation
-      setShowMoreOptions(false);
-      
-      // Sélectionner la première conversation disponible
-      const availableConversations = allDisplayConversations.filter(conv => 
-        conv.id !== selectedConversation && 
-        !deletedConversations.includes(conv.id)
-      );
-      
-      if (availableConversations.length > 0) {
-        setSelectedConversation(availableConversations[0].id);
-      } else {
-        setSelectedConversation('');
-      }
-    }
-  };
-
-  const handleTogglePin = () => {
-    if (!selectedConversation) return;
-    
-    const isPinned = pinnedConversations.includes(selectedConversation);
-    
-    if (isPinned) {
-      // Désépingler
-      setPinnedConversations(prev => prev.filter(id => id !== selectedConversation));
-    } else {
-      // Épingler
-      setPinnedConversations(prev => [...prev, selectedConversation]);
-    }
-    
-    setShowMoreOptions(false);
-  };
-
-  // Nouvelle fonction pour épingler depuis la liste (scroll vers la gauche)
-  const handleTogglePinFromList = (conversationId: string) => {
-    const isPinned = pinnedConversations.includes(conversationId);
-    
-    if (isPinned) {
-      // Désépingler
-      setPinnedConversations(prev => prev.filter(id => id !== conversationId));
-    } else {
-      // Épingler
-      setPinnedConversations(prev => [...prev, conversationId]);
-    }
-  };
-
-  const handleCreateGroupSubmit = () => {
-    if (!groupName.trim() || selectedFriendsForGroup.length === 0) {
-      alert('Veuillez saisir un nom de groupe et sélectionner au moins un ami');
-      return;
-    }
-
-    // Créer le nouveau groupe avec un ID unique
-    const newGroupId = `group-${Date.now()}`;
-    const selectedFriendAvatars = selectedFriendsForGroup.map(friendId => {
-      const friend = friendsList.find(f => f.id === friendId);
-      return friend?.avatar || '👤';
-    });
-    
-    const newGroup = {
-      id: newGroupId,
-      name: groupName,
-      type: 'group',
-      members: ['👤', ...selectedFriendAvatars], // Votre avatar + les amis sélectionnés
-      lastMessage: 'Groupe créé',
-      time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
-      unread: 0,
-      online: true
-    };
-
-    // Ajouter le groupe aux conversations
-    setAllConversations(prev => [newGroup, ...prev]);
-    
-    // Sélectionner automatiquement le nouveau groupe
-    setSelectedConversation(newGroupId);
-    
-    // Fermer la modal et réinitialiser
-    setShowCreateGroupModal(false);
-    setSelectedFriendsForGroup([]);
-    setGroupName('');
-  };
-
-  const toggleFriendSelection = (friendId: string) => {
-    setSelectedFriendsForGroup(prev => 
-      prev.includes(friendId) 
-        ? prev.filter(id => id !== friendId)
-        : [...prev, friendId]
-    );
-  };
-
-  const handleEmojiSelect = (emoji: string) => {
-    console.log('🔍 Emoji sélectionné:', emoji);
-    console.log('📝 Message actuel avant ajout:', newMessage);
-    setNewMessage(prev => prev + emoji);
-    console.log('📝 Message après ajout (devrait être):', newMessage + emoji);
-    setShowEmojiPicker(false);
-  };
-
-  // Système d'emojis amélioré avec catégories
-  const emojiCategories = {
-    smileys: ['😀', '😂', '😍', '🤔', '😎', '😊', '😢', '😡', '🤗', '😴'],
-    gestures: ['👍', '👎', '👏', '🙌', '👋', '✋', '👌', '🤝', '💪', '🙏'],
-    hearts: ['❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍', '💖', '💕'],
-    objects: ['🎉', '🔥', '💯', '⭐', '✨', '🎯', '🚀', '💡', '📝', '📱']
-  };
-
-  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState<keyof typeof emojiCategories>('smileys');
-
-  const emojiCategoryLabels = {
-    smileys: '😀', gestures: '👍', hearts: '❤️', objects: '🎉'
-  };
-
-  const switchToFriendsTab = () => {
-    setActiveTab('friends');
-  };
-
-  const switchToMessagesTab = () => {
-    setActiveTab('messages');
-  };
-
   return (
-    <div className="h-screen flex bg-gray-50 dark:bg-slate-900 transition-colors">
+
+    <div className="h-full w-full flex relative bg-gray-50 dark:bg-slate-900 transition-colors overflow-hidden">
       
-      {/* Colonne gauche - Liste des conversations */}
-      <div className="w-80 bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col transition-colors">
-        {/* Header avec titre et recherche */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-700 transition-colors">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-lg flex items-center justify-center">
-              <MessageCircle size={20} className="text-white" />
-            </div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Messagerie</h1>
-          </div>
-          
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-900 dark:text-white transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Onglets */}
-        <div className="flex border-b border-gray-200 dark:border-slate-700 transition-colors">
-          <button 
-            onClick={switchToMessagesTab}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'messages'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            Messages
-          </button>
-          <button 
-            onClick={switchToFriendsTab}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'friends'
-                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            Amis
-          </button>
-        </div>
-
-        {/* Section Conversations récentes */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Conversations récentes
-            </h3>
-            <button 
-              onClick={handleCreateGroup}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-              title="Créer un groupe"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-
-          {/* Indicateur des conversations épinglées */}
-        </div>
-
-        {/* Liste des conversations */}
-        <div className={`flex-1 overflow-y-auto ${activeTab === 'friends' ? 'hidden' : ''}`}>
-          {sortedConversations.filter(conv => 
-            conv.name.toLowerCase().includes(searchTerm.toLowerCase())
-          ).map(conv => {
-            const isPinned = pinnedConversations.includes(conv.id);
-            
-            return (
-            <div
-              key={conv.id}
-              onClick={() => setSelectedConversation(conv.id)}
-                className={`p-4 cursor-pointer transition-colors border-l-4 ${
-                  selectedConversation === conv.id 
-                    ? 'border-blue-500 dark:border-blue-400' 
-                    : isPinned 
-                      ? 'border-yellow-400 dark:border-yellow-500 conversation-pinned'
-                      : 'border-transparent'
-                }`}
-            >
+      {showLeftSidebar && (
+        <div 
+          className="absolute inset-0 bg-black/50 z-40 lg:hidden animate-[fadeIn_0.2s_ease-out]" 
+          onClick={() => setShowLeftSidebar(false)} 
+        />
+      )}
+      <div className={`${showLeftSidebar ? 'absolute inset-y-0 left-0 z-50 w-80 shadow-2xl lg:relative lg:inset-auto lg:z-0 lg:shadow-none lg:w-80 animate-[slideInLeft_0.3s_ease-out]' : (selectedConversation ? 'hidden lg:flex lg:w-12' : 'flex w-full lg:w-80')} bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-slate-700 flex flex-col transition-all duration-300 overflow-x-hidden`}>
+        <div className={`${showLeftSidebar ? 'p-4' : 'p-1 py-4'} border-b border-gray-200 dark:border-slate-700 flex flex-col transition-colors`}>
+          {showLeftSidebar ? (
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                {/* Avatar ou groupe d'avatars */}
-                <div className="relative">
-                  {conv.type === 'group' ? (<div className="flex -space-x-2">{conv.members?.slice(0, 2).map((member, index) => (<div key={index} className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg border-2 border-white">{member}</div>))}</div>) : (<div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg relative">{conv.avatar}{conv.online && (<div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>)}</div>)}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-gray-900 dark:text-white truncate">{conv.name}</h4>
-                      {/* Removed redundant isPinned indicator here */}
-                    </div>
-                    {/* New clickable pin/unpin button */}
-                    <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTogglePinFromList(conv.id);
-                  }}
-                  title={isPinned ? "Désépingler" : "Épingler"}
-                  className="p-1 rounded-full hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
+                <button 
+                  onClick={() => setShowLeftSidebar(false)}
+                  className="lg:hidden p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  title="Retour"
                 >
-                  {isPinned ? (
-                    <Pin size={16} className="text-yellow-600 dark:text-yellow-500" />
-                  ) : (
-                    <PinOff size={16} className="text-gray-400 dark:text-gray-500 hover:text-yellow-600 dark:hover:text-yellow-500" />
+                  <ChevronLeft size={20} />
+                </button>
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Messagerie</h1>
+                <button
+                  onClick={() => setShowRightSidebar(true)}
+                  className="p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors relative"
+                  title="Gérer les amis"
+                >
+                  <Users size={18} />
+                  {pendingRequests.length > 0 && (
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800"></span>
                   )}
                 </button>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">{conv.time}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{conv.lastMessage}</p>
-                </div>
-                
-                {conv.unread > 0 && (
-                  <div className="w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {conv.unread}
-                  </div>
-                )}
               </div>
+              <button 
+                onClick={() => setShowLeftSidebar(false)}
+                className="hidden lg:block p-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                title="Fermer la messagerie"
+              >
+                <X size={20} />
+              </button>
             </div>
-            );
-          })}
+          ) : (
+            <div className="flex justify-center mb-0">
+              <button 
+                onClick={() => setShowLeftSidebar(true)}
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                title="Ouvrir la messagerie"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
           
-          {/* Message quand aucune conversation */}
-          {sortedConversations.filter(conv => 
-            conv.name.toLowerCase().includes(searchTerm.toLowerCase())
-          ).length === 0 && (
-            <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-              <MessageCircle size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-              <p className="text-lg font-medium">
-                Aucune conversation
-              </p>
-              <p className="text-sm">
-                Commencez une nouvelle conversation
-              </p>
+          {showLeftSidebar && (
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-900 dark:text-white transition-colors" />
             </div>
           )}
         </div>
 
-        {/* Liste des amis (quand onglet Amis est actif) */}
-        <div className={`flex-1 overflow-y-auto p-4 ${activeTab === 'messages' ? 'hidden' : ''}`}>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Mes amis ({friendsList.length})
-              </h3>
-              <button 
-                onClick={() => setShowAddFriendForm(true)}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                title="Ajouter un ami"
-              >
-                <UserPlus size={16} />
+        {showLeftSidebar ? (
+          <>
+            <div className="flex border-b border-gray-200 dark:border-slate-700 transition-colors">
+              <button
+                onClick={switchToMessagesTab}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'messages' ?
+                'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' :
+                'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`
+                }>
+                Messages
+              </button>
+              <button
+                onClick={switchToFriendsTab}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'friends' ?
+                'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' :
+                'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'}`
+                }>
+                Amis
               </button>
             </div>
-            
-            {/* Liste des amis */}
-            <div className="space-y-2">
-              {friendsList.filter(friend => 
-                friend.name.toLowerCase().includes(searchTerm.toLowerCase())
-              ).map(friend => (
-                <div
-                  key={friend.id}
-                  onClick={() => {
-                    setSelectedConversation(friend.id);
-                    setActiveTab('messages');
-                  }}
-                    className="p-3 cursor-pointer transition-colors rounded-lg border border-gray-100 dark:border-slate-600"
-                >
+
+            <div className="p-4 border-b border-gray-200 dark:border-slate-700 transition-colors">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Conversations récentes
+                </h3>
+                <button
+                  onClick={handleCreateGroup}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                  title="Créer un groupe">
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className={`flex-1 overflow-y-auto overflow-x-hidden ${activeTab === 'friends' ? 'hidden' : ''}`}>
+              {sortedConversations.filter((conv) =>
+              conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+              ).map((conv) => {
+                const isPinned = pinnedConversations.includes(conv.id);
+                return (
+                    <div
+                      key={conv.id}
+                      onClick={() => {
+                        setSelectedConversation(conv.id);
+                        if (window.innerWidth < 1024) setShowLeftSidebar(false);
+                      }}
+                      className={`p-4 cursor-pointer transition-colors border-l-4 ${
+                    selectedConversation === conv.id ?
+                    'border-blue-500 dark:border-blue-400 bg-blue-50/30 dark:bg-blue-900/10' :
+                    isPinned ?
+                    'border-yellow-400 dark:border-yellow-500 conversation-pinned' :
+                    'border-transparent'}`
+                    }>
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-gray-100 dark:bg-slate-600 rounded-full flex items-center justify-center text-lg">
-                        {friend.avatar}
-                      </div>
-                      {friend.online && (
-                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                      )}
-                    </div>
+                        <div className="relative">
+                          {conv.type === 'group' ? (
+                            <div className="flex -space-x-2">
+                              {conv.members?.slice(0, 2).map((member: any, index: number) => (
+                                <RenderAvatar 
+                                  key={index} 
+                                  avatar={member.avatar} 
+                                  className="w-10 h-10 bg-gray-100 dark:bg-slate-700 border-2 border-white dark:border-slate-800" 
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <RenderAvatar 
+                              avatar={conv.avatar} 
+                              className="w-10 h-10 bg-gray-100 dark:bg-slate-700 relative" 
+                            />
+                          )}
+                        </div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white truncate">{friend.name}</h4>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          friend.online 
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                        }`}>
-                          {friend.online ? 'En ligne' : 'Hors ligne'}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{friend.role}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 truncate">{friend.email}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              
-              {friendsList.length === 0 && (
-                <div className="text-center text-gray-500 dark:text-gray-400 py-8">
-                  <UserPlus size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                  <p className="text-lg font-medium">Aucun ami pour le moment</p>
-                  <p className="text-sm">Ajoutez des amis pour commencer à discuter</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Colonne centrale - Zone de chat */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-slate-800 transition-colors">
-        {currentConversation && !deletedConversations.includes(currentConversation.id) ? (
-          <>
-            {/* Header de conversation */}
-            <div className="p-4 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {currentConversation.type === 'group' ? (
-                    <div className="flex -space-x-2">
-                      {currentConversation.members?.slice(0, 3).map((member, index) => (
-                        <div key={index} className="w-8 h-8 bg-gray-100 dark:bg-slate-600 rounded-full flex items-center justify-center text-sm border-2 border-white dark:border-slate-800">
-                          {member}
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-gray-900 dark:text-white truncate">{conv.name}</h4>
                         </div>
-                      ))}
+                        <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTogglePinFromList(conv.id);
+                            }}
+                            title={isPinned ? "Désépingler" : "Épingler"}
+                            className="p-1 rounded-full hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors">
+                          {isPinned ? <Pin size={16} className="text-yellow-600 dark:text-yellow-500" /> : <PinOff size={16} className="text-gray-400 dark:text-gray-500 hover:text-yellow-600 dark:hover:text-yellow-500" />}
+                        </button>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{conv.time}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{conv.lastMessage}</p>
                     </div>
-                  ) : (
-                    <div className="w-8 h-8 bg-gray-100 dark:bg-slate-600 rounded-full flex items-center justify-center text-lg relative">
-                      {currentConversation.avatar}
-                      {currentConversation.online && (
-                        <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white"></div>
-                      )}
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{currentConversation.name}</h3>
-                      {pinnedConversations.includes(currentConversation.id) && (
-                        <Pin size={16} className="text-yellow-600 dark:text-yellow-500" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {currentConversation.type === 'group' 
-                        ? `${currentConversation.members?.length} membres • 2 en ligne`
-                        : currentConversation.online ? 'En ligne' : 'Hors ligne'
-                      }
-                    </p>
+                    
+                    {conv.unread > 0 &&
+                      <div className="w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {conv.unread}
+                      </div>
+                    }
                   </div>
+                </div>);
+              })}
+              
+              {sortedConversations.filter((conv) =>
+              conv.name.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 &&
+              <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  <MessageCircle size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                  <p className="text-lg font-medium">Aucune conversation</p>
+                  <p className="text-sm">Commencez une nouvelle conversation</p>
+                </div>
+              }
+            </div>
+
+            <div className={`flex-1 overflow-y-auto overflow-x-hidden p-4 ${activeTab === 'messages' ? 'hidden' : ''}`}>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Mes amis ({friends.length})
+                  </h3>
+                  <button
+                    onClick={() => setShowAddFriendForm(true)}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                    title="Ajouter un ami">
+                    <UserPlus size={16} />
+                  </button>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  {/* Indicateur si la conversation est épinglée */}
-                  {pinnedConversations.includes(currentConversation.id) && (
-                    <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-1 rounded-full text-xs font-medium">
-                      <Pin size={12} />
-                      Épinglée
+                <div className="space-y-2">
+                  {friends.filter((friend) =>
+                  friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+                  ).map((friend) =>
+                    <div
+                      key={friend.id}
+                      onClick={() => {
+                        setSelectedConversation(friend.id);
+                        setActiveTab('messages');
+                        if (window.innerWidth < 1024) setShowLeftSidebar(false);
+                      }}
+                      className="p-3 cursor-pointer transition-colors rounded-lg border border-gray-100 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <RenderAvatar 
+                                avatar={friend.avatar} 
+                                className="w-10 h-10 bg-gray-100 dark:bg-slate-600" 
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-medium text-gray-900 dark:text-white truncate">{friend.name}</h4>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">{friend.email}</p>
+                          </div>
+                      </div>
                     </div>
                   )}
                   
+                  {friends.length === 0 &&
+                  <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                      <UserPlus size={48} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+                      <p className="text-lg font-medium">Aucun ami pour le moment</p>
+                      <p className="text-sm">Ajoutez des amis pour commencer à discuter</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-2">
+            <div className="transform -rotate-90 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap font-medium tracking-wider">
+              MESSAGERIE
+            </div>
+          </div>
+        )}
+      </div>
+
+        <div className={`flex-1 flex flex-col bg-white dark:bg-slate-800 transition-colors ${!selectedConversation ? 'hidden lg:flex' : 'flex'}`}>
+          {currentConversation && !deletedConversations.includes(currentConversation.id) ? (
+            <>
+              <div className="p-4 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowLeftSidebar(true);
+                        }}
+                        className="lg:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors relative"
+                        title="Conversations"
+                      >
+                        <MessageSquare size={24} />
+                        {totalUnreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 animate-pulse">
+                            {totalUnreadCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <div 
+                        className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50 p-1 rounded-xl transition-colors"
+                        onClick={() => currentConversation.type === 'group' && setShowGroupSettings(true)}
+                      >
+                        {currentConversation.type === 'group' ? (
+                          <div className="flex -space-x-2">
+                            {(currentConversation as any).members?.slice(0, 3).map((member: any, index: number) => (
+                              <RenderAvatar 
+                                key={index} 
+                                avatar={member.avatar} 
+                                className="w-8 h-8 bg-gray-100 dark:bg-slate-600 border-2 border-white dark:border-slate-800" 
+                                textClassName="text-xs"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <RenderAvatar 
+                            avatar={currentConversation.avatar} 
+                            className="w-8 h-8 bg-gray-100 dark:bg-slate-600 relative" 
+                            textClassName="text-sm"
+                          />
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{currentConversation.name}</h3>
+                          <div className="flex items-center gap-2">
+                            {currentConversation.type === 'group' && (
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{(currentConversation as any).members?.length} membres</span>
+                            )}
+                            {pinnedConversations.includes(currentConversation.id) &&
+                              <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full text-[10px] font-medium w-fit">
+                                <Pin size={10} /> Épinglée
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                
+                <div className="flex items-center gap-2">
                   <div className="relative">
-                    <button 
-                      onClick={() => setShowMoreOptions(!showMoreOptions)}
-                      className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                    >
+                    <button onClick={() => setShowMoreOptions(!showMoreOptions)} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors">
                       <MoreHorizontal size={20} />
                     </button>
-                    
-                    {/* Menu déroulant des options */}
                     {showMoreOptions && (
                       <div className="absolute right-0 top-12 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg py-2 w-48 z-10">
-                        {pinnedConversations.includes(currentConversation.id) ? (
-                          <button
-                            onClick={() => {
-                              handleTogglePin();
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-yellow-600 dark:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 flex items-center gap-2"
-                          >
-                            <PinOff size={16} />
-                            Désépingler
-                          </button>
-                        ) : (
-                          <button
-                            onClick={handleTogglePin}
-                            className="w-full px-4 py-2 text-left text-sm text-yellow-600 dark:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 flex items-center gap-2"
-                          >
-                            <Pin size={16} />
-                            Épingler
-                          </button>
-                        )}
-                        <button
-                          onClick={handleDeleteConversation}
-                          className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                        >
-                          <Trash2 size={16} />
-                          Supprimer
+                        <button onClick={handleTogglePin} className="w-full px-4 py-2 text-left text-sm text-yellow-600 dark:text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 flex items-center gap-2">
+                          {pinnedConversations.includes(currentConversation.id) ? <><PinOff size={16} /> Désépingler</> : <><Pin size={16} /> Épingler</>}
+                        </button>
+                        <button onClick={handleDeleteConversation} className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                          <Trash2 size={16} /> Supprimer
                         </button>
                       </div>
                     )}
@@ -777,27 +616,47 @@ const MessagingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {conversationMessages.map(message => (
-                <div key={message.id} className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex items-start gap-3 max-w-xs lg:max-w-md ${message.isOwn ? 'flex-row-reverse' : ''}`}>
-                    {!message.isOwn && (
-                      <div className="w-8 h-8 bg-gray-100 dark:bg-slate-600 rounded-full flex items-center justify-center text-sm">
-                        {message.avatar}
-                      </div>
-                    )}
-                    <div className={`px-4 py-2 rounded-2xl ${
-                      message.isOwn 
-                        ? 'bg-blue-500 dark:bg-blue-600 text-white rounded-br-md' 
-                        : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-md'
-                    }`}>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4">
+                {currentConversationMessages.map((message) => (
+                  <div key={message.id} className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex items-start gap-3 max-w-[85%] lg:max-w-md ${message.isOwn ? 'flex-row-reverse' : ''}`}>
                       {!message.isOwn && (
-                        <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">{message.sender}</div>
+                        <RenderAvatar 
+                          avatar={message.avatar} 
+                          className="w-8 h-8 bg-gray-100 dark:bg-slate-600" 
+                          textClassName="text-xs"
+                        />
                       )}
-                      <p className="text-sm">{message.content}</p>
-                      <div className={`text-xs mt-1 ${message.isOwn ? 'text-blue-100 dark:text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
-                        {message.time}
+                      <div className="flex flex-col gap-1">
+                      <div className={`px-4 py-2 rounded-2xl ${message.isOwn ? 'bg-blue-500 dark:bg-blue-600 text-white rounded-br-md' : 'bg-gray-100 dark:bg-slate-700 text-gray-900 dark:text-white rounded-bl-md'}`}>
+                        {!message.isOwn && <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">{message.sender}</div>}
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        
+                          {message.taskId && (
+                            <div 
+                              onClick={() => {
+                                const task = tasks.find(t => t.id === message.taskId);
+                                if (task) setSelectedTaskForModal(task);
+                              }}
+                              className={`mt-3 p-3 rounded-xl border cursor-pointer hover:shadow-md transition-all group/task ${message.isOwn ? 'bg-white/10 border-white/20 hover:bg-white/20' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-600 shadow-sm hover:border-blue-300 dark:hover:border-blue-700'}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg group-hover/task:scale-110 transition-transform">
+                                  <Check size={16} className="text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h5 className={`text-xs font-bold truncate ${message.isOwn ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                                    {tasks.find(t => t.id === message.taskId)?.name || 'Tâche partagée'}
+                                  </h5>
+                                  <p className={`text-[10px] ${message.isOwn ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'}`}>Cliquez pour voir les détails</p>
+                                </div>
+                              </div>
+                              <div className={`w-full mt-3 py-1.5 rounded-lg text-[10px] font-bold text-center transition-colors ${message.isOwn ? 'bg-white text-blue-600 group-hover/task:bg-blue-50' : 'bg-blue-500 text-white group-hover/task:bg-blue-600'}`}>
+                                Voir la tâche
+                              </div>
+                            </div>
+                          )}
+                        <div className={`text-[10px] mt-1 text-right ${message.isOwn ? 'text-blue-100 dark:text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>{message.time}</div>
                       </div>
                     </div>
                   </div>
@@ -805,7 +664,6 @@ const MessagingPage: React.FC = () => {
               ))}
             </div>
 
-            {/* Zone de saisie - Désactivée si conversation archivée */}
             <div className="p-4 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="flex-1 relative">
@@ -815,14 +673,9 @@ const MessagingPage: React.FC = () => {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder="Écrivez votre message..."
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-colors"
-                  />
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white transition-colors" />
                 </div>
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  className="p-3 bg-blue-500 dark:bg-blue-600 text-white rounded-xl hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button onClick={handleSendMessage} disabled={!newMessage.trim()} className="p-3 bg-blue-500 dark:bg-blue-600 text-white rounded-xl hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   <Send size={18} />
                 </button>
               </div>
@@ -832,295 +685,298 @@ const MessagingPage: React.FC = () => {
           <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-center">
               <MessageCircle size={64} className="mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-              <p className="text-xl">Sélectionnez une conversation</p>
+              <p className="text-xl font-medium">Sélectionnez une conversation</p>
               <p className="text-sm">Choisissez une conversation pour commencer à discuter</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Colonne droite - Gestion des amis */}
-      <div className={`${showRightSidebar ? 'w-80' : 'w-12'} bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col transition-all duration-300`}>
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between transition-colors">
-          {showRightSidebar && (
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Gestion des amis</h2>
-          )}
-          <button
-            onClick={() => setShowRightSidebar(!showRightSidebar)}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            title={showRightSidebar ? 'Fermer la sidebar' : 'Ouvrir la sidebar'}
-          >
+      {showRightSidebar && (
+        <div className="absolute inset-0 bg-black/50 z-40 lg:hidden animate-[fadeIn_0.2s_ease-out]" onClick={() => setShowRightSidebar(false)} />
+      )}
+      <div className={`${showRightSidebar ? 'absolute inset-y-0 right-0 z-50 w-full sm:w-80 shadow-2xl lg:relative lg:inset-auto lg:z-0 lg:shadow-none lg:w-80 animate-[slideInRight_0.3s_ease-out]' : 'hidden lg:flex lg:w-12'} bg-white dark:bg-slate-800 border-l border-gray-200 dark:border-slate-700 flex flex-col transition-all duration-300 overflow-x-hidden`}>
+        <div className={`${showRightSidebar ? 'p-4' : 'p-1 py-4'} border-b border-gray-200 dark:border-slate-700 flex items-center ${showRightSidebar ? 'justify-between' : 'justify-center'} transition-colors`}>
+          {showRightSidebar && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Gestion des amis</h2>}
+          <button onClick={() => setShowRightSidebar(!showRightSidebar)} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors relative">
             {showRightSidebar ? <X size={20} /> : <ChevronLeft size={20} />}
+            {!showRightSidebar && pendingRequests.length > 0 && <span className="absolute -top-1 right-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800">{pendingRequests.length}</span>}
           </button>
         </div>
 
         {showRightSidebar && (
           <>
-            {/* Demandes d'amis */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-700 transition-colors">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Demandes d'amis ({pendingRequests.length})</h3>
-              </div>
-              
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Demandes d'amis ({pendingRequests.length})</h3>
               <div className="space-y-3">
-                {pendingRequests.map(request => (
-                  <div key={request.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 transition-colors">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gray-100 dark:bg-slate-600 rounded-full flex items-center justify-center text-lg">
-                        {request.avatar}
+                  {pendingRequests.map((request) => {
+                    const sender = friends.find(f => f.id === request.senderId);
+                    return (
+                      <div key={request.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 transition-colors">
+                        <div className="flex items-center gap-3 mb-3">
+                          <RenderAvatar 
+                            avatar={sender?.avatar} 
+                            className="w-10 h-10 bg-gray-100 dark:bg-slate-600" 
+                          />
+                          <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white text-sm">{sender?.name || 'Inconnu'}</h4>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{sender?.email || request.senderId}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">{request.name}</h4>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">{request.role}</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleAcceptRequest(request.id)} className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors">Accepter</button>
+                        <button onClick={() => handleRejectRequest(request.id)} className="flex-1 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors">Refuser</button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleAcceptRequest(request.id)}
-                        className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
-                      >
-                        Accepter
-                      </button>
-                      <button
-                        onClick={() => handleRejectRequest(request.id)}
-                        className="flex-1 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors"
-                      >
-                        Refuser
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                
-                {pendingRequests.length === 0 && (
-                  <div className="text-center text-gray-500 dark:text-gray-400 py-4">
-                    <p className="text-sm">Aucune demande en attente</p>
-                  </div>
-                )}
+                  );
+                })}
+                {pendingRequests.length === 0 && <div className="text-center text-gray-500 dark:text-gray-400 py-4"><p className="text-sm">Aucune demande en attente</p></div>}
               </div>
             </div>
 
-            {/* Ajouter un ami */}
             <div className="p-4 border-b border-gray-200 dark:border-slate-700 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Ajouter un ami</h3>
-                <button
-                  onClick={() => setShowAddFriendForm(!showAddFriendForm)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                >
-                  <Plus size={16} />
-                </button>
+                <button onClick={() => setShowAddFriendForm(!showAddFriendForm)} className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 p-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"><Plus size={16} /></button>
               </div>
-              
               {showAddFriendForm && (
                 <div className="space-y-3">
                   <div className="relative">
                     <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                    <input
-                      type="text"
-                      value={searchFriend}
-                      onChange={(e) => setSearchFriend(e.target.value)}
-                      placeholder="Rechercher par nom ou email"
-                      className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-900 dark:text-white transition-colors"
-                    />
+                    <input type="text" value={searchFriend} onChange={(e) => setSearchFriend(e.target.value)} placeholder="Email de l'ami" className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-900 dark:text-white transition-colors" />
                   </div>
-                  <button
-                    onClick={handleSendFriendRequest}
-                    disabled={!searchFriend.trim()}
-                    className="w-full bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Envoyer une demande
-                  </button>
+                  <button onClick={handleSendFriendRequest} disabled={!searchFriend.trim()} className="w-full bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Envoyer une demande</button>
                 </div>
               )}
-            </div>
-
-            {/* Historique d'activité */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Historique d'activité</h3>
-                <div className="space-y-3">
-                  {activityHistory.map(activity => (
-                    <div key={activity.id} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors cursor-pointer">
-                      <div className="text-lg">{activity.icon}</div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </>
         )}
 
-        {/* Version compacte quand la sidebar est fermée */}
         {!showRightSidebar && (
           <div className="flex-1 flex flex-col items-center justify-center p-2">
-            <div className="transform -rotate-90 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-              Gestion des amis
-            </div>
+            <div className="transform -rotate-90 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap font-medium tracking-wider uppercase">Gestion des amis</div>
           </div>
         )}
       </div>
 
-      {/* Modal de création de groupe */}
       {showCreateGroupModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto transition-colors">
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transition-colors">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 dark:from-blue-900/10 to-purple-50/50 dark:to-purple-900/10">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Créer un nouveau groupe</h2>
-              <button 
-                onClick={() => setShowCreateGroupModal(false)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-1 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
+              <button onClick={() => setShowCreateGroupModal(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors"><X size={20} /></button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Nom du groupe */}
+            <div className="p-6 space-y-6 overflow-y-auto">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  👥 Nom du groupe *
-                </label>
-                <input
-                  type="text"
-                  value={groupName}
-                  onChange={(e) => setGroupName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-colors"
-                  placeholder="Ex: Équipe Projet, Amis Proches..."
-                  required
-                />
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nom du groupe</label>
+                <input type="text" value={groupName} onChange={(e) => setGroupName(e.target.value)} className="w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-colors" placeholder="Ex: Équipe Design, Projet X..." required />
               </div>
 
-              {/* Sélection des amis */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                  👤 Sélectionner les membres ({selectedFriendsForGroup.length} sélectionné{selectedFriendsForGroup.length !== 1 ? 's' : ''})
-                </label>
-                
-                {/* Barre de recherche pour les amis */}
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Sélectionner les membres ({selectedFriendsForGroup.length})</label>
                 <div className="relative mb-4">
                   <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
-                  <input
-                    type="text"
-                    value={searchFriend}
-                    onChange={(e) => setSearchFriend(e.target.value)}
-                    placeholder="Rechercher un ami par nom ou email..."
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-colors"
-                  />
+                  <input type="text" value={searchFriend} onChange={(e) => setSearchFriend(e.target.value)} placeholder="Rechercher un ami..." className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-colors" />
                 </div>
-                
-                <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-4 border border-gray-200 dark:border-slate-600 max-h-64 overflow-y-auto transition-colors">
-                  <div className="space-y-3">
-                    {friendsList.filter(friend => 
-                      friend.name.toLowerCase().includes(searchFriend.toLowerCase()) ||
-                      friend.email.toLowerCase().includes(searchFriend.toLowerCase())
-                    ).map(friend => (
-                      <div 
-                        key={friend.id}
-                        className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                          selectedFriendsForGroup.includes(friend.id)
-                            ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
-                        }`}
-                        onClick={() => toggleFriendSelection(friend.id)}
-                      >
+                  <div className="bg-gray-50 dark:bg-slate-900/50 rounded-2xl p-4 border border-gray-200 dark:border-slate-700 max-h-60 overflow-y-auto space-y-2">
+                    {friends.filter(f => f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())).map((friend) => (
+                      <div key={friend.id} onClick={() => toggleFriendSelection(friend.id)} className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all cursor-pointer ${selectedFriendsForGroup.includes(friend.id) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent bg-white dark:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-700'}`}>
                         <div className="flex items-center gap-3">
-                          <div className="text-2xl">{friend.avatar}</div>
+                          <RenderAvatar 
+                            avatar={friend.avatar} 
+                            className="w-10 h-10 bg-gray-100 dark:bg-slate-700" 
+                          />
                           <div>
-                            <div className="font-medium text-gray-900">{friend.name}</div>
-                            <div className="text-sm text-gray-600">{friend.email}</div>
+                            <div className="font-semibold text-gray-900 dark:text-white">{friend.name}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">{friend.email}</div>
                           </div>
                         </div>
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          selectedFriendsForGroup.includes(friend.id)
-                            ? 'border-blue-500 bg-blue-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {selectedFriendsForGroup.includes(friend.id) && (
-                            <Check size={14} className="text-white" />
-                          )}
-                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${selectedFriendsForGroup.includes(friend.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300 dark:border-slate-600'}`}>{selectedFriendsForGroup.includes(friend.id) && <Check size={14} className="text-white" />}</div>
                       </div>
                     ))}
-                    
-                    {/* Message si aucun ami trouvé */}
-                    {friendsList.filter(friend => 
-                      friend.name.toLowerCase().includes(searchFriend.toLowerCase()) ||
-                      friend.email.toLowerCase().includes(searchFriend.toLowerCase())
-                    ).length === 0 && searchFriend.trim() && (
-                      <div className="text-center text-gray-500 py-4">
-                        <p className="text-sm">Aucun ami trouvé pour "{searchFriend}"</p>
-                      </div>
-                    )}
                   </div>
-                </div>
               </div>
 
-              {/* Membres sélectionnés */}
               {selectedFriendsForGroup.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                    ✅ Membres sélectionnés
-                  </h4>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Membres sélectionnés</h4>
                   <div className="flex flex-wrap gap-2">
-                    {selectedFriendsForGroup.map(friendId => {
-                      const friend = friendsList.find(f => f.id === friendId);
-                      return friend ? (
-                        <div 
-                          key={friendId}
-                          className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-                        >
-                          <span>{friend.avatar}</span>
-                          <span>{friend.name}</span>
-                          <button
-                            onClick={() => toggleFriendSelection(friendId)}
-                            className="text-blue-600 hover:text-blue-800"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : null;
-                    })}
+                      {selectedFriendsForGroup.map((id) => {
+                        const friend = friends.find(f => f.id === id);
+                        return friend ? (
+                          <div key={id} className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm">
+                            <RenderAvatar 
+                              avatar={friend.avatar} 
+                              className="w-5 h-5" 
+                              textClassName="text-[10px]"
+                            /> 
+                            <span>{friend.name}</span>
+                            <button onClick={() => toggleFriendSelection(id)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400"><X size={14} /></button>
+                          </div>
+                        ) : null;
+                      })}
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Actions */}
-              <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setShowCreateGroupModal(false)}
-                  className="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={handleCreateGroupSubmit}
-                  disabled={!groupName.trim() || selectedFriendsForGroup.length === 0}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Users size={16} className="inline mr-2" />
-                  Créer le groupe
-                </button>
-              </div>
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-slate-700">
+              <button onClick={() => setShowCreateGroupModal(false)} className="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-xl font-semibold transition-colors">Annuler</button>
+              <button onClick={handleCreateGroupSubmit} disabled={!groupName.trim() || selectedFriendsForGroup.length === 0} className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 shadow-lg shadow-blue-500/20">Créer le groupe</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Overlay pour fermer les menus déroulants */}
       {(showMoreOptions || showEmojiPicker || showCreateGroupModal) && (
-        <div 
-          className="fixed inset-0 z-0" 
-          onClick={() => {
-            setShowMoreOptions(false);
-            setShowEmojiPicker(false);
-            setShowCreateGroupModal(false);
-          }}
+        <div className="absolute inset-0 z-0" onClick={() => { setShowMoreOptions(false); setShowEmojiPicker(false); setShowCreateGroupModal(false); }} />
+      )}
+
+      {selectedTaskForModal && (
+        <TaskModal 
+          task={selectedTaskForModal} 
+          isOpen={!!selectedTaskForModal} 
+          onClose={() => setSelectedTaskForModal(null)} 
         />
+      )}
+
+      {showGroupSettings && currentConversation?.type === 'group' && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col transition-colors"
+          >
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 dark:from-blue-900/10 to-purple-50/50 dark:to-purple-900/10">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Gérer le groupe</h2>
+              <button onClick={() => setShowGroupSettings(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors"><X size={20} /></button>
+            </div>
+
+            <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                  <Users size={16} /> Membres actuels ({(currentConversation as any).members.length})
+                </h3>
+                <div className="space-y-3">
+                    {(currentConversation as any).members.map((member: any) => (
+                      <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900/50 rounded-xl border border-gray-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3">
+                          <RenderAvatar 
+                            avatar={member.avatar} 
+                            className="w-10 h-10 bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700" 
+                            textClassName="text-xl"
+                          />
+                          <div>
+                          <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            {member.name}
+                            {member.id === (currentConversation as any).ownerId && (
+                              <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Chef</span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-gray-500 dark:text-gray-400">{member.id === user.id ? 'Vous' : 'Membre'}</div>
+                        </div>
+                      </div>
+                      
+                      {user.id === (currentConversation as any).ownerId && member.id !== user.id && (
+                        <button 
+                          onClick={() => {
+                            if (window.confirm(`Voulez-vous vraiment retirer ${member.name} du groupe ?`)) {
+                              setGroupConversations(prev => prev.map(c => {
+                                if (c.id === currentConversation.id) {
+                                  return {
+                                    ...c,
+                                    members: (c as any).members.filter((m: any) => m.id !== member.id)
+                                  };
+                                }
+                                return c;
+                              }));
+                            }
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Retirer du groupe"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                  <UserPlus size={16} /> Ajouter des membres
+                </h3>
+                <div className="relative mb-4">
+                  <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                  <input 
+                    type="text" 
+                    value={searchFriend} 
+                    onChange={(e) => setSearchFriend(e.target.value)} 
+                    placeholder="Rechercher parmi vos amis..." 
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white transition-colors" 
+                  />
+                </div>
+                
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {friends
+                    .filter(f => 
+                      (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
+                      !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                    )
+                    .map((friend) => (
+                        <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
+                          <div className="flex items-center gap-3">
+                            <RenderAvatar 
+                              avatar={friend.avatar} 
+                              className="w-8 h-8 bg-gray-100 dark:bg-slate-700" 
+                              textClassName="text-sm"
+                            />
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">{friend.name}</div>
+                          </div>
+                        <button 
+                          onClick={() => {
+                            setGroupConversations(prev => prev.map(c => {
+                              if (c.id === currentConversation.id) {
+                                return {
+                                  ...c,
+                                  members: [...(c as any).members, { id: friend.id, name: friend.name, avatar: friend.avatar }]
+                                };
+                              }
+                              return c;
+                            }));
+                            setSearchFriend('');
+                          }}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
+                          <Plus size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  
+                  {friends.filter(f => 
+                    (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
+                    !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                  ).length === 0 && (
+                    <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400 italic">
+                      Aucun autre ami trouvé
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 dark:border-slate-700 flex justify-end">
+              <button 
+                onClick={() => setShowGroupSettings(false)} 
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-colors shadow-lg shadow-blue-500/25"
+              >
+                Terminer
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );
