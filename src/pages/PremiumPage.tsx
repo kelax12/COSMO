@@ -1,12 +1,35 @@
-import React, { useState } from 'react';
-import { Crown, Zap, Play, Check, Star, Users, MessageCircle, BarChart3 } from 'lucide-react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Crown, Zap, Play, Check, Star, Users, MessageCircle, Sparkles } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import AdModal from '../components/AdModal';
 import PaymentModal from '../components/PaymentModal';
 
-const PremiumPage: React.FC = () => {
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.25, 0.46, 0.45, 0.94]
+    }
+  }
+};
+
+export function PremiumPage() {
   const { user, isPremium, watchAd, updateUserSettings } = useTasks();
-  const [showSubscription, setShowSubscription] = useState(false);
   const [showAdModal, setShowAdModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -14,52 +37,28 @@ const PremiumPage: React.FC = () => {
 
   const premium = isPremium();
 
-  const features = [
-  {
-    icon: Users,
-    title: 'Collaboration',
-    description: 'Partagez vos tâches avec votre équipe',
-    premium: true
-  },
-  {
-    icon: MessageCircle,
-    title: 'Messagerie',
-    description: 'Communiquez directement avec vos collaborateurs',
-    premium: true
-  },
-  {
-    icon: BarChart3,
-    title: 'Historique des interactions',
-    description: 'Suivez toutes vos collaborations',
-    premium: true
-  },
-  {
-    icon: Star,
-    title: 'Fonctionnalités avancées',
-    description: 'Accès à toutes les fonctionnalités premium',
-    premium: true
-  }];
-
-
-  const handleSubscribe = () => {
-    setShowSubscription(false);
-    setShowPaymentModal(true);
-  };
+    const features = [
+      {
+        icon: Users,
+        title: 'Collaboration',
+        description: 'Partagez vos tâches avec votre équipe',
+      },
+      {
+        icon: MessageCircle,
+        title: 'Messagerie',
+        description: 'Communiquez directement avec vos collaborateurs',
+      }
+    ];
 
   const handlePaymentSuccess = () => {
-    // Traitement après paiement réussi
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + 1);
 
     updateUserSettings({
       subscriptionEndDate: endDate.toISOString(),
       premiumWinStreak: user.premiumWinStreak + 1,
-      premiumTokens: user.premiumTokens + 30 // Bonus de jetons pour l'abonnement
+      premiumTokens: user.premiumTokens + 30
     });
-  };
-
-  const handleWatchAd = () => {
-    setShowAdModal(true);
   };
 
   const handleAdComplete = () => {
@@ -68,255 +67,402 @@ const PremiumPage: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-3 mb-4">
-          <div className="p-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl">
-            <Crown size={32} className="text-white" />
-          </div>
-          <h1 className="text-4xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Cosmo Premium</h1>
-        </div>
-        <p className="text-xl" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Débloquez tout le potentiel de votre productivité
-        </p>
-      </div>
+    <div className="p-4 sm:p-8 h-fit font-sans">
+      <motion.div
+        className="relative z-10 max-w-5xl mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+            <motion.div
+              className="inline-flex items-center gap-3 mb-4"
+              whileHover={{ scale: 1.02 }}
+            >
+              <motion.div
+                className="p-4 bg-[rgb(var(--color-accent))] rounded-2xl shadow-xl shadow-[rgb(var(--color-accent)/0.3)]"
+              >
+                <Crown size={32} className="text-white" />
+              </motion.div>
+              <h1 className="text-3xl sm:text-5xl font-bold text-[rgb(var(--color-text-primary))]">
+                Cosmo Premium
+              </h1>
+            </motion.div>
+          <p className="text-lg sm:text-xl text-slate-600 dark:text-blue-200/80 mb-12">
+            Débloquez tout le potentiel de votre productivité
+          </p>
 
-      {/* Statut actuel */}
-      <div className="card p-8 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {premium ? '✨ Vous êtes Premium !' : '🔒 Version Gratuite'}
-            </h2>
-            <div className="space-y-2">
-              <div className="flex items-center gap-4">
-                <span style={{ color: 'rgb(var(--color-text-secondary))' }}>Jetons Premium:</span>
-                <div className="flex items-center gap-2">
-                  <Zap size={20} className="text-yellow-500" />
-                  <span className="font-bold text-2xl text-blue-600 dark:text-blue-400">{user.premiumTokens}</span>
+          <motion.div
+            className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 shadow-sm"
+            variants={itemVariants}
+          >
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-3 flex items-center gap-2">
+                {premium ? (
+                  <>
+                    <Sparkles className="w-6 h-6 text-[rgb(var(--color-accent))]" />
+                    Vous êtes Premium !
+                  </>
+                ) : (
+                  <>
+                    <span className="text-[rgb(var(--color-text-muted))]">🔒</span>
+                    Version Gratuite
+                  </>
+                )}
+              </h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Jetons Premium:</span>
+                  <div className="flex items-center gap-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-400/30">
+                    <Zap size={18} className="text-amber-500" />
+                    <span className="font-bold text-xl text-amber-600 dark:text-amber-300">{user.premiumTokens}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <span style={{ color: 'rgb(var(--color-text-secondary))' }}>Win Streak:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🔥</span>
-                  <span className="font-bold text-2xl text-orange-600">{user.premiumWinStreak}</span>
-                  <span style={{ color: 'rgb(var(--color-text-muted))' }}>jours</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-[rgb(var(--color-text-secondary))] text-sm font-medium">Win Streak:</span>
+                  <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-400/30">
+                    <span className="text-lg">🔥</span>
+                    <span className="font-bold text-xl text-orange-600 dark:text-orange-300">{user.premiumWinStreak}</span>
+                    <span className="text-orange-500 dark:text-orange-400/70 text-sm font-medium">jours</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-right">
-            {premium ?
-            <div className="text-lg px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold shadow-lg">
-                ✨ PREMIUM ACTIF
-              </div> :
-
-            <button
-              onClick={() => setShowSubscription(true)}
-              className="btn-primary text-lg px-8 py-4">
-
-                <Crown size={24} />
-                <span>Passer Premium</span>
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-
-      {/* Gagner des jetons */}
-      <div className="card p-6 mb-8">
-        <h3 className="text-xl font-bold mb-4 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-primary))' }}> Gagner des jetons Premium</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-2xl border border-green-200 dark:border-green-700">
-            <div className="flex items-center gap-3 mb-4">
-              <Play size={24} className="text-green-600 dark:text-green-400" />
-              <h4 className="font-bold text-green-800 dark:text-green-200">Regarder une publicité</h4>
-            </div>
-            <p className="text-green-700 dark:text-green-300 mb-4 !whitespace-pre-line">Regardez une courte vidéo publicitaire pour gagner 1 jeton Premium.
-
-            </p>
-            <div className="text-center mb-4">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">+1</div>
-              <div className="text-sm text-green-600 dark:text-green-400">jeton Premium</div>
-            </div>
-            <button
-              onClick={handleWatchAd}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
-
-              <Play size={20} />
-              <span>Regarder pub (+1 jeton)</span>
-            </button>
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-2xl border border-blue-200 dark:border-blue-700">
-            <div className="flex items-center gap-3 mb-4">
-              <Crown size={24} className="text-blue-600 dark:text-blue-400" />
-              <h4 className="font-bold text-blue-800 dark:text-blue-200">Abonnement mensuel</h4>
-            </div>
-            <p className="text-blue-700 dark:text-blue-300 mb-4 !whitespace-pre-line">Souscrivez à l'abonnement Premium pour 30 jours de statut Premium.
-
-            </p>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">3,50€</div>
-              <div className="text-sm text-blue-600 dark:text-blue-400">par mois</div>
-            </div>
-            <button
-              onClick={() => setShowPaymentModal(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 mt-4">
-
-              <Crown size={20} />
-              <span>S'abonner maintenant</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Fonctionnalités Premium */}
-      <div className="card p-6 mb-8">
-        <h3 className="text-xl font-bold mb-6 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-primary))' }}> Fonctionnalités Premium</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {features.map((feature, index) =>
-          <div
-            key={index}
-            className={`p-6 rounded-2xl border-2 transition-colors ${
-            premium ?
-            'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' :
-            'border-gray-200 dark:border-gray-700'}`
-            }
-            style={{
-              backgroundColor: premium ?
-              undefined :
-              'rgb(var(--color-hover))'
-            }}>
-
-              <div className="flex items-center gap-4 mb-3">
-                <div className={`p-3 rounded-xl transition-colors ${
-              premium ? 'bg-green-100 dark:bg-green-800' : 'bg-gray-100 dark:bg-gray-700'}`
-              }>
-                  <feature.icon size={24} className={
-                premium ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
-                } />
-                </div>
-                <div>
-                  <h4 className="font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{feature.title}</h4>
-                  {premium && <Check size={20} className="text-green-500" />}
-                </div>
-              </div>
-              <p style={{ color: 'rgb(var(--color-text-secondary))' }}>{feature.description}</p>
-              {!premium &&
-            <div className="mt-3 text-sm text-orange-600 dark:text-orange-400 font-bold">
-                  🔒 Premium requis
-                </div>
-            }
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Comment ça marche */}
-      <div className="card p-6">
-        <h3 className="text-xl font-bold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>❓ Comment ça marche</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors">
-              <span className="text-2xl">1️⃣</span>
-            </div>
-            <h4 className="font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Gagnez des jetons</h4>
-            <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Regardez des pubs ou souscrivez à l'abonnement pour obtenir des jetons Premium
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors">
-              <span className="text-2xl">2️⃣</span>
-            </div>
-            <h4 className="font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Consommation automatique</h4>
-            <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              1 jeton est consommé automatiquement chaque jour pour maintenir votre statut Premium
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors">
-              <span className="text-2xl">3️⃣</span>
-            </div>
-            <h4 className="font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>Profitez des avantages</h4>
-            <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Accédez à toutes les fonctionnalités Premium tant que vous avez des jetons
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal d'abonnement */}
-      {showSubscription &&
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="rounded-xl shadow-2xl w-full max-w-md p-8 transition-colors" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
-            <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              Abonnement Premium
-            </h2>
-            
-            <div className="text-center mb-6">
-              <div className="text-5xl font-bold text-blue-600 dark:text-blue-400 mb-2">3,50€</div>
-              <div style={{ color: 'rgb(var(--color-text-secondary))' }}>par mois</div>
-            </div>
-            
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-3">
-                <Check size={20} className="text-green-500" />
-                <span style={{ color: 'rgb(var(--color-text-primary))' }}>30 jours de Premium garanti</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check size={20} className="text-green-500" />
-                <span style={{ color: 'rgb(var(--color-text-primary))' }}>Toutes les fonctionnalités débloquées</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check size={20} className="text-green-500" />
-                <span style={{ color: 'rgb(var(--color-text-primary))' }}>Pas de publicités</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check size={20} className="text-green-500" />
-                <span style={{ color: 'rgb(var(--color-text-primary))' }}>Support prioritaire</span>
               </div>
             </div>
             
-            <div className="flex gap-3">
-              <button
-              onClick={() => setShowSubscription(false)}
-              className="flex-1 btn-secondary">
-
-                Annuler
-              </button>
-              <button
-              onClick={handleSubscribe}
-              className="flex-1 btn-primary">
-
-                S'abonner
-              </button>
+            <div className="w-full sm:w-auto">
+              {premium ? (
+                        <motion.div
+                          className="text-center px-6 py-3 bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl font-black border-2 relative overflow-hidden"
+                          style={{
+                            borderColor: 'rgba(59, 130, 246, 0.8)',
+                          }}
+                          animate={{
+                            boxShadow: [
+                              "0 0 20px 2px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2)",
+                              "0 0 50px 15px rgba(37, 99, 235, 0.9), inset 0 0 25px rgba(37, 99, 235, 0.5)",
+                              "0 0 30px 5px rgba(147, 197, 253, 0.7), inset 0 0 15px rgba(147, 197, 253, 0.3)",
+                              "0 0 20px 2px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2)"
+                            ],
+                            borderColor: [
+                              "rgba(59, 130, 246, 0.6)",
+                              "rgba(147, 197, 253, 1)",
+                              "rgba(37, 99, 235, 1)",
+                              "rgba(96, 165, 250, 0.8)",
+                              "rgba(59, 130, 246, 0.6)"
+                            ],
+                            borderRadius: [
+                              "12px 12px 12px 12px",
+                              "18px 30px 14px 22px",
+                              "14px 22px 30px 18px",
+                              "25px 15px 22px 12px",
+                              "12px 12px 12px 12px"
+                            ],
+                            scale: [1, 1.04, 0.98, 1.04, 1],
+                            rotate: [0, 1, -1, 0.5, 0],
+                            skewY: [0, 2, -2, 1, 0],
+                            filter: [
+                              "drop-shadow(0 0 5px rgba(59, 130, 246, 0.5))",
+                              "drop-shadow(0 0 15px rgba(37, 99, 235, 0.8))",
+                              "drop-shadow(0 0 5px rgba(59, 130, 246, 0.5))"
+                            ]
+                          }}
+                          transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            times: [0, 0.25, 0.5, 0.75, 1]
+                          }}
+                          whileHover={{ scale: 1.1, transition: { duration: 0.2 } }}
+                        >
+                  <span className="flex items-center gap-2 justify-center">
+                    <Sparkles className="w-5 h-5" />
+                    PREMIUM ACTIF
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="w-full sm:w-auto px-8 py-4 bg-[rgb(var(--color-accent))] text-white rounded-xl font-bold text-lg shadow-lg shadow-[rgb(var(--color-accent)/0.3)] flex items-center gap-3 justify-center"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Crown size={24} />
+                  <span>Passer Premium</span>
+                </motion.button>
+              )}
             </div>
           </div>
-        </div>
-      }
+        </motion.div>
 
-      {/* Modal de publicité */}
-      <AdModal
-        isOpen={showAdModal}
+        <motion.div
+          className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-6 sm:mb-8 shadow-sm"
+          variants={itemVariants}
+        >
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-500" />
+            Gagner des jetons Premium
+          </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <motion.div
+                    className="relative overflow-hidden bg-emerald-500/10 p-6 rounded-2xl border border-emerald-500/30"
+                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(16, 185, 129, 0.15)' }}
+                  >
+                    <div className="relative">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-emerald-500/20 rounded-xl">
+                          <Play size={24} className="text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <h4 className="font-bold text-emerald-700 dark:text-emerald-300">Regarder une publicité</h4>
+                      </div>
+                      <p className="text-emerald-600 dark:text-emerald-400/80 mb-4 text-sm font-medium">
+                        Regardez une courte vidéo pour gagner 1 jeton Premium.
+                      </p>
+                      <div className="text-center mb-4">
+                        <div className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mb-1">+1</div>
+                        <div className="text-sm text-emerald-500">jeton Premium</div>
+                      </div>
+                        <motion.button
+                          onClick={() => setShowAdModal(true)}
+                          className="w-full bg-emerald-600 text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                        <Play size={20} />
+                        <span>Regarder pub (+1 jeton)</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                
+                <motion.div
+                    className="relative overflow-hidden bg-[rgb(var(--color-accent)/0.1)] p-6 rounded-2xl border border-[rgb(var(--color-accent)/0.3)]"
+                    whileHover={{ scale: 1.02, backgroundColor: 'rgb(var(--color-accent)/0.15)' }}
+                  >
+                    <div className="relative">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-[rgb(var(--color-accent)/0.2)] rounded-xl">
+                          <Crown size={24} className="text-[rgb(var(--color-accent))]" />
+                        </div>
+                        <h4 className="font-bold text-[rgb(var(--color-text-primary))]">Abonnement mensuel</h4>
+                      </div>
+                      <p className="text-[rgb(var(--color-text-secondary))] mb-4 text-sm font-medium">
+                        Souscrivez pour 30 jours de statut Premium complet.
+                      </p>
+                      <div className="text-center mb-4">
+                        <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">3,50€</div>
+                        <div className="text-sm text-[rgb(var(--color-text-secondary))]">par mois</div>
+                      </div>
+                        <motion.button
+                          onClick={() => setShowPaymentModal(true)}
+                          className="w-full bg-[rgb(var(--color-accent))] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-[rgb(var(--color-accent)/0.2)]"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                        <Crown size={20} />
+                        <span>S'abonner maintenant</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+            </div>
+        </motion.div>
+
+        <motion.div
+          className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-3xl p-6 sm:p-8 mb-8 shadow-sm"
+          variants={itemVariants}
+        >
+          <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6 flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500" />
+            Fonctionnalités Premium
+          </h3>
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            variants={containerVariants}
+          >
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                      className={`p-5 rounded-2xl border transition-all ${
+                        premium
+                          ? 'bg-emerald-500/10 border-emerald-500/30'
+                          : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))]'
+                      }`}
+                      variants={itemVariants}
+                      whileHover={{
+                        scale: 1.02,
+                        borderColor: premium ? '#10b981' : 'rgb(var(--color-accent))'
+                      }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`p-3 rounded-xl ${
+                        premium
+                          ? 'bg-emerald-500/20'
+                          : 'bg-[rgb(var(--color-accent)/0.1)]'
+                      }`}>
+                        <feature.icon size={24} className={
+                          premium ? 'text-emerald-600 dark:text-emerald-400' : 'text-[rgb(var(--color-accent))]'
+                        } />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{feature.title}</h4>
+                          {premium && <Check size={18} className="text-emerald-600 dark:text-emerald-400" />}
+                        </div>
+                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{feature.description}</p>
+                        {!premium && (
+                          <div className="mt-2 text-xs font-bold text-amber-600">
+                            🔒 Premium requis
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.div>
+            
+            <motion.div
+              className="mt-12 backdrop-blur-2xl bg-white/40 dark:bg-white/[0.06] border border-slate-200 dark:border-white/20 rounded-[2.5rem] p-8 sm:p-12 shadow-xl dark:shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] relative overflow-hidden group/section"
+            variants={itemVariants}
+          >
+          <div className="relative">
+              <motion.div 
+                className="flex flex-col items-center mb-16"
+                variants={itemVariants}
+              >
+                <motion.div
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Sparkles className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                  <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Guide Étape par Étape</span>
+                </motion.div>
+                <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white text-center tracking-tight leading-tight">
+                  Comment ça <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-600 dark:from-blue-400 dark:to-sky-400">marche</span> ?
+                </h3>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-16 relative">
+                  {/* Animated Desktop Connector Line */}
+                  <div className="hidden md:block absolute top-[100px] left-[10%] right-[10%] h-[2px] overflow-hidden z-0">
+                    <div className="absolute inset-0 bg-slate-200 dark:bg-white/5" />
+                    <motion.div 
+                      className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent blur-sm"
+                      animate={{
+                        left: ['-100%', '200%']
+                      }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  </div>
+
+                  {[
+                              { 
+                                icon: Play, 
+                                title: 'Accumulez', 
+                                desc: 'Regardez des pubs ou souscrivez pour obtenir des jetons Premium', 
+                                  color: 'from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600',
+                                  glow: 'group-hover:shadow-emerald-500/40',
+                                    iconColor: 'text-emerald-50',
+                                            bgBase: 'bg-emerald-100/80 dark:bg-emerald-500/40',
+                                            bgHover: 'hover:bg-emerald-200/95 dark:hover:bg-emerald-500/60',
+                                            borderColor: 'border-emerald-200 dark:border-emerald-500/40',
+                                        borderHover: 'hover:border-emerald-400 dark:hover:border-emerald-400'
+                                      },
+                                      { 
+                                        icon: Zap, 
+                                        title: 'Activation', 
+                                        desc: '1 jeton est consommé chaque jour pour maintenir votre statut Premium', 
+                                        color: 'from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600',
+                                        glow: 'group-hover:shadow-blue-500/40',
+                                          iconColor: 'text-blue-50',
+                                            bgBase: 'bg-blue-100/80 dark:bg-blue-500/40',
+                                            bgHover: 'hover:bg-blue-200/95 dark:hover:bg-blue-500/60',
+                                            borderColor: 'border-blue-200 dark:border-blue-500/40',
+                                        borderHover: 'hover:border-blue-400 dark:hover:border-blue-400'
+                                      },
+                                      { 
+                                        icon: Crown, 
+                                        title: 'Liberté', 
+                                        desc: 'Accédez à toutes les fonctionnalités Premium tant que vous avez des jetons', 
+                                        color: 'from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600',
+                                        glow: 'group-hover:shadow-purple-500/40',
+                                          iconColor: 'text-purple-50',
+                                            bgBase: 'bg-purple-100/80 dark:bg-purple-500/40',
+                                            bgHover: 'hover:bg-purple-200/95 dark:hover:bg-purple-500/60',
+                                            borderColor: 'border-purple-200 dark:border-purple-500/40',
+                                        borderHover: 'hover:border-purple-400 dark:hover:border-purple-400'
+                                      },
+
+                    ].map((item, i) => (
+                          <motion.div
+                            key={i}
+                            className={`relative group backdrop-blur-xl ${item.bgBase} ${item.borderColor} border rounded-[2.5rem] p-8 ${item.bgHover} ${item.borderHover} transition-all duration-500 shadow-lg hover:shadow-xl`}
+
+                      variants={itemVariants}
+                  >
+                    <div className="flex flex-col items-center text-center relative z-10">
+                      <motion.div
+                        className={`w-28 h-28 bg-gradient-to-br ${item.color} rounded-[2rem] flex items-center justify-center mb-8 border border-white/10 shadow-2xl relative z-10 transition-all duration-500 ${item.glow}`}
+                        animate={{
+                          y: [0, -8, 0],
+                        }}
+                          transition={{
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: i * 0.5
+                          }}
+                        >
+                          <item.icon size={44} className={`${item.iconColor} filter drop-shadow-[0_0_8px_currentColor]`} />
+                          
+                          {/* Step Number Badge */}
+                          <motion.div 
+                            className="absolute -top-4 -right-4 w-12 h-12 bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-white/20 rounded-2xl flex items-center justify-center text-xl font-black text-slate-900 dark:text-white shadow-2xl"
+                          >
+                            {i + 1}
+                          </motion.div>
+  
+                          {/* Animated Rings */}
+                          <motion.div 
+                            className="absolute inset-0 border border-white/20 rounded-[2rem]"
+                            animate={{ scale: [1, 1.4], opacity: [0.5, 0] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: i * 0.7 }}
+                          />
+                        </motion.div>
+                        
+                        <motion.h4 
+                          className="font-black text-slate-900 dark:text-white text-2xl mb-4 tracking-tight transition-transform duration-300"
+                        >
+                          {item.title}
+                        </motion.h4>
+                          <p className="text-base text-slate-600 dark:text-blue-50 leading-relaxed font-medium">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        <AdModal
+          isOpen={showAdModal}
         onClose={() => setShowAdModal(false)}
-        onAdComplete={handleAdComplete} />
+        onAdComplete={handleAdComplete}
+      />
 
-
-      {/* Modal de paiement */}
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onPaymentSuccess={handlePaymentSuccess} />
-
-    </div>);
-
-};
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+    </div>
+  );
+}
 
 export default PremiumPage;
