@@ -340,7 +340,7 @@ const EventModal: React.FC<EventModalProps> = ({
             </div>
 
             <div
-              className="p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5 transition-colors"
+              className="p-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-950/40 transition-colors shadow-inner"
             >
               <div className="grid grid-cols-1 gap-4">
                 <div className="group">
@@ -390,11 +390,11 @@ const EventModal: React.FC<EventModalProps> = ({
                             e.target.value
                           )
                         }
-                        className={`w-full px-3 py-2.5 h-11 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:border-blue-400 dark:bg-slate-800 dark:text-white ${
-                          isPrefilledMode && prefilledFields.has("startTime")
-                            ? "border-blue-300 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10"
-                            : "border-gray-200 dark:border-white/10 bg-white"
-                        }`}
+                          className={`w-full px-3 py-2.5 h-11 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:border-blue-400 dark:bg-slate-900/50 dark:text-white ${
+                            isPrefilledMode && prefilledFields.has("startTime")
+                              ? "border-blue-300 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/20"
+                              : "border-gray-200 dark:border-white/10 bg-white"
+                          }`}
                         required
                       />
                     </div>
@@ -448,11 +448,11 @@ const EventModal: React.FC<EventModalProps> = ({
                             e.target.value
                           )
                         }
-                        className={`w-full px-3 py-2.5 h-11 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:border-blue-400 dark:bg-slate-800 dark:text-white ${
-                          isPrefilledMode && prefilledFields.has("endTime")
-                            ? "border-blue-300 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10"
-                            : "border-gray-200 dark:border-white/10 bg-white"
-                        }`}
+                          className={`w-full px-3 py-2.5 h-11 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:border-blue-400 dark:bg-slate-900/50 dark:text-white ${
+                            isPrefilledMode && prefilledFields.has("endTime")
+                              ? "border-blue-300 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/20"
+                              : "border-gray-200 dark:border-white/10 bg-white"
+                          }`}
                         required
                       />
                     </div>
@@ -756,3 +756,4 @@ const EventModal: React.FC<EventModalProps> = ({
 };
 
 export default EventModal;
+
