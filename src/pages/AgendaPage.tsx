@@ -14,13 +14,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 const AgendaPage: React.FC = () => {
   const { events, addEvent, deleteEvent, updateEvent, categories } = useTasks();
   const [currentView, setCurrentView] = useState('timeGridWeek');
-  const [showTaskSidebar, setShowTaskSidebar] = useState(true);
+  const [showTaskSidebar, setShowTaskSidebar] = useState(() => window.innerWidth >= 768);
+  const [isDraggingTask, setIsDraggingTask] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{start: string;end: string;} | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [calendarKey, setCalendarKey] = useState(0);
   const calendarRef = useRef<FullCalendar>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const draggableRef = useRef<Draggable | null>(null);
   const [zoomLevel, setZoomLevel] = useState(3);
   const zoomDurations = ['00:05:00', '00:10:00', '00:15:00', '00:30:00', '01:00:00'];
 
@@ -45,20 +48,14 @@ const AgendaPage: React.FC = () => {
     }
   };
 
+  // Initialization effect for external dragging
   useEffect(() => {
-    let draggableInstance: Draggable | null = null;
-
-    const initializeExternalDragging = () => {
+    if (!showTaskSidebar) return;
+    
+    const timer = setTimeout(() => {
       const container = document.getElementById('external-events-container');
-      const taskElements = document.querySelectorAll('.external-event');
-
-      if (container && taskElements.length > 0) {
-        if (draggableInstance) {
-          try {draggableInstance.destroy();} catch {}
-          draggableInstance = null;
-        }
-
-        draggableInstance = new Draggable(container, {
+      if (container && !draggableRef.current) {
+        draggableRef.current = new Draggable(container, {
           itemSelector: '.external-event',
           longPressDelay: 50,
           eventData: function (eventEl) {
@@ -80,26 +77,50 @@ const AgendaPage: React.FC = () => {
           }
         });
       }
-    };
+    }, 500);
 
-    const timer = setTimeout(initializeExternalDragging, 200);
-    return () => {
-      clearTimeout(timer);
-      if (draggableInstance) {
-        try {draggableInstance.destroy();} catch (e) {}
-        draggableInstance = null;
-      }
-    };
-  }, [showTaskSidebar, categories]);
+    return () => clearTimeout(timer);
+  }, [showTaskSidebar, categories, events]);
+
+  // Robust cleanup effect that ensures drag survives sidebar unmounting
+  useEffect(() => {
+    if (!showTaskSidebar && !isDraggingTask && draggableRef.current) {
+      try { draggableRef.current.destroy(); } catch {}
+      draggableRef.current = null;
+    }
+  }, [showTaskSidebar, isDraggingTask]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (calendarRef.current) {
         calendarRef.current.getApi().updateSize();
       }
-    }, 350);
+    }, 400);
     return () => clearTimeout(timer);
   }, [showTaskSidebar]);
+
+  useEffect(() => {
+    if (!isDraggingTask) return;
+
+    const handleMove = (x: number) => {
+const sidebarWidth = sidebarRef.current?.offsetWidth || 224;
+if (x > sidebarWidth && window.innerWidth < 768) {
+setShowTaskSidebar(false);
+}
+};
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (isDraggingTask) handleMove(e.clientX);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', () => setIsDraggingTask(false));
+    
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', () => setIsDraggingTask(false));
+    };
+  }, [isDraggingTask]);
 
   const handleViewChange = (newView: string) => {
     setCurrentView(newView);
@@ -230,28 +251,45 @@ const AgendaPage: React.FC = () => {
       className="h-full flex overflow-hidden"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-      {/* Task Sidebar */}
-      <AnimatePresence>
-        {showTaskSidebar &&
-          <motion.div
-            initial={{ x: -400, opacity: 0, width: 0 }}
-            animate={{ x: 0, opacity: 1, width: 'auto' }}
-            exit={{ x: -400, opacity: 0, width: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative z-40 flex overflow-hidden flex-shrink-0"
-            onAnimationComplete={() => {
-              if (calendarRef.current) {
-                calendarRef.current.getApi().updateSize();
-              }
-            }}>
-            <TaskSidebar onClose={() => setShowTaskSidebar(false)} />
-          </motion.div>
-        }
+      {/* Task Sidebar & Backdrop for Mobile */}
+      <AnimatePresence mode="wait">
+        {showTaskSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+                onClick={() => setShowTaskSidebar(false)}
+                className="fixed inset-0 bg-black/20 z-40 md:hidden backdrop-blur-[1px]"
+              />
+              
+              <motion.div
+                ref={sidebarRef}
+                layoutRoot
+                initial={{ x: -400, opacity: 0, width: 0 }}
+                animate={{ x: 0, opacity: 1, width: 'auto' }}
+                exit={{ x: -400, opacity: 0, width: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed md:relative inset-y-0 left-0 z-50 md:z-40 flex overflow-hidden flex-shrink-0 shadow-2xl md:shadow-none"
+                onAnimationComplete={() => {
+                  if (calendarRef.current) {
+                    calendarRef.current.getApi().updateSize();
+                  }
+                }}>
+                <TaskSidebar 
+                  onClose={() => setShowTaskSidebar(false)} 
+                  onDragStart={() => {
+                    if (window.innerWidth < 768) {
+                      setIsDraggingTask(true);
+                    }
+                  }}
+                />
+            </motion.div>
+          </>
+        )}
       </AnimatePresence>
 
-      {/* Main Calendar Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Modern Header */}
         <motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -259,147 +297,100 @@ const AgendaPage: React.FC = () => {
           className="px-4 py-3 border-b"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
 
-          <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between">
-            <div className="contents lg:flex lg:items-center lg:gap-4 lg:w-auto">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowTaskSidebar(!showTaskSidebar)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm col-span-1 lg:w-auto justify-center border ${
-                  showTaskSidebar ? 'shadow-md' : ''
-                }`}
-                style={{
-                  backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-                  borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-                  color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))'
-                }}>
-                <Calendar size={18} />
-                <span className="font-medium text-sm lg:text-base">Tâches</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowAddEventModal(true)}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 col-span-1 lg:w-auto whitespace-nowrap"
-              >
-                <Plus size={18} />
-                <span className="font-medium text-sm lg:text-base">Nouveau</span>
-              </motion.button>
-            
-              <div className="flex items-center gap-1 col-span-1 lg:w-auto">
+            <div className="grid grid-cols-2 gap-2 lg:flex lg:items-center lg:justify-between">
+              <div className="contents lg:flex lg:items-center lg:gap-4 lg:w-auto">
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => calendarRef.current?.getApi().prev()}
-                  className="p-2 rounded-lg transition-colors hover:text-blue-600"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-                    e.currentTarget.style.color = '#2563eb';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'rgb(var(--color-text-secondary))';
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowTaskSidebar(!showTaskSidebar)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all shadow-sm col-span-1 lg:w-auto justify-center border ${
+                    showTaskSidebar ? 'shadow-md' : ''
+                  }`}
+                  style={{
+                    backgroundColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
+                    borderColor: showTaskSidebar ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
+                    color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-primary))'
                   }}>
-                  <ChevronLeft size={18} />
+                  <Calendar size={18} />
+                  <span className="font-medium text-sm lg:text-base">Tâches</span>
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => calendarRef.current?.getApi().next()}
-                  className="p-2 rounded-lg transition-colors hover:text-blue-600"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-                    e.currentTarget.style.color = '#2563eb';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = 'rgb(var(--color-text-secondary))';
-                  }}>
-                  <ChevronRight size={18} />
-                </motion.button>
-              </div>
-            </div>
 
-            <motion.div
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="contents lg:flex lg:items-center lg:gap-3 lg:w-auto">
-
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 col-span-1 lg:mr-2 lg:w-auto justify-center">
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleZoomIn}
-                  disabled={zoomLevel === 0}
-                  title="Zoom avant"
-                  className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}
-                  style={{ color: zoomLevel === 0 ? 'rgb(var(--color-text-secondary))' : undefined }}
-                  onMouseEnter={(e) => {
-                    if (zoomLevel !== 0) {
-                      e.currentTarget.style.color = '#2563eb';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (zoomLevel !== 0) {
-                      e.currentTarget.style.color = 'rgb(var(--color-text-secondary))';
-                    }
-                  }}>
-                  <ZoomIn size={20} />
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowAddEventModal(true)}
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 col-span-1 lg:w-auto whitespace-nowrap"
+                >
+                  <Plus size={18} />
+                  <span className="font-medium text-sm lg:text-base">Nouveau</span>
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleZoomOut}
-                  disabled={zoomLevel === zoomDurations.length - 1}
-                  title="Zoom arrière"
-                  className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}
-                  style={{ color: zoomLevel === zoomDurations.length - 1 ? 'rgb(var(--color-text-secondary))' : undefined }}
-                  onMouseEnter={(e) => {
-                    if (zoomLevel !== zoomDurations.length - 1) {
-                      e.currentTarget.style.color = '#2563eb';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (zoomLevel !== zoomDurations.length - 1) {
-                      e.currentTarget.style.color = 'rgb(var(--color-text-secondary))';
-                    }
-                  }}>
-                  <ZoomOut size={20} />
-                </motion.button>
-              </div>
-
-              <div className="flex rounded-lg p-0.5 col-span-2 lg:col-span-1 lg:w-auto" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                {['timeGridDay', 'timeGridWeek', 'dayGridMonth'].map((view, index) =>
+              
+                <div className="flex items-center gap-1 col-span-1 lg:w-auto">
                   <motion.button
-                    key={view}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3 + index * 0.05 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleViewChange(view)}
-                    className={`px-2 py-1 text-xs font-medium rounded-md transition-all flex-1 lg:flex-none ${
-                      currentView === view ? 'shadow-sm' : ''
-                    }`}
-                    style={{
-                      backgroundColor: currentView === view ? 'rgb(var(--color-surface))' : 'transparent',
-                      color: currentView === view ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))'
-                    }}>
-                    {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => calendarRef.current?.getApi().prev()}
+                    className="p-2 rounded-lg transition-colors hover:text-blue-600"
+                    style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    <ChevronLeft size={18} />
                   </motion.button>
-                )}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => calendarRef.current?.getApi().next()}
+                    className="p-2 rounded-lg transition-colors hover:text-blue-600"
+                    style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                    <ChevronRight size={18} />
+                  </motion.button>
+                </div>
               </div>
-            </motion.div>
-          </div>
+
+                <motion.div
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="contents lg:flex lg:items-center lg:gap-3 lg:w-auto">
+
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 col-span-1 lg:mr-2 lg:w-auto justify-center">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleZoomIn}
+                      disabled={zoomLevel === 0}
+                      className={`p-1.5 rounded-md transition-all ${zoomLevel === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                      <ZoomIn size={20} />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleZoomOut}
+                      disabled={zoomLevel === zoomDurations.length - 1}
+                      className={`p-1.5 rounded-md transition-all ${zoomLevel === zoomDurations.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white dark:hover:bg-gray-700 shadow-sm'}`}>
+                      <ZoomOut size={20} />
+                    </motion.button>
+                  </div>
+
+                  <div className="flex rounded-lg p-0.5 col-span-2 lg:col-span-1 lg:w-auto" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                    {['timeGridDay', 'timeGridWeek', 'dayGridMonth'].map((view, index) =>
+                      <motion.button
+                        key={view}
+                        onClick={() => handleViewChange(view)}
+                        className={`px-2 py-1 text-xs font-medium rounded-md transition-all flex-1 lg:flex-none ${
+                          currentView === view ? 'shadow-sm' : ''
+                        }`}
+                        style={{
+                          backgroundColor: currentView === view ? 'rgb(var(--color-surface))' : 'transparent',
+                          color: currentView === view ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-secondary))'
+                        }}>
+                        {view === 'timeGridDay' ? 'Jour' : view === 'timeGridWeek' ? 'Semaine' : 'Mois'}
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+            </div>
         </motion.div>
 
-        {/* Calendar Container */}
         <motion.div
-          layout
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
@@ -445,115 +436,70 @@ const AgendaPage: React.FC = () => {
                 eventReceive={handleEventReceive}
                 unselectAuto={true}
                 unselectCancel=".modal-overlay,.modal-content,input,textarea,select,button,.fc-event"
-                eventContent={(eventInfo) => {
-                  return (
-                    <div className="h-full w-full flex items-center justify-center p-1 text-xs cursor-pointer">
-                      <div className="font-medium text-white truncate text-center leading-tight">
-                        {eventInfo.event.title}
-                      </div>
+                eventContent={(eventInfo) => (
+                  <div className="h-full w-full flex items-center justify-center p-1 text-xs cursor-pointer">
+                    <div className="font-medium text-white truncate text-center leading-tight">
+                      {eventInfo.event.title}
                     </div>
-                  );
-                }}
-                dayCellClassNames={() => 'transition-colors'}
+                  </div>
+                )}
                 eventClassNames="rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105"
               />
 
               <style>{`
                 .dark .fc-theme-standard td.fc-day:hover,
-                .dark .fc-theme-standard td.fc-day.fc-day-today:hover,
                 .dark .fc-theme-standard .fc-timegrid-col:hover {
                   background-color: rgba(255, 255, 255, 0.06) !important;
                 }
-
                 .dark .fc-theme-standard td.fc-day,
                 .dark .fc-theme-standard .fc-timegrid-col {
                   background-color: transparent !important;
                 }
-                
                 .fc-event {
                   transition: all 0.2s ease;
                 }
-                
                 .fc-event:hover {
                   transform: scale(1.02);
                   z-index: 999;
-                }
-                
-                .fc-timegrid-now-indicator-line {
-                  animation: pulse 2s ease-in-out infinite;
-                }
-                
-                @keyframes pulse {
-                  0%, 100% { opacity: 1; }
-                  50% { opacity: 0.5; }
                 }
               `}</style>
             </div>
           </div>
         </motion.div>
       </div>
-
-      {/* Modals with animations */}
-      <AnimatePresence>
+  
         {showAddEventModal &&
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}>
-              <AddEventModal
-                isOpen={showAddEventModal}
-                onClose={handleCloseAddModal}
-                task={{
-                  id: '',
-                  name: '',
-                  priority: 3,
-                  category: 'blue',
-                  deadline: '',
-                  estimatedTime: 60,
-                  createdAt: '',
-                  bookmarked: false,
-                  completed: false
-                }}
-                onAddEvent={handleAddEvent}
-                prefilledTimeSlot={selectedTimeSlot || undefined}
-              />
-            </motion.div>
-          </motion.div>
+          <AddEventModal
+            isOpen={showAddEventModal}
+            onClose={handleCloseAddModal}
+            task={{
+              id: '',
+              name: '',
+              priority: 3,
+              category: 'blue',
+              deadline: '',
+              estimatedTime: 60,
+              createdAt: '',
+              bookmarked: false,
+              completed: false
+            }}
+            onAddEvent={handleAddEvent}
+            prefilledTimeSlot={selectedTimeSlot || undefined}
+          />
         }
-      </AnimatePresence>
-
-      <AnimatePresence>
+  
         {showEditEventModal && selectedEvent &&
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}>
-              <EditEventModal
-                isOpen={showEditEventModal}
-                onClose={() => {
-                  setShowEditEventModal(false);
-                  setSelectedEvent(null);
-                }}
-                event={selectedEvent}
-                onUpdateEvent={handleUpdateEvent}
-                onDeleteEvent={handleDeleteEvent}
-              />
-            </motion.div>
-          </motion.div>
+          <EditEventModal
+            isOpen={showEditEventModal}
+            onClose={() => {
+              setShowEditEventModal(false);
+              setSelectedEvent(null);
+            }}
+            event={selectedEvent}
+            onUpdateEvent={handleUpdateEvent}
+            onDeleteEvent={handleDeleteEvent}
+          />
         }
-      </AnimatePresence>
     </motion.div>
   );
 };
