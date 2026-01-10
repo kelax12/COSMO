@@ -3,7 +3,7 @@ import { Users, Lock, Plus, X, UserPlus, UserMinus, Check, Search, AlertTriangle
 import { useTasks, Task } from '../context/TaskContext';
 
 const CollaborativeTasks: React.FC = () => {
-  const { tasks, isPremium, friends, updateTask, categories, priorityRange } = useTasks();
+  const { tasks, user, isPremium, friends, updateTask, categories, priorityRange } = useTasks();
   
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -25,6 +25,10 @@ const CollaborativeTasks: React.FC = () => {
   const premium = isPremium();
   const collaborativeTasks = tasks.filter(task => task.isCollaborative);
   
+  const isOwner = (task: Task) => {
+    return !task.sharedBy || task.sharedBy === user?.name;
+  };
+
   const filteredTasks = useMemo(() => {
     let filtered = tasks
       .filter(task => !task.completed)
@@ -126,17 +130,38 @@ const CollaborativeTasks: React.FC = () => {
         </div>
 
         <div className="space-y-4">
-          {collaborativeTasks.map(task => (
-            <div key={task.id} className="collaborative-task p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-[rgb(var(--color-text-primary))]">{task.name}</h3>
-                  <div className="flex items-center gap-4 mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
-                    <span>Partagé par {task.sharedBy}</span>
-                    <span className="capitalize">{task.permissions}</span>
-                    <span>{task.collaborators?.length} collaborateurs</span>
-                  </div>
-                </div>
+            {collaborativeTasks.map(task => {
+              const categoryColor = getCategoryColor(task.category);
+              const owner = isOwner(task);
+              const ownerFriend = friends.find(f => f.name === task.sharedBy);
+
+                return (
+                  <div 
+                    key={task.id} 
+                    className="collaborative-task p-4 rounded-2xl border transition-all duration-300 hover:shadow-lg hover:scale-[1.01] cursor-pointer group"
+                    style={{ 
+                      backgroundColor: `${categoryColor}25`,
+                      borderColor: `${categoryColor}60`
+                    }}
+                  >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-[rgb(var(--color-text-primary))]">{task.name}</h3>
+                      <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-[rgb(var(--color-text-secondary))]">
+                        <div className="flex items-center gap-1.5">
+                          <Users size={14} />
+                          <span>Partagé par {task.sharedBy || 'Moi'}</span>
+                        </div>
+                        {!owner && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium">
+                            <span>Contact : {ownerFriend?.email || `${task.sharedBy?.toLowerCase().replace(' ', '.')}@example.com`}</span>
+                          </div>
+                        )}
+                        <span className="capitalize">{task.permissions}</span>
+                        <span>{task.collaborators?.length} collaborateurs</span>
+                      </div>
+                    </div>
+
                 
                 <div className="flex items-center gap-2">
                   {task.collaborators?.map((collaborator, index) => {
@@ -163,7 +188,8 @@ const CollaborativeTasks: React.FC = () => {
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
 
           {collaborativeTasks.length === 0 && (
             <div className="text-center py-8 text-[rgb(var(--color-text-muted))]">
