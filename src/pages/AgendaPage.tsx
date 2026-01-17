@@ -4,11 +4,9 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
 import { useTasks } from '../context/TaskContext';
-import { ChevronLeft, ChevronRight, Calendar, Clock, Plus, X, ZoomIn, ZoomOut, Menu } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
-import AddEventModal from '../components/AddEventModal';
-import EditEventModal from '../components/EditEventModal';
-import ColorSettingsModal from '../components/ColorSettingsModal';
+import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AgendaPage: React.FC = () => {
@@ -469,7 +467,8 @@ setShowTaskSidebar(false);
       </div>
   
         {showAddEventModal &&
-          <AddEventModal
+          <EventModal
+            mode="add"
             isOpen={showAddEventModal}
             onClose={handleCloseAddModal}
             task={{
@@ -489,7 +488,8 @@ setShowTaskSidebar(false);
         }
   
         {showEditEventModal && selectedEvent &&
-          <EditEventModal
+          <EventModal
+            mode="edit"
             isOpen={showEditEventModal}
             onClose={() => {
               setShowEditEventModal(false);
