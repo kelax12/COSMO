@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { CheckSquare, Clock, Bookmark, AlertCircle } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { useNavigate } from 'react-router-dom';
+import CollaboratorAvatars from './CollaboratorAvatars';
 
 const TodayTasks: React.FC = () => {
-  const { tasks, categories, toggleComplete, toggleBookmark } = useTasks();
+  const { tasks, categories, toggleComplete, toggleBookmark, friends } = useTasks();
   const navigate = useNavigate();
+  const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
   
   // Tâches prioritaires pour aujourd'hui
   const todayTasks = tasks
@@ -64,7 +66,9 @@ const TodayTasks: React.FC = () => {
                       onMouseLeave={() => setHoveredTaskId(null)}
                       className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer hover:shadow-md ${
                         task.isCollaborative ? 'collaborative-task' : ''
-                      } ${task.priority <= 2 ? 'bg-[rgb(var(--color-error)/0.35)] dark:bg-[rgb(var(--color-error)/0.45)] border-[rgb(var(--color-error)/0.6)] dark:border-[rgb(var(--color-error)/0.8)]' : 'border-[rgb(var(--color-border))]'}`}
+                      } ${task.priority <= 2 ? 'bg-[rgb(var(--color-error)/0.35)] dark:bg-[rgb(var(--color-error)/0.45)] border-[rgb(var(--color-error)/0.6)] dark:border-[rgb(var(--color-error)/0.8)]' : 'border-[rgb(var(--color-border))]'} ${
+                        completedTaskId === task.id ? 'animate-task-complete' : ''
+                      }`}
                       style={!task.completed && task.priority > 2 ? {
                         backgroundColor: isHovered ? `${cardColor}40` : `${cardColor}25`,
                         borderColor: isHovered ? `${cardColor}70` : (task.isCollaborative ? `${cardColor}50` : undefined)
@@ -72,15 +76,19 @@ const TodayTasks: React.FC = () => {
                   >
 
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleComplete(task.id);
-                        }}
+                    <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCompletedTaskId(task.id);
+                            setTimeout(() => {
+                              toggleComplete(task.id);
+                              setCompletedTaskId(null);
+                            }, 600);
+                          }}
                         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                           task.completed 
-                            ? 'bg-[rgb(var(--color-success))] border-[rgb(var(--color-success))]' 
-                            : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-success)/0.5)]'
+                            ? 'bg-[rgb(var(--color-error))] border-[rgb(var(--color-error))]' 
+                            : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-error)/0.5)]'
                         }`}
                         title={task.completed ? "Marquer comme non faite" : "Marquer comme faite"}
                       >
@@ -120,18 +128,24 @@ const TodayTasks: React.FC = () => {
                       </div>
                     </div>
                   
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleBookmark(task.id);
-                    }}
-                    className="flex-shrink-0 p-1 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
-                  >
-                    <Bookmark 
-                      size={18} 
-                      className={task.bookmarked ? 'favorite-icon filled' : 'text-[rgb(var(--color-text-muted))] hover:text-blue-500 dark:hover:text-blue-400'} 
-                    />
-                  </button>
+                    <div className="flex items-center gap-2">
+                      {task.isCollaborative && task.collaborators && (
+                        <CollaboratorAvatars collaborators={task.collaborators} friends={friends} size="sm" />
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBookmark(task.id);
+                        }}
+                        className="flex-shrink-0 p-1 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
+                      >
+                        <Bookmark 
+                          size={18} 
+                          className={task.bookmarked ? 'favorite-icon filled' : 'text-[rgb(var(--color-text-muted))] hover:text-blue-500 dark:hover:text-blue-400'} 
+                        />
+                      </button>
+                    </div>
+
                 </div>
               </div>
             );
