@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Users, Lock, Plus, X, UserPlus, UserMinus, Check, Search, AlertTriangle } from 'lucide-react';
+import { Users, Lock, Plus, X, UserPlus, UserMinus, Check, Search, AlertCircle, AlertTriangle } from 'lucide-react';
 import { useTasks, Task } from '../context/TaskContext';
+import CollaboratorAvatars from './CollaboratorAvatars';
 
 const CollaborativeTasks: React.FC = () => {
+
   const { tasks, user, isPremium, friends, updateTask, categories, priorityRange } = useTasks();
   
   const getCategoryColor = (categoryId: string) => {
@@ -19,6 +21,7 @@ const CollaborativeTasks: React.FC = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
+  const [collaboratorSearchQuery, setCollaboratorSearchQuery] = useState('');
   
   const selectedTask = selectedTaskId ? tasks.find(t => t.id === selectedTaskId) || null : null;
   
@@ -163,29 +166,41 @@ const CollaborativeTasks: React.FC = () => {
                     </div>
 
                 
-                <div className="flex items-center gap-2">
-                  {task.collaborators?.map((collaborator, index) => {
-                    const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
-                    return (
-                      <div 
-                        key={index}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold relative transition-all ${
-                          hasValidated 
-                            ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
-                            : 'bg-[rgb(var(--color-active))] text-[rgb(var(--color-text-secondary))]'
-                        }`}
-                        title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}
-                      >
-                        {collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                        {hasValidated && (
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[rgb(var(--color-surface))] rounded-full flex items-center justify-center shadow-md">
-                            <Check size={12} className="text-green-500" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                  <div className="flex items-center gap-2">
+                    {task.collaborators?.map((collaborator, index) => {
+                      const hasValidated = task.collaboratorValidations?.[collaborator] ?? false;
+                      const friend = friends.find(f => f.name === collaborator || f.id === collaborator);
+                      const initials = collaborator.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold relative transition-all overflow-hidden ${
+                            hasValidated 
+                              ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
+                              : 'bg-[rgb(var(--color-active))] text-[rgb(var(--color-text-secondary))]'
+                          }`}
+                          title={`${collaborator} - ${hasValidated ? 'Validé' : 'Non validé'}`}
+                        >
+                          {friend?.avatar ? (
+                            friend.avatar.startsWith('http') ? (
+                              <img src={friend.avatar} alt={collaborator} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-xl">{friend.avatar}</span>
+                            )
+                          ) : (
+                            <span>{initials}</span>
+                          )}
+                          {hasValidated && (
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[rgb(var(--color-surface))] rounded-full flex items-center justify-center shadow-md z-10">
+                              <Check size={12} className="text-green-500" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
               </div>
             </div>
           );
@@ -346,28 +361,26 @@ const CollaborativeTasks: React.FC = () => {
                       
                       <div className="space-y-3 mb-4">
                         <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="Rechercher un contact..."
-                            className="w-full px-4 py-2.5 pl-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
-                        </div>
+                            <input
+                              type="text"
+                              placeholder="Rechercher un contact..."
+                              value={collaboratorSearchQuery}
+                              onChange={(e) => setCollaboratorSearchQuery(e.target.value)}
+                              className="w-full px-4 py-2.5 pl-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
+                          </div>
                         
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="Entrer l'identifiant de la personne..."
-                            className="w-full px-4 py-2.5 pl-10 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                          <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
                         </div>
-                      </div>
                       
                       <div className="space-y-2">
-                        {friends
-                          .filter(friend => !selectedTask.collaborators?.includes(friend.name))
-                          .map(friend => (
+                          {friends
+                            .filter(friend => !selectedTask.collaborators?.includes(friend.name))
+                            .filter(friend => 
+                              collaboratorSearchQuery.trim() === '' || 
+                              friend.name.toLowerCase().includes(collaboratorSearchQuery.toLowerCase())
+                            )
+                            .map(friend => (
                           <button
                             key={friend.id}
                             onClick={() => handleAddCollaborator(friend.name)}
@@ -384,9 +397,9 @@ const CollaborativeTasks: React.FC = () => {
                             <UserPlus size={18} className="text-blue-500" />
                           </button>
                         ))}
-                        {friends.filter(f => !selectedTask.collaborators?.includes(f.name)).length === 0 && (
+                        {friends.filter(f => !selectedTask.collaborators?.includes(f.name)).filter(f => collaboratorSearchQuery.trim() === '' || f.name.toLowerCase().includes(collaboratorSearchQuery.toLowerCase())).length === 0 && (
                           <p className="text-center py-4 text-[rgb(var(--color-text-muted))]">
-                            Tous vos amis sont déjà collaborateurs
+                            {collaboratorSearchQuery.trim() ? 'Aucun contact trouvé' : 'Tous vos amis sont déjà collaborateurs'}
                           </p>
                         )}
                       </div>
