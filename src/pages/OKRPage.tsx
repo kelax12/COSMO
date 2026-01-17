@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Settings, Clock } from 'lucide-react';
+import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Clock } from 'lucide-react';
 import CategoryManager, { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useTasks } from '../context/TaskContext';
-import AddTaskForm from '../components/AddTaskForm';
-import AddEventModal from '../components/AddEventModal';
+import TaskModal from '../components/TaskModal';
+import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
 
 type KeyResult = {
@@ -54,12 +54,13 @@ const OKRPage: React.FC = () => {
     { id: 'demo', name: 'Nouvelle Catégorie (Démo)', color: 'orange', icon: '🚀' }]
     );
 
-  const [showAddObjective, setShowAddObjective] = useState(false);
-  const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
+    const [showAddObjective, setShowAddObjective] = useState(false);
+    const [showCategoryManager, setShowCategoryManager] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
+    const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
 
-  const getProgress = (keyResults: KeyResult[]) => {
+    const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
     const totalProgress = keyResults.reduce((sum, kr) => {
       return sum + Math.min(kr.currentValue / kr.targetValue * 100, 100);
@@ -88,16 +89,23 @@ const OKRPage: React.FC = () => {
     ));
   };
 
-  const deleteCategory = (categoryId: string) => {
-    const isUsed = objectives.some((obj) => obj.category === categoryId);
-    if (isUsed) {
-      alert('Cette catégorie est utilisée par des objectifs existants et ne peut pas être supprimée.');
-      return;
-    }
-    setCategories((prev) => prev.filter((cat) => cat.id !== categoryId));
-  };
+    const deleteCategory = (categoryId: string) => {
+      const isUsed = objectives.some((obj) => obj.category === categoryId);
+      if (isUsed) {
+        alert('Cette catégorie est utilisée par des objectifs existants et ne peut pas être supprimée.');
+        return;
+      }
+      setCategoryToDelete(categoryId);
+    };
 
-  const deleteObjective = (objectiveId: string) => {
+    const confirmDeleteCategory = () => {
+      if (categoryToDelete) {
+        setCategories((prev) => prev.filter((cat) => cat.id !== categoryToDelete));
+        setCategoryToDelete(null);
+      }
+    };
+
+    const deleteObjective = (objectiveId: string) => {
     deleteOKR(objectiveId);
     setDeletingObjective(null);
   };
@@ -278,24 +286,23 @@ const OKRPage: React.FC = () => {
               // New Logic: Comparison between progress and time elapsed
               // Using ratio of progress / timeProgress to determine health
               let hue = 120;
-              let saturation = 80;
-              let lightness = 45;
+                const saturation = 80;
+                const lightness = 45;
 
-              if (timeProgress > 0) {
-                  const ratio = progress / timeProgress;
-                  if (ratio >= 1.5) {
-                    hue = 120; // Green for being way ahead
-                  } else if (ratio >= 1.0) {
-                    hue = 145; // Darker/Vibrant Green (on track or slightly ahead)
-                    lightness = 35;
-                  } else if (ratio >= 0.8) {
-                  hue = 60; // Yellow (slightly behind)
-                } else if (ratio >= 0.5) {
-                  hue = 30; // Orange (behind)
-                } else {
-                  hue = 0; // Red (significantly behind)
+                if (timeProgress > 0) {
+                    const ratio = progress / timeProgress;
+                    if (ratio >= 1.5) {
+                      hue = 120; // Green for being way ahead
+                    } else if (ratio >= 1.0) {
+                      hue = 145; // Darker/Vibrant Green (on track or slightly ahead)
+                    } else if (ratio >= 0.8) {
+                    hue = 60; // Yellow (slightly behind)
+                  } else if (ratio >= 0.5) {
+                    hue = 30; // Orange (behind)
+                  } else {
+                    hue = 0; // Red (significantly behind)
+                  }
                 }
-              }
               
               const healthColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.1)`;
               const healthBorder = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.2)`;
@@ -461,19 +468,79 @@ const OKRPage: React.FC = () => {
         onSubmit={handleModalSubmit}
       />
 
-      <AnimatePresence>
-        {deletingObjective &&
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl max-w-sm">
-              <h2 className="text-lg font-bold mb-4">Supprimer l'objectif ?</h2>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setDeletingObjective(null)}>Annuler</button>
-                <button onClick={() => deleteObjective(deletingObjective)} className="bg-red-600 text-white px-4 py-2 rounded">Supprimer</button>
-              </div>
+        <AnimatePresence>
+          {deletingObjective && (
+            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer l'objectif</h3>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                    Êtes-vous sûr de vouloir supprimer cet objectif ? Tous les résultats clés associés seront également supprimés.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setDeletingObjective(null)}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={() => deleteObjective(deletingObjective)}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        }
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {categoryToDelete && (
+            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la catégorie</h3>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                    Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCategoryToDelete(null)}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={confirmDeleteCategory}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
       <CategoryManager
         isOpen={showCategoryManager}
@@ -484,45 +551,41 @@ const OKRPage: React.FC = () => {
         onDelete={deleteCategory}
       />
 
-      <AddTaskForm expanded={showAddTaskModal} onFormToggle={setShowAddTaskModal} initialData={selectedKeyResultForModal ? { name: `OKR: ${selectedKeyResultForModal.kr.title}`, estimatedTime: selectedKeyResultForModal.kr.estimatedTime, category: 'okr', priority: 2, isFromOKR: true } : undefined} />
+      <TaskModal 
+        isOpen={showAddTaskModal} 
+        onClose={() => setShowAddTaskModal(false)} 
+        isCreating={true}
+        initialData={selectedKeyResultForModal ? { 
+          name: selectedKeyResultForModal.kr.title, 
+          estimatedTime: selectedKeyResultForModal.kr.estimatedTime, 
+          isFromOKR: true 
+        } : undefined} 
+      />
 
       
-      <AnimatePresence>
-        {selectedKeyResultForModal && showAddEventModal &&
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-
-            <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}>
-
-              <AddEventModal
-              isOpen={showAddEventModal}
-              onClose={() => setShowAddEventModal(false)}
-              task={{
-                id: selectedKeyResultForModal.kr.id,
-                name: selectedKeyResultForModal.kr.title,
-                completed: selectedKeyResultForModal.kr.completed,
-                priority: 2,
-                category: 'okr',
-                estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
-                deadline: selectedKeyResultForModal.obj.endDate,
-                bookmarked: false
-              }}
-              onAddEvent={(event) => {
-                addEvent(event);
-                setShowAddEventModal(false);
-              }} />
-
-            </motion.div>
-          </motion.div>
-        }
-      </AnimatePresence>
+      {selectedKeyResultForModal && showAddEventModal &&
+        <EventModal
+          mode="add"
+          isOpen={showAddEventModal}
+          onClose={() => setShowAddEventModal(false)}
+            task={{
+              id: selectedKeyResultForModal.kr.id,
+              name: selectedKeyResultForModal.kr.title,
+              completed: selectedKeyResultForModal.kr.completed,
+              priority: 0,
+              category: '',
+              estimatedTime: selectedKeyResultForModal.kr.estimatedTime,
+              deadline: selectedKeyResultForModal.obj.endDate,
+              bookmarked: false,
+              createdAt: '', // Added missing properties
+              notes: ''      // Added missing properties
+            }}
+          onAddEvent={(event) => {
+            addEvent(event);
+            setShowAddEventModal(false);
+          }}
+        />
+      }
     </motion.div>);
 
 };
