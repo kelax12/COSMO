@@ -114,54 +114,57 @@ const DeadlineCalendar: React.FC = () => {
       backgroundColor: 'rgb(var(--color-surface))',
       borderColor: 'rgb(var(--color-border))'
     }}>
-      <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: 'rgb(var(--color-border))' }}>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={navigatePrev}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
-          </button>
-          <h2 className="text-lg font-semibold capitalize min-w-[200px] text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {currentView === 'week' ? formatWeekRange(currentDate) : formatMonth(currentDate)}
-          </h2>
-          <button
-            onClick={navigateNext}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
-          </button>
-        </div>
-        
-        <div className="flex rounded-xl p-1 gap-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-          <button
-            onClick={() => setCurrentView('week')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              currentView === 'week' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
-            }`}
-            style={{
-              color: currentView === 'week' ? '#fff' : 'rgb(var(--color-text-secondary))'
-            }}
-          >
-            <Calendar className="w-4 h-4" />
-            Semaine
-          </button>
-          <button
-            onClick={() => setCurrentView('month')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-              currentView === 'month' 
-                ? 'bg-blue-500 text-white shadow-md' 
-                : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
-            }`}
-            style={{
-              color: currentView === 'month' ? '#fff' : 'rgb(var(--color-text-secondary))'
-            }}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            Mois
-          </button>
+      <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <button
+              onClick={navigatePrev}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+            </button>
+            <h2 className="text-base sm:text-lg font-semibold capitalize min-w-[150px] sm:min-w-[200px] text-center" style={{ color: 'rgb(var(--color-text-primary))' }}>
+              {currentView === 'week' ? formatWeekRange(currentDate) : formatMonth(currentDate)}
+            </h2>
+            <button
+              onClick={navigateNext}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" style={{ color: 'rgb(var(--color-text-secondary))' }} />
+            </button>
+          </div>
+          
+          <div className="inline-flex self-center sm:self-auto rounded-xl p-1 gap-1" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+            <button
+              onClick={() => setCurrentView('week')}
+              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                currentView === 'week' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
+              }`}
+              style={{
+                color: currentView === 'week' ? '#fff' : 'rgb(var(--color-text-secondary))'
+              }}
+            >
+              <Calendar className="w-4 h-4" />
+              <span className="hidden xs:inline">Semaine</span>
+              <span className="xs:hidden">Sem.</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('month')}
+              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                currentView === 'month' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'hover:bg-white/50 dark:hover:bg-slate-700/50'
+              }`}
+              style={{
+                color: currentView === 'month' ? '#fff' : 'rgb(var(--color-text-secondary))'
+              }}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Mois</span>
+            </button>
+          </div>
         </div>
       </div>
 
