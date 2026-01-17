@@ -350,15 +350,15 @@ const HabitTable: React.FC = () => {
                 backgroundColor: index % 2 === 0 ? 'rgb(var(--table-row-even))' : 'rgb(var(--table-row-odd))'
               }}>
 
-                  <td className="p-3 md:p-4 sticky left-0 bg-inherit z-10 border-r transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ borderColor: 'rgb(var(--table-border))' }}>
-                    <div className="flex items-center gap-2 md:gap-3">
+                  <td className="p-2 md:p-4 sticky left-0 bg-inherit z-10 border-r transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ borderColor: 'rgb(var(--table-border))' }}>
+                    <div className="flex items-center gap-1.5 md:gap-3">
                       <div
-                        className="w-2.5 h-2.5 md:w-3 h-3 rounded-full flex-shrink-0"
+                        className="w-2 h-2 md:w-3 md:h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: colorOptions.find((c) => c.value === habit.color)?.color }} />
 
                       <div className="min-w-0">
-                        <div className="font-medium truncate text-xs md:text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
-                        <div className="text-[10px] md:text-xs flex items-center gap-2 mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        <div className="font-medium truncate text-[11px] md:text-sm leading-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>{habit.name}</div>
+                        <div className="hidden md:flex text-xs items-center gap-2 mt-0.5" style={{ color: 'rgb(var(--color-text-secondary))' }}>
                           <span>{habit.estimatedTime} min</span>
                         </div>
                       </div>
