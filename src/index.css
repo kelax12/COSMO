@@ -613,37 +613,39 @@ body {
 
 /* Scrollbar moderne */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: rgb(var(--color-accent) / 0.2);
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: rgb(var(--color-accent) / 0.3);
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--color-accent) / 0.4);
+  background-clip: content-box;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: rgb(var(--color-accent) / 0.5);
+  background-clip: content-box;
 }
 
 /* Custom Blue Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -651,17 +653,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #3b82f6;
+  background: rgb(var(--color-accent) / 0.3);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
-}
-
-/* Dark mode pour les groupes et containers */
-.dark .group, .dark .container {
-  @apply bg-slate-900;
+  background: rgb(var(--color-accent) / 0.5);
 }
 
 /* Pinned conversation style */
@@ -697,4 +694,33 @@ body > .fc-event {
 /* Force the external events mirror to be high z-index and follow correctly */
 .fc-event.fc-event-dragging.fc-event-dot {
   display: none !important; /* Hide the dot if it appears as mirror */
+}
+
+@keyframes taskComplete {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgb(var(--color-error) / 0.4);
+  }
+  25% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px rgb(var(--color-error) / 0.2);
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.15);
+  }
+  50% {
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgb(var(--color-error) / 0);
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.1);
+  }
+  100% {
+    transform: scale(0.98);
+    opacity: 0;
+    border-color: rgb(var(--color-error));
+    background-color: rgb(var(--color-error) / 0.05);
+  }
+}
+
+.animate-task-complete {
+  animation: taskComplete 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
