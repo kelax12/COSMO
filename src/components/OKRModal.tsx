@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, TrendingUp, Trash2, X, Clock } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { DatePicker } from './ui/date-picker';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 
 type KeyResult = {
   id: string;
@@ -194,26 +195,27 @@ const OKRModal: React.FC<OKRModalProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   const startDate = editingObjective ? editingObjective.startDate : new Date().toISOString().split('T')[0];
   const duration = calculateDuration(startDate, newObjective.endDate);
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white dark:bg-slate-800 rounded-xl shadow-2xl w-full max-w-4xl xl:max-w-5xl 2xl:max-w-6xl 3xl:max-w-[1600px] min-h-[50vh] 3xl:min-h-[85vh] max-h-[90vh] overflow-y-auto">
-
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent
+        showCloseButton={false}
+        fullScreenMobile={true}
+        className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl 3xl:max-w-[1600px] w-full h-full md:h-auto md:min-h-[50vh] 3xl:min-h-[85vh] md:max-h-[90vh] overflow-y-auto"
+      >
+        <DialogTitle className="sr-only">
+          {editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}
+        </DialogTitle>
+        <div className="md:rounded-xl md:shadow-2xl w-full h-full transition-colors bg-white dark:bg-slate-800">
           <div className="flex justify-between items-center p-6 border-b dark:border-slate-700">
             <h2 className="text-xl font-bold">{editingObjective ? "Modifier l'objectif" : 'Nouvel Objectif'}</h2>
             <button onClick={handleClose}>
               <X size={20} />
             </button>
           </div>
-          <form onSubmit={handleSubmitObjective} className="p-6 space-y-8">
+          <form onSubmit={handleSubmitObjective} className="p-6 space-y-8 overflow-y-auto h-[calc(100%-80px)] md:h-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-5">
                 <div>
@@ -394,10 +396,11 @@ const OKRModal: React.FC<OKRModalProps> = ({
                 {editingObjective ? 'Mettre à jour' : "Créer l'objectif"}
               </button>
             </div>
-          </form>
-        </motion.div>
-      </div>
-    </AnimatePresence>);
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+  );
 
 };
 
