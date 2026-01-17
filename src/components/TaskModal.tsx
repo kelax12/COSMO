@@ -1,45 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Users, AlertCircle, CheckCircle, Bookmark, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus } from 'lucide-react';
-import { Task, useTasks } from '../context/TaskContext';
-import { Dialog, DialogContent } from './ui/dialog';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Task, useTasks } from '@/context/TaskContext';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import CollaboratorItem from './CollaboratorItem';
-import { DatePicker } from './ui/date-picker';
+} from '@/components/ui/dropdown-menu';
+import CollaboratorItem from '@/components/CollaboratorItem';
+import { DatePicker } from '@/components/ui/date-picker';
+import CollaboratorAvatars from './CollaboratorAvatars';
 
 interface TaskModalProps {
-  task: Task;
+  task?: Task;
   isOpen: boolean;
   onClose: () => void;
   onSave?: (taskData: Partial<Task>) => void;
   isCreating?: boolean;
   showCollaborators?: boolean;
+  initialData?: Partial<Task> & { isFromOKR?: boolean };
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, isCreating = false, showCollaborators = false }) => {
-    const { updateTask, deleteTask, colorSettings, categories, friends, isPremium, shareTask, lists, addTaskToList, removeTaskFromList } = useTasks();
-  
-    // Form state
-    const [formData, setFormData] = useState({
-      name: '',
-      priority: 3,
-      category: '',
-      deadline: '',
-      estimatedTime: 30,
-      completed: false,
-      bookmarked: false,
-      isFromOKR: false
-    });
-  
-    const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, isCreating = false, showCollaborators = false, initialData }) => {
+  const { updateTask, deleteTask, colorSettings, categories, friends, isPremium, shareTask, lists, addTaskToList, removeTaskFromList } = useTasks();
 
+  // Form state
+  const [formData, setFormData] = useState({
+    name: '',
+    priority: 0,
+    category: '',
+    deadline: '',
+    estimatedTime: 0,
+    completed: false,
+    bookmarked: false,
+    isFromOKR: false
+  });
+
+  const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
 
   // Collaborator state (integrated from AddTaskForm)
@@ -47,25 +49,72 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [searchUser, setSearchUser] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
+
+  const collaboratorRef = useRef<HTMLDivElement>(null);
 
   const getCategoryColor = (id: string) => {
     return categories.find((cat) => cat.id === id)?.color || '#9CA3AF';
   };
 
+  // Close collaborator section on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      const isToggleButton = target.closest('[data-collaborator-toggle="true"]');
+      if (showCollaboratorSection && collaboratorRef.current && !collaboratorRef.current.contains(target) && !isToggleButton) {
+        setShowCollaboratorSection(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCollaboratorSection]);
+
   // Initialize form data when task changes
   useEffect(() => {
-    if (isOpen && task) {
+    if (!isOpen) return;
+
+    if (isCreating) {
       setFormData({
-        name: task.name,
-        priority: task.priority,
-        category: task.category,
+        name: initialData?.name || '',
+        priority: initialData?.priority || 0,
+        category: initialData?.category || '',
+        deadline: initialData?.deadline ? initialData.deadline.split('T')[0] : '',
+        estimatedTime: initialData?.estimatedTime || 0,
+        completed: initialData?.completed || false,
+        bookmarked: initialData?.bookmarked || false,
+        isFromOKR: initialData?.isFromOKR || false
+      });
+      
+      if (initialData?.isFromOKR) {
+        setOkrFields({
+          name: !!initialData.name,
+          category: !!initialData.category,
+          estimatedTime: !!initialData.estimatedTime,
+        });
+      } else {
+        setOkrFields({});
+      }
+
+      setCollaborators([]);
+      setSelectedListIds([]);
+      setHasChanges(false);
+      setErrors({});
+      setShowCollaboratorSection(showCollaborators);
+    } else if (task) {
+      setFormData({
+        name: task.name || '',
+        priority: task.priority || 3,
+        category: task.category || '',
         deadline: task.deadline ? task.deadline.split('T')[0] : '',
-        estimatedTime: task.estimatedTime,
-        completed: task.completed,
-        bookmarked: task.bookmarked,
+        estimatedTime: task.estimatedTime || 30,
+        completed: task.completed || false,
+        bookmarked: task.bookmarked || false,
         isFromOKR: (task as any).isFromOKR || false
       });
       
@@ -80,16 +129,16 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         setOkrFields({});
       }
 
-        setCollaborators(task.collaborators || []);
-        
-        const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
-        setSelectedListIds(taskLists);
+      setCollaborators(task.collaborators || []);
+      
+      const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
+      setSelectedListIds(taskLists);
 
-        setHasChanges(false);
+      setHasChanges(false);
       setErrors({});
       setShowCollaboratorSection(showCollaborators || (task.collaborators && task.collaborators.length > 0) || false);
     }
-  }, [isOpen, task, showCollaborators]);
+  }, [isOpen, task, isCreating, showCollaborators, lists]);
 
   // Track changes
   useEffect(() => {
@@ -180,7 +229,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || !task) return;
 
     setIsLoading(true);
 
@@ -194,29 +243,29 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         collaborators: collaborators,
       };
 
-          if (isCreating && onSave) {
-            onSave(taskData);
-          } else {
-            updateTask(task.id, taskData);
-            
-            // Sync lists
-            const currentListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
-            
-            // Add to new lists
-            selectedListIds.forEach(listId => {
-                if (!currentListIds.includes(listId)) {
-                    addTaskToList(task.id, listId);
-                }
-            });
-            
-            // Remove from deselected lists
-            currentListIds.forEach(listId => {
-                if (!selectedListIds.includes(listId)) {
-                    removeTaskFromList(task.id, listId);
-                }
-            });
+      if (isCreating && onSave) {
+        onSave(taskData);
+      } else {
+        updateTask(task.id, taskData);
+        
+        // Sync lists
+        const currentListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
+        
+        // Add to new lists
+        selectedListIds.forEach(listId => {
+            if (!currentListIds.includes(listId)) {
+                addTaskToList(task.id, listId);
+            }
+        });
+        
+        // Remove from deselected lists
+        currentListIds.forEach(listId => {
+            if (!currentListIds.includes(listId)) {
+                removeTaskFromList(task.id, listId);
+            }
+        });
 
-            if (isPremium()) {
+        if (isPremium()) {
           collaborators.forEach(userId => {
             if (!task.collaborators?.includes(userId)) {
                 shareTask(task.id, userId, 'editor');
@@ -234,17 +283,25 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.')) {
+  const handleDelete = () => {
+    if (task) {
+      setShowDeleteConfirm(true);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (task) {
       setIsLoading(true);
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
         deleteTask(task.id);
+        setShowDeleteConfirm(false);
         onClose();
       } catch (err) {
         console.error('Error deleting task:', err);
         setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+        setShowDeleteConfirm(false);
       } finally {
         setIsLoading(false);
       }
@@ -252,13 +309,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   };
 
   const handleClose = () => {
-    if (hasChanges) {
-      if (window.confirm('Vous avez des modifications non sauvegardées. Voulez-vous vraiment fermer ?')) {
-        onClose();
-      }
-    } else {
-      onClose();
-    }
+    onClose();
   };
 
   const availableFriends = friends || [];
@@ -301,11 +352,15 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent
-          showCloseButton={false}
-          className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl 3xl:max-w-[1600px] w-full min-h-[50vh] 3xl:min-h-[85vh] max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto"
-        >
-          <div className="sm:rounded-2xl sm:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
+      <DialogContent
+        showCloseButton={false}
+        fullScreenMobile={true}
+        className="p-0 border-0 sm:bg-transparent sm:shadow-none sm:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl 3xl:max-w-[1600px] w-full h-full md:h-auto md:min-h-[50vh] 3xl:min-h-[85vh] md:max-h-[90vh] overflow-y-auto"
+      >
+        <DialogTitle className="sr-only">
+          {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
+        </DialogTitle>
+        <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors h-full min-h-inherit" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-blue-50 dark:from-blue-900/20 to-purple-50 dark:to-purple-900/20 transition-colors" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <div className="flex items-center gap-3">
@@ -323,24 +378,16 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               }
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2 rounded-lg transition-colors"
               style={{ color: 'rgb(var(--color-text-muted))' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'rgb(var(--color-accent))';
-                e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
               aria-label="Fermer le formulaire"
             >
               <X size={20} aria-hidden="true" />
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto h-[calc(100%-72px)] md:h-auto">
             {/* Error display */}
             {errors.general &&
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
@@ -351,8 +398,8 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               </div>
             }
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <form onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Left Column - Main Information */}
                 <div className="space-y-5">
@@ -420,62 +467,62 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                       }
                     </div>
 
-                            <div>
-                              <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                                Catégorie
-                              </label>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 data-[state=open]:border-blue-600 data-[state=open]:border-2 transition-all text-base ${
-                                            errors.category ? 'border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
-                                          } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
-                                          style={{
-                                          backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
-                                          color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-                                          borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : undefined)
-                                        }}
-                                      >
-                                      <span>{categories.find(c => c.id === formData.category)?.name || (formData.category === 'okr' ? 'OKR' : 'Choisir...')}</span>
-                                      <ChevronDown size={18} className="text-blue-500" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                <DropdownMenuContent 
-                                  align="start" 
-                                  className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
-                                >
-                                  {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
-                                    <DropdownMenuItem asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleInputChange('category', 'okr')}
-                                        className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-blue-600 text-white shadow-sm"
-                                      >
-                                        <div className="w-2 h-2 rounded-full bg-blue-400" />
-                                        OKR
-                                      </button>
-                                    </DropdownMenuItem>
-                                  )}
-                                  {categories.map((cat) => (
-                                    <DropdownMenuItem key={cat.id} asChild>
-                                      <button
-                                        key={cat.id}
-                                        type="button"
-                                        onClick={() => handleInputChange('category', cat.id)}
-                                        className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
-                                          formData.category === cat.id
-                                            ? 'bg-blue-600 text-white shadow-sm'
-                                            : 'text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600'
-                                        }`}
-                                      >
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                                        {cat.name}
-                                      </button>
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                        Catégorie
+                      </label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-blue-500 focus:border-blue-600 focus:border-2 data-[state=open]:border-blue-600 data-[state=open]:border-2 transition-all text-base ${
+                                    errors.category ? 'border-red-500' : (okrFields.category ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700')
+                                  } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
+                                  style={{
+                                  backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
+                                  color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+                                  borderColor: errors.category ? 'rgb(var(--color-error))' : (okrFields.category ? undefined : undefined)
+                                }}
+                              >
+                              <span>{categories.find(c => c.id === formData.category)?.name || (formData.category === 'okr' ? 'OKR' : 'Choisir...')}</span>
+                              <ChevronDown size={18} className="text-blue-500" />
+                            </button>
+                          </DropdownMenuTrigger>
+                        <DropdownMenuContent 
+                          align="start" 
+                          className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                        >
+                          {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
+                            <DropdownMenuItem asChild>
+                              <button
+                                type="button"
+                                onClick={() => handleInputChange('category', 'okr')}
+                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-blue-600 text-white shadow-sm"
+                              >
+                                <div className="w-2 h-2 rounded-full bg-blue-400" />
+                                OKR
+                              </button>
+                            </DropdownMenuItem>
+                          )}
+                          {categories.map((cat) => (
+                            <DropdownMenuItem key={cat.id} asChild>
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => handleInputChange('category', cat.id)}
+                                className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
+                                  formData.category === cat.id
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'text-slate-700 dark:text-slate-200 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600'
+                                }`}
+                              >
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                                {cat.name}
+                              </button>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                         {errors.category &&
                           <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
                             <AlertCircle size={14} aria-hidden="true" />
@@ -495,7 +542,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                           value={formData.deadline}
                           onChange={(date) => handleInputChange('deadline', date)}
                           placeholder="Sélectionner une date"
-                          className={`h-12 ${errors.deadline ? 'border-red-300 dark:border-red-600' : ''}`}
+                          className={`h-12 w-full ${errors.deadline ? 'border-red-300 dark:border-red-600' : ''}`}
                         />
 
                         {errors.deadline &&
@@ -543,10 +590,10 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         backgroundColor: 'rgb(var(--color-hover))',
                         borderColor: 'rgb(var(--color-border))'
                       }}>
-                        <div className="flex items-center gap-3">
-                          <Bookmark size={20} className={formData.bookmarked ? 'text-yellow-500' : 'text-gray-400 dark:text-gray-500'} aria-hidden="true" />
-                          <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>Favori</span>
-                        </div>
+                          <div className="flex items-center gap-3">
+                            <Bookmark size={20} className="text-yellow-500" aria-hidden="true" />
+                              <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Favori</span>
+                          </div>
                         <label className="relative inline-flex items-center cursor-pointer ml-4">
                           <input
                             type="checkbox"
@@ -559,53 +606,72 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         </label>
                       </div>
 
-                              <div className="flex items-center gap-3 p-4 rounded-lg border transition-colors" style={{
-                                backgroundColor: 'rgb(var(--color-hover))',
-                                borderColor: 'rgb(var(--color-border))'
-                              }}>
-                                  <div className="flex items-center gap-2 flex-shrink-0">
-                                    <List size={18} className="text-blue-500" aria-hidden="true" />
-                                    <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Listes</span>
-                                  </div>
-                                  
-                                  <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className="p-1 rounded-lg transition-all hover:bg-blue-500/10"
-                                          style={{ color: "rgb(var(--color-text-primary))" }}
-                                        >
-                                          <Plus size={18} className="text-blue-500" />
-                                        </button>
-                                      </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56 bg-[#1e293b] border-slate-700 text-white">
-                                      {lists.length === 0 && (
-                                        <div className="p-2 text-sm text-center text-slate-400">
-                                          Aucune liste disponible
-                                        </div>
-                                      )}
-                                      {lists.map(list => (
-                                        <DropdownMenuCheckboxItem
-                                          key={list.id}
-                                          checked={selectedListIds.includes(list.id)}
-                                          onCheckedChange={(checked) => {
-                                            if (checked) {
-                                              setSelectedListIds([...selectedListIds, list.id]);
-                                            } else {
-                                              setSelectedListIds(selectedListIds.filter(id => id !== list.id));
-                                            }
-                                            setHasChanges(true);
-                                          }}
-                                          className="focus:bg-slate-700 focus:text-white"
-                                        >
-                                          {list.name}
-                                        </DropdownMenuCheckboxItem>
-                                      ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                              </div>
+                      <div className="flex items-center gap-3 p-4 rounded-lg border transition-colors" style={{
+                        backgroundColor: 'rgb(var(--color-hover))',
+                        borderColor: 'rgb(var(--color-border))'
+                      }}>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <List size={18} className="text-blue-500" aria-hidden="true" />
+                            <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Listes</span>
+                          </div>
+                          
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="p-1 rounded-lg transition-all hover:bg-blue-500/10"
+                                  style={{ color: "rgb(var(--color-text-primary))" }}
+                                >
+                                  <Plus size={18} className="text-blue-500" />
+                                </button>
+                              </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
+                              {lists.length === 0 && (
+                                <div className="p-2 text-sm text-center text-slate-400">
+                                  Aucune liste disponible
+                                </div>
+                              )}
+                              {lists.map(list => (
+                                <DropdownMenuCheckboxItem
+                                  key={list.id}
+                                  checked={selectedListIds.includes(list.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedListIds([...selectedListIds, list.id]);
+                                    } else {
+                                      setSelectedListIds(selectedListIds.filter(id => id !== list.id));
+                                    }
+                                    setHasChanges(true);
+                                  }}
+                                  className="focus:bg-slate-700 focus:text-white"
+                                >
+                                  {list.name}
+                                </DropdownMenuCheckboxItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                      </div>
 
-                              <div className="flex flex-wrap gap-2 items-center">
+                        {/* Collaborateurs Toggle (Mobile Only) */}
+                          <button
+                            type="button"
+                            data-collaborator-toggle="true"
+                            onClick={() => setShowCollaboratorSection(!showCollaboratorSection)}
+                            className={`md:hidden flex items-center gap-3 p-4 rounded-lg border transition-all ${
+                              showCollaboratorSection ? 'bg-blue-500/10 border-blue-500/50' : ''
+                            }`}
+                          style={{
+                            backgroundColor: showCollaboratorSection ? undefined : 'rgb(var(--color-hover))',
+                            borderColor: showCollaboratorSection ? undefined : 'rgb(var(--color-border))'
+                          }}
+                        >
+                          <Users size={20} className="text-blue-500" />
+                            <span className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                              Collaborateurs
+                            </span>
+                        </button>
+
+                      <div className="flex flex-wrap gap-2 items-center">
                                 {selectedListIds.map(id => {
                                   const list = lists.find(l => l.id === id);
                                   if (!list) return null;
@@ -632,33 +698,35 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                   </div>
                 </div>
 
-                {/* Right Column - Collaborators and Preview */}
-                <div className="space-y-6">
+                  {/* Right Column - Collaborators and Preview */}
+                  <div className="space-y-6">
 
-                  {/* Collaborators Section */}
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        Collaborateurs
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setShowCollaboratorSection(!showCollaboratorSection)}
-                        className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                      >
-                        <Users size={16} />
-                        <span>{showCollaboratorSection ? 'Masquer' : 'Gérer'}</span>
-                      </button>
-                    </div>
+                    {/* Collaborators Section */}
+                    <div>
+                      <div className="hidden md:flex items-center justify-between mb-4">
+                        <label className="block text-sm font-semibold" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                          Collaborateurs
+                        </label>
+                            <button
+                              type="button"
+                              data-collaborator-toggle="true"
+                              onClick={() => setShowCollaboratorSection(!showCollaboratorSection)}
+                              className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            >
+                            <Users size={16} className="text-blue-500" />
+                            <span>{showCollaboratorSection ? 'Masquer' : 'Gérer'}</span>
+                          </button>
+                      </div>
 
-                    {showCollaboratorSection && (
-                      <div
-                        className="rounded-lg p-4 border transition-colors"
-                        style={{
-                          backgroundColor: 'rgb(var(--color-hover))',
-                          borderColor: 'rgb(var(--color-border))',
-                        }}
-                      >
+                      {showCollaboratorSection && (
+                        <div
+                          ref={collaboratorRef}
+                          className="rounded-lg p-4 border transition-colors"
+                          style={{
+                            backgroundColor: 'rgb(var(--color-hover))',
+                            borderColor: 'rgb(var(--color-border))',
+                          }}
+                        >
                         {!isPremium() ? (
                           <div className="text-center py-6">
                             <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -773,90 +841,132 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                   </div>
 
                   {/* Task Preview */}
-                  <div className="p-4 rounded-lg border transition-colors" style={{
-                    backgroundColor: 'rgb(var(--color-hover))',
-                    borderColor: 'rgb(var(--color-border))'
-                  }}>
-                    <h4 className="text-sm font-semibold mb-3 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>Aperçu de la tâche</h4>
-                    <div className="p-4 rounded-lg border transition-colors" style={{
-                      backgroundColor: 'rgb(var(--color-surface))',
+                  {!showCollaboratorSection && (
+                    <div className="hidden md:block p-4 rounded-lg border transition-colors" style={{
+                      backgroundColor: 'rgb(var(--color-hover))',
                       borderColor: 'rgb(var(--color-border))'
                     }}>
-                      <div className="flex items-center gap-3 mb-2">
-                        <div
-                          className="w-4 h-4 rounded"
-                          style={{ backgroundColor: getCategoryColor(formData.category) }}
-                        />
-                        <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {formData.name || 'Nom de la tâche'}
-                        </span>
-                        {formData.bookmarked && <Bookmark size={16} className="text-yellow-500" />}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        <span>Priorité {formData.priority}</span>
-                        <span>{formData.estimatedTime} min</span>
-                        {formData.completed && <span className="text-blue-600 dark:text-blue-400">✓ Complétée</span>}
-                      </div>
+                      <h4 className="text-sm font-semibold mb-3 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>Aperçu de la tâche</h4>
+                          <div className="p-4 rounded-lg border transition-colors flex items-center justify-between" style={{
+                            backgroundColor: 'rgb(var(--color-surface))',
+                            borderColor: 'rgb(var(--color-border))'
+                          }}>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-4 h-4 rounded"
+                                  style={{ backgroundColor: getCategoryColor(formData.category) }}
+                                />
+                                <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                                  {formData.name || 'Nom de la tâche'}
+                                </span>
+                                {formData.bookmarked && <Bookmark size={16} className="text-yellow-500" />}
+                              </div>
+                              <div className="flex items-center gap-4 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                                <span>Priorité {formData.priority}</span>
+                                <span>{formData.estimatedTime} min</span>
+                                {formData.completed && <span className="text-blue-600 dark:text-blue-400">✓ Complétée</span>}
+                              </div>
+                            </div>
+                            {collaborators.length > 0 && (
+                              <CollaboratorAvatars collaborators={collaborators} friends={friends} size="md" />
+                            )}
+                          </div>
+
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-between items-center pt-6 border-t mt-6" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                {!isCreating && (
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isLoading}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50"
-                  >
-                    <Trash2 size={16} />
-                    Supprimer
-                  </button>
-                )}
-                {isCreating && <div></div>}
+                {/* Action Buttons */}
+                <div className="flex justify-between items-center pt-6 border-t mt-6" style={{ borderColor: 'rgb(var(--color-border))' }}>
+                  {!isCreating && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      disabled={isLoading}
+                      className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg transition-colors border border-red-200 dark:border-red-800 disabled:opacity-50"
+                    >
+                      <Trash2 size={16} />
+                      <span className="hidden sm:inline">Supprimer</span>
+                    </button>
+                  )}
+                  {isCreating && <div></div>}
 
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={handleClose}
-                    disabled={isLoading}
-                    className="px-6 py-3 rounded-lg transition-colors disabled:opacity-50"
-                    style={{
-                      backgroundColor: 'rgb(var(--color-hover))',
-                      color: 'rgb(var(--color-text-secondary))'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isLoading) e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))';
-                    }}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
-                    className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" role="status"></div>
-                        {isCreating ? 'Création...' : 'Sauvegarde...'}
-                      </>
-                    ) : (
-                      <>
-                        {isCreating ? 'Créer' : 'Sauvegarder'}
-                      </>
-                    )}
-                  </button>
-                </div>
+                  <div className="flex gap-2 sm:gap-3">
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      disabled={isLoading}
+                      className="px-4 py-2 sm:px-6 sm:py-3 rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base"
+                      style={{
+                        backgroundColor: 'rgb(var(--color-hover))',
+                        color: 'rgb(var(--color-text-secondary))'
+                      }}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading || !isFormValid() || (!hasChanges && !isCreating)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-2.5 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" role="status"></div>
+                          <span className="hidden sm:inline">{isCreating ? 'Création...' : 'Sauvegarde...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          {isCreating ? 'Créer' : 'Sauvegarder'}
+                        </>
+                      )}
+                    </button>
+                  </div>
               </div>
             </form>
           </div>
         </div>
+        
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[70] p-4 sm:rounded-2xl">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+              >
+                <div className="p-6">
+                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+                  <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                    Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmDelete}
+                      disabled={isLoading}
+                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20 disabled:opacity-50"
+                    >
+                      {isLoading ? '...' : 'Supprimer'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </DialogContent>
     </Dialog>
   );
