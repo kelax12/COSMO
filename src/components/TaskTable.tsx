@@ -6,8 +6,7 @@ import { motion } from 'framer-motion';
 import { Task, useTasks } from '../context/TaskContext';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
-import AddToListModal from './AddToListModal';
-import TaskToEventModal from './TaskToEventModal';
+import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
 
 type TaskTableProps = {
@@ -253,20 +252,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
               </button>
             )}
           </div>
-        <div className="flex gap-1">
-          <button 
-            onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }}
-            className="p-2 text-slate-400"
-          >
-            <MoreHorizontal size={18} />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }} 
-            className="p-2 text-red-400"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
+          <div className="flex gap-1">
+            <button 
+              onClick={(e) => { e.stopPropagation(); setSelectedTask(task.id); }}
+              className="p-2 text-slate-400"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }} 
+              className="p-2 text-red-400"
+            >
+              <Trash2 size={18} />
+            </button>
+          </div>
       </div>
     </div>
     );
@@ -458,13 +457,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         <Calendar size={16} />
                       </button>
                     )}
-                    <button 
-                      onClick={() => setAddToListTask(task.id)}
-                      className="p-2 rounded transition-colors"
-                      style={{ color: 'rgb(var(--color-text-muted))' }}
-                    >
-                      <MoreHorizontal size={16} />
-                    </button>
+                      <button 
+                        onClick={() => setSelectedTask(task.id)}
+                        className="p-2 rounded transition-colors"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
                     <button 
                       onClick={() => setCollaboratorModalTask(task.id)}
                       className="p-2 rounded transition-colors"
@@ -529,12 +528,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
         />
       )}
 
-      <AddToListModal
-        isOpen={!!addToListTask}
-        onClose={() => setAddToListTask(null)}
-        taskId={addToListTask || ''}
-      />
-
       {collaboratorModalTask && (
         <CollaboratorModal
           isOpen={!!collaboratorModalTask}
@@ -544,7 +537,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {taskToEventModal && (
-        <TaskToEventModal
+        <EventModal
+          mode="convert"
           isOpen={true}
           onClose={() => setTaskToEventModal(null)}
           task={taskToEventModal}
@@ -552,39 +546,40 @@ const TaskTable: React.FC<TaskTableProps> = ({
         />
       )}
 
-      {taskToDelete && (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
-          >
-            <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+        {taskToDelete && (
+          <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-200 dark:border-slate-700"
+            >
+              <div className="p-6">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
+                  Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setTaskToDelete(null)}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Supprimer la tâche</h3>
-              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-6">
-                Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setTaskToDelete(null)}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
-                >
-                  Annuler
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 shadow-md shadow-red-500/20"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            </motion.div>
+          </div>
+        )}
     </>
   );
 };
