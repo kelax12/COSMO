@@ -244,15 +244,15 @@ const MessagingPage: React.FC = () => {
 
   const handleSendFriendRequest = () => {
     if (!addFriendEmail.trim()) return;
-    // In this demo, we assume the user finds an ID or email
-    const foundFriend = friends.find(f => f.email === addFriendEmail);
+    const email = addFriendEmail.trim().toLowerCase();
+    const foundFriend = friends.find(f => f.email.toLowerCase() === email);
     if (foundFriend) {
-      sendFriendRequest(foundFriend.id);
-      setAddFriendEmail('');
-      setShowAddFriendForm(false);
+      alert('Cet utilisateur est déjà votre ami');
     } else {
-      alert('Utilisateur non trouvé');
+      sendFriendRequest(email);
     }
+    setAddFriendEmail('');
+    setShowAddFriendForm(false);
   };
 
   const currentConversation = allConversations.find(c => c.id === selectedConversation);
