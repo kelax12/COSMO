@@ -129,8 +129,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all shadow-sm border shrink-0 ${
                 showAdvancedFilters || hasActiveFilters
-                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
-                  : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700'
+                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
+                  : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
               }`}
               aria-label={showAdvancedFilters ? "Masquer les filtres avancés" : "Afficher les filtres avancés"}
               aria-expanded={showAdvancedFilters}
@@ -141,7 +141,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 <motion.span 
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="bg-white dark:bg-blue-500 text-blue-600 dark:text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                  className="bg-white dark:bg-blue-500 monochrome:bg-white text-blue-600 dark:text-white monochrome:text-black text-[10px] px-1.5 py-0.5 rounded-full font-bold"
                 >
                   {[searchTerm, ...selectedCategories, showCompleted ? 'completed' : ''].filter(Boolean).length}
                 </motion.span>
@@ -159,7 +159,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={clearAllFilters}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border border-red-200 dark:border-red-800/50 transition-all shadow-sm w-full lg:w-auto"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-red-50 dark:bg-red-900/20 monochrome:bg-neutral-900 text-red-600 dark:text-red-400 monochrome:text-neutral-300 hover:bg-red-100 dark:hover:bg-red-900/40 monochrome:hover:bg-neutral-800 border border-red-200 dark:border-red-800/50 monochrome:border-neutral-700 transition-all shadow-sm w-full lg:w-auto"
                 aria-label="Réinitialiser tous les filtres"
               >
                 <X size={18} aria-hidden="true" />
@@ -202,8 +202,8 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                               onClick={() => toggleCategory(category.id)}
                               className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border shadow-sm shrink-0 ${
                                 selectedCategories.includes(category.id)
-                                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 shadow-md'
-                                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700'
+                                  ? 'bg-blue-600 text-white border-blue-700 dark:bg-blue-500 dark:border-blue-600 monochrome:bg-white monochrome:text-black monochrome:border-white shadow-md'
+                                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:border-slate-700 monochrome:bg-neutral-900 monochrome:text-neutral-300 monochrome:border-neutral-700 monochrome:hover:bg-neutral-800'
                               }`}
                               aria-label={`${selectedCategories.includes(category.id) ? 'Retirer' : 'Ajouter'} le filtre ${category.name}`}
                               aria-pressed={selectedCategories.includes(category.id)}
@@ -220,17 +220,17 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                       </div>
   
                   {/* Priority Range */}
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-inner">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 monochrome:bg-neutral-900 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 shadow-inner">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                       <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                          Intervalle de priorité
                       </label>
                       <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-bold">
+                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
                           P{priorityRange[0]}
                         </span>
                         <span className="text-slate-400 dark:text-slate-600">à</span>
-                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 text-xs font-bold">
+                        <span className="px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-500/20 monochrome:bg-neutral-800 border border-blue-200 dark:border-blue-500/30 monochrome:border-neutral-600 text-blue-600 dark:text-blue-400 monochrome:text-neutral-300 text-xs font-bold">
                           P{priorityRange[1]}
                         </span>
                       </div>
@@ -253,10 +253,10 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     const isActive = p >= priorityRange[0] && p <= priorityRange[1];
                     return (
                       <div key={p} className="flex flex-col items-center gap-2">
-                        <div className={`text-xs font-black transition-colors ${isActive ? 'text-blue-400 scale-110' : 'text-slate-600'}`}>
+                        <div className={`text-xs font-black transition-colors ${isActive ? 'text-blue-400 monochrome:text-white scale-110' : 'text-slate-600'}`}>
                           P{p}
                         </div>
-                        <div className={`h-2 w-2 rounded-full transition-all duration-300 ${isActive ? 'bg-blue-500 ring-4 ring-blue-500/20' : 'bg-slate-800'}`} />
+                        <div className={`h-2 w-2 rounded-full transition-all duration-300 ${isActive ? 'bg-blue-500 monochrome:bg-white ring-4 ring-blue-500/20 monochrome:ring-white/20' : 'bg-slate-800'}`} />
                         <span className="text-[10px] text-slate-500 font-medium">
                           {p === 1 ? 'Basse' : p === 5 ? 'Critique' : ''}
                         </span>
@@ -286,7 +286,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                     </span>
                     <button
                       onClick={clearAllFilters}
-                      className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                      className="text-xs text-red-600 dark:text-red-400 monochrome:text-neutral-400 hover:underline"
                       aria-label="Effacer tous les filtres"
                     >
                       Tout effacer
@@ -294,7 +294,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {searchTerm && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 monochrome:bg-neutral-800 text-blue-700 dark:text-blue-400 monochrome:text-neutral-300 rounded text-xs">
                         Recherche: "{searchTerm}"
                       </span>
                     )}
@@ -302,12 +302,12 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                       const selected = categories.find(c => c.id === cat);
                       const color = selected?.color || '#3B82F6';
                       return (
-                        <div key={cat} className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                        <div key={cat} className="flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 monochrome:bg-neutral-800 text-blue-800 dark:text-blue-300 monochrome:text-neutral-300">
                           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }}></span>
                           <span>{selected?.name || cat}</span>
                           <button
                             onClick={() => toggleCategory(cat)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                            className="text-blue-600 dark:text-blue-400 monochrome:text-neutral-400 hover:text-blue-800 dark:hover:text-blue-200"
                           >
                             <X size={14} aria-hidden="true" />
                           </button>
@@ -315,12 +315,12 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                       );
                     })}
                     {showCompleted && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 monochrome:bg-neutral-800 text-green-700 dark:text-green-400 monochrome:text-neutral-300 rounded text-xs">
                         Complétées
                       </span>
                     )}
                     {(priorityRange[0] !== 1 || priorityRange[1] !== 5) && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded text-xs">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 monochrome:bg-neutral-800 text-orange-700 dark:text-orange-400 monochrome:text-neutral-300 rounded text-xs">
                         Priorité: {priorityRange[0]}-{priorityRange[1]}
                       </span>
                     )}
