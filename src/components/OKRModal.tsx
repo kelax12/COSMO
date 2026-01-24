@@ -373,7 +373,7 @@ const OKRModal: React.FC<OKRModalProps> = ({
                     className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all self-center"
                     title="Supprimer ce résultat">
 
-                        <Trash2 size={20} />
+                        <Trash2 size={20} className="text-red-500" />
                       </button>
                   }
                   </motion.div>
