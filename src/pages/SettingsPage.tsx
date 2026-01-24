@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Palette, BookOpen, LogOut, Layout, Calendar, 
@@ -47,6 +47,10 @@ const SettingsPage: React.FC = () => {
   const { user, updateUserSettings, logout } = useTasks();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
@@ -655,6 +659,3 @@ const SettingsPage: React.FC = () => {
 };
 
 export default SettingsPage;
-
-
-
