@@ -6,12 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 type ColorSettingsModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  isNested?: boolean;
 };
 
-  const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose }) => {
+  const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) => {
   const { categories, updateCategory, addCategory, deleteCategory } = useTasks();
   const [localCategories, setLocalCategories] = useState(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
@@ -45,34 +47,41 @@ type ColorSettingsModalProps = {
 
   const confirmDeleteLocal = () => {
     if (categoryToDelete) {
-      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
+    setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
       setCategoryToDelete(null);
+        }
+      };
+  
+    const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const deletePromises = categories
+        .filter(cat => !localCategories.find(lc => lc.id === cat.id))
+        .map(cat => deleteCategory(cat.id));
+
+      const savePromises = localCategories.map(lc => {
+        const existing = categories.find(cat => cat.id === lc.id);
+        if (existing) {
+          if (existing.name !== lc.name || existing.color !== lc.color) {
+            return updateCategory(lc.id, { name: lc.name, color: lc.color });
+          }
+          return Promise.resolve();
+        } else {
+          return addCategory(lc);
+        }
+      });
+
+      await Promise.all([...deletePromises, ...savePromises]);
+      onClose();
+    } catch (error) {
+      console.error('Error saving categories:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleSave = () => {
-    categories.forEach(cat => {
-      if (!localCategories.find(lc => lc.id === cat.id)) {
-        deleteCategory(cat.id);
-      }
-    });
-
-    localCategories.forEach(lc => {
-      const existing = categories.find(cat => cat.id === lc.id);
-      if (existing) {
-        if (existing.name !== lc.name || existing.color !== lc.color) {
-          updateCategory(lc.id, { name: lc.name, color: lc.color });
-        }
-      } else {
-        addCategory(lc);
-      }
-    });
-
-    onClose();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center px-4">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -84,7 +93,9 @@ type ColorSettingsModalProps = {
         <motion.div 
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="relative w-full max-w-md overflow-hidden rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-2xl border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700"
+            className={`relative w-full overflow-hidden rounded-[20px] bg-white dark:bg-slate-800 monochrome:bg-neutral-900 text-slate-800 dark:text-white shadow-2xl border border-slate-200 dark:border-slate-700 monochrome:border-neutral-700 transition-all duration-300 ${
+              isNested ? 'max-w-[600px]' : 'max-w-2xl'
+            }`}
         >
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50 monochrome:border-neutral-700">
             <h2 className="text-xl font-medium text-slate-800 dark:text-white">Modifier les catégories</h2>
@@ -155,19 +166,25 @@ type ColorSettingsModalProps = {
             </div>
           </div>
 
-          <div className="px-6 pb-8 pt-2 flex justify-center">
-            <button
-              onClick={handleSave}
-              className="w-48 py-3 bg-blue-600 hover:bg-blue-700 monochrome:bg-white monochrome:hover:bg-neutral-200 text-white monochrome:text-black font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 monochrome:shadow-white/10"
-            >
-              Enregistrer
-            </button>
-          </div>
+            <div className="px-6 pb-8 pt-2 flex justify-center">
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="w-48 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 monochrome:bg-white monochrome:hover:bg-neutral-200 text-white monochrome:text-black font-bold rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-500/20 monochrome:shadow-white/10 flex items-center justify-center"
+              >
+                {isSaving ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  'Enregistrer'
+                )}
+              </button>
+            </div>
+
         </motion.div>
 
         <AnimatePresence>
           {categoryToDelete && (
-            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 monochrome:bg-black/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+            <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 monochrome:bg-black/80 backdrop-blur-sm flex items-center justify-center z-[90] p-4">
               <motion.div 
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -189,12 +206,13 @@ type ColorSettingsModalProps = {
                     >
                       Annuler
                     </button>
-                    <button
-                      onClick={confirmDeleteLocal}
-                      className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black monochrome:hover:bg-neutral-200 transition-all duration-200 shadow-md shadow-red-500/20 monochrome:shadow-white/10"
-                    >
-                      Supprimer
-                    </button>
+                      <button
+                        onClick={confirmDeleteLocal}
+                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 monochrome:bg-white monochrome:text-black monochrome:hover:bg-neutral-200 transition-all duration-200 shadow-md shadow-red-500/20 monochrome:shadow-white/10"
+                      >
+                        Confirmer
+                      </button>
+
                   </div>
                 </div>
               </motion.div>
