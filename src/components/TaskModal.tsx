@@ -13,6 +13,8 @@ import {
 import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
 import CollaboratorAvatars from './CollaboratorAvatars';
+import ColorSettingsModal from './ColorSettingsModal';
+import ListModal from './ListModal';
 
 interface TaskModalProps {
   task?: Task;
@@ -42,6 +44,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
   });
 
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showListModal, setShowListModal] = useState(false);
   const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
 
   // Collaborator state (integrated from AddTaskForm)
@@ -550,11 +554,23 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
                               <ChevronDown size={18} className="text-blue-500" />
                             </button>
                           </DropdownMenuTrigger>
-                        <DropdownMenuContent 
-                          align="start" 
-                          className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
-                        >
-                          {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
+                          <DropdownMenuContent 
+                            align="start" 
+                            className="w-[var(--radix-dropdown-menu-trigger-width)] bg-[#f8fafc] dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 p-1 shadow-xl"
+                          >
+                            {categories.length === 0 && (
+                              <DropdownMenuItem asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowCategoryModal(true)}
+                                  className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                >
+                                  <Plus size={18} />
+                                  Ajouter une catégorie
+                                </button>
+                              </DropdownMenuItem>
+                            )}
+                            {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
                             <DropdownMenuItem asChild>
                               <button
                                 type="button"
@@ -689,9 +705,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
                               </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-[#1e293b] border-slate-700 text-white shadow-xl">
                               {lists.length === 0 && (
-                                <div className="p-2 text-sm text-center text-slate-400">
-                                  Aucune liste disponible
-                                </div>
+                                <DropdownMenuItem asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowListModal(true)}
+                                    className="w-full text-left px-4 py-2 text-sm rounded-md transition-colors flex items-center gap-2 text-blue-400 font-medium hover:bg-slate-700"
+                                  >
+                                    <Plus size={16} />
+                                    Ajouter une liste
+                                  </button>
+                                </DropdownMenuItem>
                               )}
                               {lists.map(list => (
                                 <DropdownMenuCheckboxItem
@@ -1029,11 +1052,23 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
               </motion.div>
             </div>
           )}
-        </AnimatePresence>
-      </DialogContent>
-    </Dialog>
-  );
-};
+            </AnimatePresence>
+            
+            <ColorSettingsModal 
+              isOpen={showCategoryModal} 
+              onClose={() => setShowCategoryModal(false)} 
+              isNested={true}
+            />
+            <ListModal 
+              isOpen={showListModal} 
+              onClose={() => setShowListModal(false)} 
+              isNested={true}
+            />
+          </DialogContent>
+        </Dialog>
+
+    );
+  };
 
 export default TaskModal;
 
