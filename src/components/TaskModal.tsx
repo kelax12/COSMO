@@ -14,7 +14,7 @@ import CollaboratorItem from '@/components/CollaboratorItem';
 import { DatePicker } from '@/components/ui/date-picker';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import ColorSettingsModal from './ColorSettingsModal';
-import ListModal from './ListModal';
+import ListModal from '../ListModal';
 
 interface TaskModalProps {
   task?: Task;
