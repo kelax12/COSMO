@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authClient } from '../lib/auth-client';
+import { useAuth } from '../modules/auth/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -7,19 +7,17 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { data, error } = await authClient.signIn.email({
-        email,
-        password,
-      });
+      const { success, error } = await login(email, password);
 
-      if (error) {
-        toast.error(error.message || 'Erreur lors de la connexion');
+      if (!success) {
+        toast.error(error || 'Erreur lors de la connexion');
       } else {
         toast.success('Connexion réussie !');
         navigate('/dashboard');
