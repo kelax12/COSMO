@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import AgendaPage from './pages/AgendaPage';
@@ -15,8 +17,16 @@ import { TaskProvider, useTasks } from './context/TaskContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
+import HoverReceiver from "@/visual-edits/VisualEditsMessenger";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      gcTime: 0,
+    },
+  },
+});
 
 function AppContent() {
   const { user, loading } = useTasks();
@@ -32,17 +42,17 @@ function AppContent() {
     );
   }
 
-  return (
+    return (
     <Routes>
-      {/* La landing page est accessible à /welcome pour tout le monde */}
       <Route path="/welcome" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignupPage />} />
 
-      {/* Si l'utilisateur n'est pas connecté, la racine affiche la landing page */}
       {!user ? (
         <Route path="*" element={<LandingPage />} />
       ) : (
-        /* Si l'utilisateur est connecté, la racine affiche l'application */
         <Route path="/" element={<Layout />}>
+
           <Route index element={<DashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="tasks" element={<TasksPage />} />
@@ -66,6 +76,7 @@ const App = () => (
     <TooltipProvider>
       <TaskProvider>
         <Toaster />
+        <HoverReceiver />
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
