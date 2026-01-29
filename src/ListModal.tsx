@@ -1,6 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
-import ListManager from './ListManager';
+import { Dialog, DialogContent, DialogTitle } from './components/ui/dialog';
+import ListManager from './components/ListManager';
 import { X } from 'lucide-react';
 
 interface ListModalProps {
