@@ -1,21 +1,9 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import path from "path";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
+  plugins: [react()],
   server: {
-    host: "::",
-    port: 3000,
+    allowedHosts: 'all',
   },
-  plugins: [
-    react(),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  optimizeDeps: {
-    exclude: ["lucide-react"],
-  },
-});
+})
