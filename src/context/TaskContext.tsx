@@ -1,33 +1,44 @@
-import React, { createContext, useContext } from 'react';
-import { useAuth } from '../modules/auth/AuthContext';
-
-export const TaskContext = createContext<any>(undefined);
-
-export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const auth = useAuth();
-
-  const value = {
-    user: auth.user,
-    loading: auth.isLoading,
-    isAuthenticated: auth.isAuthenticated,
-    isDemo: auth.isDemo,
-    login: auth.login,
-    register: auth.register,
-    loginWithGoogle: auth.loginWithGoogle,
-    logout: auth.logout,
+messages,
+    tasks,
+    habits,
+    okrs,
+    events,
+    lists,
+    categories,
+    collaborators,
+    friends,
+    colorSettings,
+    searchTerm,
+    setSearchTerm,
+    selectedCategories,
+    setSelectedCategories,
+    priorityRange,
+    setPriorityRange,
+    markMessagesAsRead,
+    addTask,
+    updateTask,
+    deleteTask,
+    toggleBookmark,
+    toggleComplete,
+    addHabit,
+    updateHabit,
+    deleteHabit,
+    toggleHabitCompletion,
+    addOKR,
+    updateOKR,
+    deleteOKR,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    addList,
+    updateList,
+    deleteList,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    sendFriendRequest,
+    login: async () => {},
+    register: async () => {},
+    loginWithGoogle: async () => {},
+    logout: async () => {},
   };
-
-  return (
-    <TaskContext.Provider value={value}>
-      {children}
-    </TaskContext.Provider>
-  );
-};
-
-export const useTasks = () => {
-  const context = useContext(TaskContext);
-  if (context === undefined) {
-    throw new Error('useTasks must be used within a TaskProvider');
-  }
-  return context;
-};
