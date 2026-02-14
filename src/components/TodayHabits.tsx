@@ -1,10 +1,11 @@
 import React from 'react';
 import { Repeat, Clock, Check } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
 import { useNavigate } from 'react-router-dom';
+import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 
 const TodayHabits: React.FC = () => {
-  const { habits, toggleHabitCompletion } = useTasks();
+  const { data: habits = [], isLoading } = useHabits();
+  const toggleCompletionMutation = useToggleHabitCompletion();
   const navigate = useNavigate();
 
   const today = new Date().toLocaleDateString('en-CA');
@@ -18,6 +19,31 @@ const TodayHabits: React.FC = () => {
   const totalTime = todayHabits.reduce((sum, habit) =>
   habit.completedToday ? sum + habit.estimatedTime : sum, 0
   );
+
+  const handleToggle = (habitId: string) => {
+    toggleCompletionMutation.mutate({ id: habitId, date: today });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-indigo-50 dark:bg-purple-900/20 rounded-xl border border-indigo-100 dark:border-purple-800/30">
+            <Repeat size={24} className="text-indigo-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
+            <p className="text-[rgb(var(--color-text-secondary))] text-sm">Chargement...</p>
+          </div>
+        </div>
+        <div className="animate-pulse space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-20 bg-slate-200 dark:bg-slate-700 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card p-6">
@@ -44,7 +70,7 @@ const TodayHabits: React.FC = () => {
               }
             onClick={(e) => {
               if ((e.target as HTMLElement).closest('.completion-toggle')) {
-                toggleHabitCompletion(habit.id, today);
+                handleToggle(habit.id);
               } else {
                 navigate('/habits', { state: { selectedHabitId: habit.id } });
               }
@@ -53,7 +79,7 @@ const TodayHabits: React.FC = () => {
               <div className="flex items-center gap-4">
                   <div className="flex-shrink-0 completion-toggle" onClick={(e) => e.stopPropagation()}>
                       <div
-                        onClick={() => toggleHabitCompletion(habit.id, today)}
+                        onClick={() => handleToggle(habit.id)}
                         className={`h-7 w-7 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
                           habit.completedToday 
                             ? 'bg-white text-blue-600 border-white dark:bg-blue-500 dark:text-white dark:border-blue-600 shadow-md' 
@@ -75,7 +101,7 @@ const TodayHabits: React.FC = () => {
                   </div>
                   <div className={`flex items-center gap-1 text-sm font-medium ${habit.completedToday ? 'text-white/90 dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     <span>🔥</span>
-                    <span>{habit.streak} jours</span>
+                    <span>{Object.values(habit.completions).filter(Boolean).length} jours</span>
                   </div>
                 </div>
               </div>
