@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Eye, EyeOff } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useTasks as useTasksContext } from '../context/TaskContext';
+import { usePendingTasks } from '@/modules/tasks';
 import ColorSettingsModal from './ColorSettingsModal';
 
 interface TasksSummaryProps {
@@ -12,19 +13,33 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
   onTogglePosition,
   isBottomPosition = false 
 }) => {
-  const { tasks, categories } = useTasks();
+  // Use new module for tasks (read-only)
+  const { data: tasks = [], isLoading } = usePendingTasks();
+  // Still need categories from TaskContext
+  const { categories } = useTasksContext();
   const [showColorSettings, setShowColorSettings] = useState(false);
   
-  const activeTasks = tasks.filter(task => !task.completed);
-  
   const categoryCounts = categories.reduce((acc, cat) => {
-    acc[cat.id] = activeTasks.filter(task => task.category === cat.id).length;
+    acc[cat.id] = tasks.filter(task => task.category === cat.id).length;
     return acc;
   }, {} as Record<string, number>);
 
-  const totalTasks = activeTasks.length;
+  const totalTasks = tasks.length;
 
   const [isHovered, setIsHovered] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="card p-6">
+        <h2 className="text-xl font-bold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>Chargement...</h2>
+        <div className="animate-pulse space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
