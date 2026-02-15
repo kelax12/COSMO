@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useTasks as useTasksContext } from '../context/TaskContext';
+import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
@@ -10,7 +11,10 @@ type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
 
 export default function StatisticsPage() {
-  const { tasks, events, colorSettings, okrs } = useTasks();
+  // Use new module for tasks (read-only)
+  const { data: tasks = [] } = useTasks();
+  // Still need events, colorSettings, okrs from TaskContext
+  const { events, colorSettings, okrs } = useTasksContext();
   const { data: habits = [] } = useHabits();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
