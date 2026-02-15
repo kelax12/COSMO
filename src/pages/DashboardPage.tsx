@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Repeat, Target, CheckSquare, Calendar, Zap, Award, Leaf } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
+import { useHabits } from '@/modules/habits';
 import DashboardChart from '../components/DashboardChart';
 import TodayHabits from '../components/TodayHabits';
 import TodayTasks from '../components/TodayTasks';
@@ -10,9 +11,11 @@ import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 
 const DashboardPage: React.FC = () => {
-  const { user, tasks, habits, okrs, events, isPremium } = useTasks();
+  const { user, tasks, okrs, events, isPremium } = useTasks();
+  const { data: habits = [] } = useHabits();
 
-  if (!user) return null;
+  // Default user for demo mode
+  const displayUser = user || { id: 'demo', name: 'Utilisateur', email: 'demo@cosmo.app' };
 
   // Calculer les statistiques du jour
   const today = new Date().toISOString().split('T')[0];
@@ -110,7 +113,7 @@ const DashboardPage: React.FC = () => {
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[rgb(var(--color-text-primary))] mb-2 lg:mb-3">
                   <span>Bonjour, </span>
                 <TextType
-                        text={user.name}
+                        text={displayUser.name}
                         typingSpeed={80}
                         pauseDuration={5000}
                         deletingSpeed={50}
