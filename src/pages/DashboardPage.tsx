@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Repeat, Target, CheckSquare, Calendar, Zap, Award, Leaf } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useTasks as useTasksContext } from '../context/TaskContext';
+import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import DashboardChart from '../components/DashboardChart';
 import TodayHabits from '../components/TodayHabits';
@@ -11,7 +12,10 @@ import ActiveOKRs from '../components/ActiveOKRs';
 import TextType from '../components/TextType';
 
 const DashboardPage: React.FC = () => {
-  const { user, tasks, okrs, events, isPremium } = useTasks();
+  // Use new module for tasks (read-only)
+  const { data: tasks = [] } = useTasks();
+  // Still need user, okrs, events from TaskContext
+  const { user, okrs, events, isPremium } = useTasksContext();
   const { data: habits = [] } = useHabits();
 
   // Default user for demo mode
