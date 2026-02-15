@@ -1,56 +1,120 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { SupabaseTasksRepository } from './supabase.repository';
 import { LocalStorageTasksRepository } from './local.repository';
-import { Task } from './tasks.repository';
+import { ITasksRepository } from './tasks.repository';
+import { Task, TaskFilters } from './tasks.types';
 
-const useTasksRepository = () => {
-  const { isDemo } = useAuth();
+// ═══════════════════════════════════════════════════════════════════
+// Query Keys
+// ═══════════════════════════════════════════════════════════════════
+export const taskKeys = {
+  all: ['tasks'] as const,
+  lists: () => [...taskKeys.all, 'list'] as const,
+  list: (filters: TaskFilters) => [...taskKeys.lists(), filters] as const,
+  details: () => [...taskKeys.all, 'detail'] as const,
+  detail: (id: string) => [...taskKeys.details(), id] as const,
+  byDate: (date: string) => [...taskKeys.all, 'date', date] as const,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// Repository Factory
+// ═══════════════════════════════════════════════════════════════════
+const useTasksRepository = (): ITasksRepository => {
+  const { isDemo, isAuthenticated } = useAuth();
   return useMemo(
-    () => (isDemo ? new LocalStorageTasksRepository() : new SupabaseTasksRepository()),
-    [isDemo]
+    () => (isDemo || !isAuthenticated
+      ? new LocalStorageTasksRepository()
+      : new SupabaseTasksRepository()),
+    [isDemo, isAuthenticated]
   );
 };
 
-export const useTasks = () => {
+// ═══════════════════════════════════════════════════════════════════
+// READ HOOKS (Phase 1)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch all tasks
+ */
+export const useTasks = (options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
   return useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => repository.fetchTasks(),
+    queryKey: taskKeys.lists(),
+    queryFn: () => repository.getAll(),
+    enabled: options?.enabled ?? true,
   });
 };
 
-export const useCreateTask = () => {
-  const queryClient = useQueryClient();
+/**
+ * Fetch a single task by ID
+ */
+export const useTask = (id: string, options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
-  return useMutation({
-    mutationFn: (task: Omit<Task, 'id' | 'createdAt'>) => repository.createTask(task),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
+  return useQuery({
+    queryKey: taskKeys.detail(id),
+    queryFn: () => repository.getById(id),
+    enabled: (options?.enabled ?? true) && !!id,
   });
 };
 
-export const useUpdateTask = () => {
-  const queryClient = useQueryClient();
+/**
+ * Fetch tasks by date (deadline)
+ */
+export const useTasksByDate = (date: string, options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
-  return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Task> }) =>
-      repository.updateTask(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
+  return useQuery({
+    queryKey: taskKeys.byDate(date),
+    queryFn: () => repository.getByDate(date),
+    enabled: (options?.enabled ?? true) && !!date,
   });
 };
 
-export const useDeleteTask = () => {
-  const queryClient = useQueryClient();
+/**
+ * Fetch tasks with filters
+ */
+export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boolean }) => {
   const repository = useTasksRepository();
-  return useMutation({
-    mutationFn: (id: string) => repository.deleteTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    },
+  return useQuery({
+    queryKey: taskKeys.list(filters),
+    queryFn: () => repository.getFiltered(filters),
+    enabled: options?.enabled ?? true,
   });
 };
+
+// ═══════════════════════════════════════════════════════════════════
+// Computed Hooks (derived data)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Get today's tasks
+ */
+export const useTodaysTasks = () => {
+  const today = new Date().toISOString().split('T')[0];
+  return useTasksByDate(today);
+};
+
+/**
+ * Get pending tasks (not completed)
+ */
+export const usePendingTasks = () => {
+  return useFilteredTasks({ completed: false });
+};
+
+/**
+ * Get bookmarked tasks
+ */
+export const useBookmarkedTasks = () => {
+  return useFilteredTasks({ bookmarked: true });
+};
+
+/**
+ * Get completed tasks
+ */
+export const useCompletedTasks = () => {
+  return useFilteredTasks({ completed: true });
+};
+
+// Re-export types
+export type { Task, TaskFilters } from './tasks.types';
