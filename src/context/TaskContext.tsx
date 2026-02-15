@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useTasksBridge } from '@/modules/tasks/useTasksBridge';
-import type { Task } from '@/modules/tasks/tasks.repository';
+import React, { createContext, useContext, useState } from 'react';
+import type { Task } from '@/modules/tasks/tasks.types';
 
 // Helper pour générer des dates
 const getDate = (daysFromNow: number) => {
@@ -9,90 +8,93 @@ const getDate = (daysFromNow: number) => {
   return date.toISOString();
 };
 
-const today = new Date().toISOString().split('T')[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
+// Données de démonstration Tasks
+const DEMO_TASKS: Task[] = [
+  {
+    id: 'task-1',
+    name: 'Finaliser le rapport mensuel',
+    description: 'Rapport Q4 pour la direction',
+    priority: 5,
+    category: 'cat-1',
+    deadline: getDate(1),
+    estimatedTime: 120,
+    createdAt: getDate(-2),
+    bookmarked: true,
+    completed: false,
+    isCollaborative: false,
+    collaborators: [],
+    pendingInvites: [],
+  },
+  {
+    id: 'task-2',
+    name: 'Préparer la présentation client',
+    description: 'Présentation pour le client XYZ',
+    priority: 4,
+    category: 'cat-1',
+    deadline: getDate(3),
+    estimatedTime: 90,
+    createdAt: getDate(-1),
+    bookmarked: false,
+    completed: false,
+    isCollaborative: true,
+    collaborators: ['friend-1'],
+    pendingInvites: [],
+  },
+  {
+    id: 'task-3',
+    name: 'Réviser les cours de React',
+    description: 'Hooks avancés et Context API',
+    priority: 3,
+    category: 'cat-4',
+    deadline: getDate(5),
+    estimatedTime: 60,
+    createdAt: getDate(-3),
+    bookmarked: true,
+    completed: false,
+    isCollaborative: false,
+    collaborators: [],
+    pendingInvites: [],
+  },
+  {
+    id: 'task-4',
+    name: 'Rendez-vous médecin',
+    description: 'Bilan annuel',
+    priority: 2,
+    category: 'cat-3',
+    deadline: getDate(0),
+    estimatedTime: 45,
+    createdAt: getDate(-5),
+    bookmarked: false,
+    completed: true,
+    completedAt: getDate(0),
+    isCollaborative: false,
+    collaborators: [],
+    pendingInvites: [],
+  },
+  {
+    id: 'task-5',
+    name: 'Planifier les vacances',
+    description: 'Réserver hôtel et billets',
+    priority: 2,
+    category: 'cat-2',
+    deadline: getDate(14),
+    estimatedTime: 30,
+    createdAt: getDate(-7),
+    bookmarked: false,
+    completed: false,
+    isCollaborative: false,
+    collaborators: [],
+    pendingInvites: [],
+  },
+];
 
-// Données de démonstration pour les autres domaines (non-tasks)
+// Données de démonstration pour les autres domaines
 const DEMO_CATEGORIES = [
   { id: 'cat-1', name: 'Travail', color: '#3B82F6' },
   { id: 'cat-2', name: 'Personnel', color: '#10B981' },
   { id: 'cat-3', name: 'Santé', color: '#EF4444' },
   { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6' },
   { id: 'cat-5', name: 'Projets', color: '#F97316' },
-];
-
-const DEMO_HABITS = [
-  {
-    id: 'habit-1',
-    name: 'Méditation',
-    description: '15 minutes de méditation le matin',
-    frequency: 'daily',
-    estimatedTime: 15,
-    color: '#8B5CF6',
-    icon: '🧘',
-    completions: {
-      [today]: true,
-      [yesterday]: true,
-      [twoDaysAgo]: false,
-    },
-  },
-  {
-    id: 'habit-2',
-    name: 'Sport',
-    description: '30 minutes d\'exercice',
-    frequency: 'daily',
-    estimatedTime: 30,
-    color: '#EF4444',
-    icon: '🏃',
-    completions: {
-      [today]: false,
-      [yesterday]: true,
-      [twoDaysAgo]: true,
-    },
-  },
-  {
-    id: 'habit-3',
-    name: 'Lecture',
-    description: 'Lire 20 pages',
-    frequency: 'daily',
-    estimatedTime: 30,
-    color: '#3B82F6',
-    icon: '📚',
-    completions: {
-      [today]: true,
-      [yesterday]: false,
-      [twoDaysAgo]: true,
-    },
-  },
-  {
-    id: 'habit-4',
-    name: 'Apprentissage langue',
-    description: '15 minutes de pratique',
-    frequency: 'daily',
-    estimatedTime: 15,
-    color: '#10B981',
-    icon: '🌍',
-    completions: {
-      [today]: false,
-      [yesterday]: true,
-      [twoDaysAgo]: true,
-    },
-  },
-  {
-    id: 'habit-5',
-    name: 'Journaling',
-    description: 'Écrire dans mon journal',
-    frequency: 'daily',
-    estimatedTime: 10,
-    color: '#F97316',
-    icon: '✏️',
-    completions: {
-      [today]: true,
-      [yesterday]: true,
-      [twoDaysAgo]: false,
-    },
-  },
 ];
 
 const DEMO_OKRS = [
@@ -183,7 +185,7 @@ const DEMO_LISTS = [
     id: 'list-1',
     name: 'Urgent',
     color: 'red',
-    taskIds: ['task-1', 'task-2', 'task-6'],
+    taskIds: ['task-1', 'task-2'],
   },
   {
     id: 'list-2',
@@ -195,7 +197,7 @@ const DEMO_LISTS = [
     id: 'list-3',
     name: 'Professionnel',
     color: 'purple',
-    taskIds: ['task-1', 'task-2', 'task-6', 'task-7'],
+    taskIds: ['task-1', 'task-2'],
   },
 ];
 
@@ -205,8 +207,13 @@ const DEMO_FRIENDS = [
   { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
 ];
 
+const DEMO_FAVORITE_COLORS = [
+  '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
+];
+
 // Re-export Task type for backward compatibility
 export type { Task };
+
 export interface TaskList {
   id: string;
   name: string;
@@ -224,62 +231,82 @@ export interface CalendarEvent {
   taskId?: string;
 }
 
-export interface Habit {
-  id: string;
-  name: string;
-  description?: string;
-  frequency: string;
-  estimatedTime: number;
-  color: string;
-  icon: string;
-  completions: Record<string, boolean>;
-}
-
 export const TaskContext = createContext<any>(undefined);
 
 /**
  * TaskProvider - Provider hybride
  * 
- * TASKS: Utilise les hooks modernes (React Query + Repository Pattern)
- * AUTRES: Reste sur useState legacy (habits, okr, events, etc.)
+ * TASKS: Utilise useState legacy (mutations seront migrées en Phase 2)
+ *        READ-ONLY hooks disponibles via: import { useTasks } from '@/modules/tasks'
+ * HABITS: Migré vers /modules/habits (complètement indépendant)
+ * AUTRES: Reste sur useState legacy (okr, events, lists, categories, etc.)
  * 
- * Migration incrémentale: les tasks sont maintenant persistées via LocalStorage/Supabase
+ * Migration incrémentale en cours
  */
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════════
-  // TASKS - MODERNISÉ via React Query + Repository Pattern
+  // TASKS - Legacy useState (mutations Phase 2)
+  // READ: import { useTasks } from '@/modules/tasks'
   // ═══════════════════════════════════════════════════════════════════
-  const tasksBridge = useTasksBridge();
-  
-  // Wrapper pour compatibilité avec l'ancienne API
-  const addTask = async (taskData: any) => {
-    const task = {
+  const [tasks, setTasks] = useState<Task[]>(DEMO_TASKS);
+  const [loading, setLoading] = useState(false);
+
+  const addTask = (taskData: any) => {
+    const newTask: Task = {
+      id: crypto.randomUUID(),
       name: taskData.name || '',
       description: taskData.description || '',
       category: taskData.category || 'cat-1',
       priority: taskData.priority || 3,
       deadline: taskData.deadline || new Date().toISOString(),
       estimatedTime: taskData.estimatedTime || 60,
+      createdAt: new Date().toISOString(),
       completed: false,
       bookmarked: false,
       isCollaborative: taskData.isCollaborative || false,
       collaborators: taskData.collaborators || [],
       pendingInvites: taskData.pendingInvites || [],
     };
-    return tasksBridge.addTask(task);
+    setTasks(prev => [newTask, ...prev]);
+    return newTask;
+  };
+
+  const updateTask = (id: string, updates: Partial<Task>) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id));
+  };
+
+  const toggleBookmark = (id: string) => {
+    setTasks(prev => prev.map(t => 
+      t.id === id ? { ...t, bookmarked: !t.bookmarked } : t
+    ));
+  };
+
+  const toggleComplete = (id: string) => {
+    setTasks(prev => prev.map(t => 
+      t.id === id ? { 
+        ...t, 
+        completed: !t.completed,
+        completedAt: !t.completed ? new Date().toISOString() : undefined
+      } : t
+    ));
   };
 
   // ═══════════════════════════════════════════════════════════════════
   // LEGACY - Reste sur useState (à migrer plus tard)
+  // Note: HABITS a été migré vers /modules/habits
   // ═══════════════════════════════════════════════════════════════════
   const [messages, setMessages] = useState<any[]>([]);
-  const [habits, setHabits] = useState<any[]>(DEMO_HABITS);
   const [okrs, setOkrs] = useState<any[]>(DEMO_OKRS);
   const [events, setEvents] = useState<any[]>(DEMO_EVENTS);
   const [lists, setLists] = useState<any[]>(DEMO_LISTS);
   const [categories, setCategories] = useState<any[]>(DEMO_CATEGORIES);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>(DEMO_FRIENDS);
+  const [favoriteColors, setFavoriteColors] = useState<string[]>(DEMO_FAVORITE_COLORS);
   const [user] = useState({ id: 'demo-user', name: 'Demo', email: 'demo@cosmo.app', avatar: '👤' });
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -287,32 +314,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const markMessagesAsRead = () => {
     setMessages(prev => prev.map(msg => ({ ...msg, read: true })));
-  };
-
-  // Habit CRUD operations (legacy)
-  const addHabit = (habit: any) => {
-    const newHabit = { ...habit, id: Date.now().toString(), completions: {} };
-    setHabits(prev => [...prev, newHabit]);
-    return newHabit;
-  };
-
-  const updateHabit = (id: string, updates: any) => {
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, ...updates } : h));
-  };
-
-  const deleteHabit = (id: string) => {
-    setHabits(prev => prev.filter(h => h.id !== id));
-  };
-
-  const toggleHabitCompletion = (id: string, date: string) => {
-    setHabits(prev => prev.map(h => {
-      if (h.id === id) {
-        const completions = { ...h.completions };
-        completions[date] = !completions[date];
-        return { ...h, completions };
-      }
-      return h;
-    }));
   };
 
   // OKR CRUD operations (legacy)
@@ -407,11 +408,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  const isPremium = () => true; // Demo user has premium features
+  const isPremium = () => true;
   const sendFriendRequest = (email: string) => console.log('Friend request sent to:', email);
   const shareTask = (taskId: string, friendId: string) => console.log('Task shared:', taskId, friendId);
 
-  // Color settings mapping category id to name for display
   const colorSettings: Record<string, string> = {
     'cat-1': 'Travail',
     'cat-2': 'Personnel',
@@ -423,7 +423,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     // User & Auth
     user,
-    loading: tasksBridge.isLoading,
+    loading,
     isAuthenticated: true,
     isDemo: true,
     isPremium,
@@ -433,17 +433,21 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     markMessagesAsRead,
     
     // ═══════════════════════════════════════════════════════════════════
-    // TASKS - NOW USING MODERN HOOKS (React Query + Repository)
+    // TASKS - Legacy (mutations), READ via @/modules/tasks
     // ═══════════════════════════════════════════════════════════════════
-    tasks: tasksBridge.tasks,
+    tasks,
     addTask,
-    updateTask: tasksBridge.updateTask,
-    deleteTask: tasksBridge.deleteTask,
-    toggleBookmark: tasksBridge.toggleBookmark,
-    toggleComplete: tasksBridge.toggleComplete,
+    updateTask,
+    deleteTask,
+    toggleBookmark,
+    toggleComplete,
+    
+    // ═══════════════════════════════════════════════════════════════════
+    // HABITS - REMOVED (now in /modules/habits)
+    // Use: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
+    // ═══════════════════════════════════════════════════════════════════
     
     // Legacy domains (not migrated yet)
-    habits,
     okrs,
     events,
     lists,
@@ -451,6 +455,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     collaborators,
     friends,
     colorSettings,
+    favoriteColors,
+    setFavoriteColors,
     
     // Filters (UI state)
     searchTerm,
@@ -459,12 +465,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedCategories,
     priorityRange,
     setPriorityRange,
-    
-    // Habits
-    addHabit,
-    updateHabit,
-    deleteHabit,
-    toggleHabitCompletion,
     
     // OKRs
     addOKR,
