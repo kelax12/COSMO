@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { useTasks } from '../context/TaskContext';
+import { useTasks as useTasksContext } from '../context/TaskContext';
+import { usePendingTasks } from '@/modules/tasks';
 import { ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react';
 
 const DeadlineCalendar: React.FC = () => {
-  const { tasks, categories } = useTasks();
+  // Use new module for tasks (read-only)
+  const { data: tasks = [], isLoading } = usePendingTasks();
+  // Still need categories from TaskContext
+  const { categories } = useTasksContext();
   const [currentView, setCurrentView] = useState<'month' | 'week'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const deadlineEvents = tasks
-    .filter(task => !task.completed)
-    .map(task => ({
-      id: task.id,
-      title: task.name,
-      date: new Date(task.deadline),
-      backgroundColor: getCategoryColor(task.category),
-      priority: task.priority,
-      category: task.category,
-      estimatedTime: task.estimatedTime,
-    }));
+  const deadlineEvents = tasks.map(task => ({
+    id: task.id,
+    title: task.name,
+    date: new Date(task.deadline),
+    backgroundColor: getCategoryColor(task.category),
+    priority: task.priority,
+    category: task.category,
+    estimatedTime: task.estimatedTime,
+  }));
 
   function getCategoryColor(category: string) {
     return categories.find(cat => cat.id === category)?.color || '#6B7280';
@@ -108,6 +110,22 @@ const DeadlineCalendar: React.FC = () => {
 
   const weekDays = getWeekDays(currentDate);
   const monthDays = getMonthDays(currentDate);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border overflow-hidden transition-colors" style={{
+        backgroundColor: 'rgb(var(--color-surface))',
+        borderColor: 'rgb(var(--color-border))'
+      }}>
+        <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+          <div className="animate-pulse h-8 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
+        </div>
+        <div className="p-4 animate-pulse">
+          <div className="h-64 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border overflow-hidden transition-colors" style={{
