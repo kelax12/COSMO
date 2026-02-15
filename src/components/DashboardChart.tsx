@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useTasks as useTasksContext } from '../context/TaskContext';
+import { useTasks } from '@/modules/tasks';
+import { useHabits } from '@/modules/habits';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 const calculateWorkTimeForDate = (
@@ -16,7 +18,11 @@ const calculateWorkTimeForDate = (
 
 const DashboardChart: React.FC = () => {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
-  const { tasks, events, habits, okrs } = useTasks();
+  // Use new module for tasks (read-only)
+  const { data: tasks = [] } = useTasks();
+  // Still need events, okrs from TaskContext
+  const { events, okrs } = useTasksContext();
+  const { data: habits = [] } = useHabits();
 
   const chartData = useMemo(() => {
     const days = [];
