@@ -8,11 +8,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { useTasks } from '../context/TaskContext';
 import CollaboratorItem from './CollaboratorItem';
 import { DatePicker } from './ui/date-picker';
 import ColorSettingsModal from './ColorSettingsModal';
 import ListModal from './ListModal';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCreateTask, CreateTaskInput } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 type AddTaskFormProps = {
   onFormToggle?: (isOpen: boolean) => void;
@@ -29,7 +38,16 @@ type AddTaskFormProps = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = false, initialData }) => {
-  const { addTask, colorSettings, categories, friends, shareTask, isPremium, lists, addTaskToList } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const createTaskMutation = useCreateTask();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { colorSettings, categories, friends, shareTask, isPremium, lists, addTaskToList } = useTaskContext();
+
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -79,7 +97,6 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const [searchUser, setSearchUser] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string;}>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -170,34 +187,36 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const newTask = {
-        id: Date.now().toString(),
-        name: formData.name,
-        priority: formData.priority,
-        category: formData.category,
-        deadline: formData.deadline || new Date().toISOString(),
-        estimatedTime: formData.estimatedTime,
-        createdAt: new Date().toISOString(),
-        bookmarked: formData.bookmarked,
-        completed: formData.completed,
-        isCollaborative: collaborators.length > 0,
-        collaborators: collaborators,
-        permissions: 'responsible' as const
-      };
-      addTask(newTask);
-      selectedListIds.forEach(listId => addTaskToList(newTask.id, listId));
-      if (collaborators.length > 0 && isPremium()) {
-        collaborators.forEach((userId) => shareTask(newTask.id, userId, 'editor'));
+
+    const taskInput: CreateTaskInput = {
+      name: formData.name,
+      priority: formData.priority,
+      category: formData.category,
+      deadline: formData.deadline || new Date().toISOString(),
+      estimatedTime: Number(formData.estimatedTime),
+      bookmarked: formData.bookmarked,
+      completed: formData.completed,
+      isCollaborative: collaborators.length > 0,
+      collaborators: collaborators,
+      pendingInvites: [],
+    };
+
+    createTaskMutation.mutate(taskInput, {
+      onSuccess: (newTask) => {
+        // Ajouter aux listes sélectionnées
+        selectedListIds.forEach(listId => addTaskToList(newTask.id, listId));
+        
+        // Partager avec les collaborateurs si Premium
+        if (collaborators.length > 0 && isPremium()) {
+          collaborators.forEach((userId) => shareTask(newTask.id, userId, 'editor'));
+        }
+        
+        handleFormToggle(false);
+      },
+      onError: () => {
+        setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
       }
-      handleFormToggle(false);
-    } catch (error) {
-      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const toggleCollaborator = (userId: string) => {
@@ -206,6 +225,8 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     );
     setHasChanges(true);
   };
+
+  const isLoading = createTaskMutation.isPending;
 
   return (
     <Dialog open={isFormOpen} onOpenChange={handleFormToggle}>
@@ -624,28 +645,35 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
                   <button
                     type="submit"
                     disabled={isLoading || !isFormValid()}
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg shadow-blue-500/25 transform transition-all hover:scale-105 active:scale-95 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px]"
                   >
                     {isLoading ? (
                       <>
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" role="status"></div>
-                        Création...
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                        <span>Création...</span>
                       </>
-                    ) : 'Créer la tâche'}
+                    ) : (
+                      <>
+                        <Plus size={18} />
+                        <span>Créer la tâche</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
             </div>
-          </div>
-        </DialogContent>
-        <ColorSettingsModal 
-          isOpen={showCategoryModal} 
-          onClose={() => setShowCategoryModal(false)} 
-        />
-        <ListModal 
-          isOpen={showListModal} 
-          onClose={() => setShowListModal(false)} 
-        />
+        </div>
+      </DialogContent>
+
+      <ColorSettingsModal 
+        isOpen={showCategoryModal} 
+        onClose={() => setShowCategoryModal(false)} 
+      />
+
+      <ListModal
+        isOpen={showListModal}
+        onClose={() => setShowListModal(false)}
+      />
     </Dialog>
   );
 };
