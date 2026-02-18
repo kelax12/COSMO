@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Task } from '@/modules/tasks/tasks.types';
 
 // Helper pour générer des dates
 const getDate = (daysFromNow: number) => {
@@ -8,87 +7,10 @@ const getDate = (daysFromNow: number) => {
   return date.toISOString();
 };
 
-// Données de démonstration Tasks
-const DEMO_TASKS: Task[] = [
-  {
-    id: 'task-1',
-    name: 'Finaliser le rapport mensuel',
-    description: 'Rapport Q4 pour la direction',
-    priority: 5,
-    category: 'cat-1',
-    deadline: getDate(1),
-    estimatedTime: 120,
-    createdAt: getDate(-2),
-    bookmarked: true,
-    completed: false,
-    isCollaborative: false,
-    collaborators: [],
-    pendingInvites: [],
-  },
-  {
-    id: 'task-2',
-    name: 'Préparer la présentation client',
-    description: 'Présentation pour le client XYZ',
-    priority: 4,
-    category: 'cat-1',
-    deadline: getDate(3),
-    estimatedTime: 90,
-    createdAt: getDate(-1),
-    bookmarked: false,
-    completed: false,
-    isCollaborative: true,
-    collaborators: ['friend-1'],
-    pendingInvites: [],
-  },
-  {
-    id: 'task-3',
-    name: 'Réviser les cours de React',
-    description: 'Hooks avancés et Context API',
-    priority: 3,
-    category: 'cat-4',
-    deadline: getDate(5),
-    estimatedTime: 60,
-    createdAt: getDate(-3),
-    bookmarked: true,
-    completed: false,
-    isCollaborative: false,
-    collaborators: [],
-    pendingInvites: [],
-  },
-  {
-    id: 'task-4',
-    name: 'Rendez-vous médecin',
-    description: 'Bilan annuel',
-    priority: 2,
-    category: 'cat-3',
-    deadline: getDate(0),
-    estimatedTime: 45,
-    createdAt: getDate(-5),
-    bookmarked: false,
-    completed: true,
-    completedAt: getDate(0),
-    isCollaborative: false,
-    collaborators: [],
-    pendingInvites: [],
-  },
-  {
-    id: 'task-5',
-    name: 'Planifier les vacances',
-    description: 'Réserver hôtel et billets',
-    priority: 2,
-    category: 'cat-2',
-    deadline: getDate(14),
-    estimatedTime: 30,
-    createdAt: getDate(-7),
-    bookmarked: false,
-    completed: false,
-    isCollaborative: false,
-    collaborators: [],
-    pendingInvites: [],
-  },
-];
+// ═══════════════════════════════════════════════════════════════════
+// DONNÉES DE DÉMONSTRATION (domaines NON migrés)
+// ═══════════════════════════════════════════════════════════════════
 
-// Données de démonstration pour les autres domaines
 const DEMO_CATEGORIES = [
   { id: 'cat-1', name: 'Travail', color: '#3B82F6' },
   { id: 'cat-2', name: 'Personnel', color: '#10B981' },
@@ -211,8 +133,9 @@ const DEMO_FAVORITE_COLORS = [
   '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
 ];
 
-// Re-export Task type for backward compatibility
-export type { Task };
+// ═══════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════
 
 export interface TaskList {
   id: string;
@@ -231,99 +154,157 @@ export interface CalendarEvent {
   taskId?: string;
 }
 
-export const TaskContext = createContext<any>(undefined);
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface Friend {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
+export interface OKR {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  progress: number;
+  completed: boolean;
+  keyResults: KeyResult[];
+  startDate: string;
+  endDate: string;
+}
+
+export interface KeyResult {
+  id: string;
+  title: string;
+  progress: number;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CONTEXT TYPE (domaines NON migrés uniquement)
+// ═══════════════════════════════════════════════════════════════════
+
+interface TaskContextType {
+  // User & Auth
+  user: { id: string; name: string; email: string; avatar: string };
+  loading: boolean;
+  isAuthenticated: boolean;
+  isDemo: boolean;
+  isPremium: () => boolean;
+  
+  // Messages
+  messages: any[];
+  markMessagesAsRead: () => void;
+  
+  // Categories
+  categories: Category[];
+  addCategory: (category: Partial<Category>) => Category;
+  updateCategory: (id: string, updates: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
+  colorSettings: Record<string, string>;
+  favoriteColors: string[];
+  setFavoriteColors: React.Dispatch<React.SetStateAction<string[]>>;
+  
+  // Friends
+  friends: Friend[];
+  sendFriendRequest: (email: string) => void;
+  shareTask: (taskId: string, friendId: string, role?: string) => void;
+  
+  // Lists
+  lists: TaskList[];
+  addList: (list: Partial<TaskList>) => TaskList;
+  updateList: (id: string, updates: Partial<TaskList>) => void;
+  deleteList: (id: string) => void;
+  addTaskToList: (taskId: string, listId: string) => void;
+  removeTaskFromList: (taskId: string, listId: string) => void;
+  
+  // Priority Range (UI state)
+  priorityRange: [number, number];
+  setPriorityRange: (range: [number, number]) => void;
+  
+  // OKRs
+  okrs: OKR[];
+  addOKR: (okr: Partial<OKR>) => OKR;
+  updateOKR: (id: string, updates: Partial<OKR>) => void;
+  deleteOKR: (id: string) => void;
+  updateKeyResult: (objectiveId: string, keyResultId: string, updates: Partial<KeyResult>) => void;
+  
+  // Events
+  events: CalendarEvent[];
+  addEvent: (event: Partial<CalendarEvent>) => CalendarEvent;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
+  deleteEvent: (id: string) => void;
+  
+  // Auth stubs
+  login: () => Promise<void>;
+  register: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
+}
+
+export const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 /**
- * TaskProvider - Provider hybride
+ * TaskProvider - Provider pour domaines NON migrés
  * 
- * TASKS: Utilise useState legacy (mutations seront migrées en Phase 2)
- *        READ-ONLY hooks disponibles via: import { useTasks } from '@/modules/tasks'
- * HABITS: Migré vers /modules/habits (complètement indépendant)
- * AUTRES: Reste sur useState legacy (okr, events, lists, categories, etc.)
+ * ═══════════════════════════════════════════════════════════════════
+ * DOMAINES MIGRÉS (NE PLUS UTILISER ICI):
+ * - TASKS: import { useTasks, useCreateTask, ... } from '@/modules/tasks'
+ * - HABITS: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
+ * ═══════════════════════════════════════════════════════════════════
  * 
- * Migration incrémentale en cours
+ * DOMAINES RESTANTS (à migrer ultérieurement):
+ * - categories
+ * - friends
+ * - lists
+ * - priorityRange
+ * - events
+ * - okrs
  */
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════════
-  // TASKS - Legacy useState (mutations Phase 2)
-  // READ: import { useTasks } from '@/modules/tasks'
+  // STATE - Domaines NON migrés uniquement
   // ═══════════════════════════════════════════════════════════════════
-  const [tasks, setTasks] = useState<Task[]>(DEMO_TASKS);
-  const [loading, setLoading] = useState(false);
-
-  const addTask = (taskData: any) => {
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      name: taskData.name || '',
-      description: taskData.description || '',
-      category: taskData.category || 'cat-1',
-      priority: taskData.priority || 3,
-      deadline: taskData.deadline || new Date().toISOString(),
-      estimatedTime: taskData.estimatedTime || 60,
-      createdAt: new Date().toISOString(),
-      completed: false,
-      bookmarked: false,
-      isCollaborative: taskData.isCollaborative || false,
-      collaborators: taskData.collaborators || [],
-      pendingInvites: taskData.pendingInvites || [],
-    };
-    setTasks(prev => [newTask, ...prev]);
-    return newTask;
-  };
-
-  const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-  };
-
-  const deleteTask = (id: string) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
-  };
-
-  const toggleBookmark = (id: string) => {
-    setTasks(prev => prev.map(t => 
-      t.id === id ? { ...t, bookmarked: !t.bookmarked } : t
-    ));
-  };
-
-  const toggleComplete = (id: string) => {
-    setTasks(prev => prev.map(t => 
-      t.id === id ? { 
-        ...t, 
-        completed: !t.completed,
-        completedAt: !t.completed ? new Date().toISOString() : undefined
-      } : t
-    ));
-  };
-
-  // ═══════════════════════════════════════════════════════════════════
-  // LEGACY - Reste sur useState (à migrer plus tard)
-  // Note: HABITS a été migré vers /modules/habits
-  // ═══════════════════════════════════════════════════════════════════
+  const [loading] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
-  const [okrs, setOkrs] = useState<any[]>(DEMO_OKRS);
-  const [events, setEvents] = useState<any[]>(DEMO_EVENTS);
-  const [lists, setLists] = useState<any[]>(DEMO_LISTS);
-  const [categories, setCategories] = useState<any[]>(DEMO_CATEGORIES);
-  const [collaborators, setCollaborators] = useState<any[]>([]);
-  const [friends, setFriends] = useState<any[]>(DEMO_FRIENDS);
+  const [okrs, setOkrs] = useState<OKR[]>(DEMO_OKRS);
+  const [events, setEvents] = useState<CalendarEvent[]>(DEMO_EVENTS);
+  const [lists, setLists] = useState<TaskList[]>(DEMO_LISTS);
+  const [categories, setCategories] = useState<Category[]>(DEMO_CATEGORIES);
+  const [friends] = useState<Friend[]>(DEMO_FRIENDS);
   const [favoriteColors, setFavoriteColors] = useState<string[]>(DEMO_FAVORITE_COLORS);
   const [user] = useState({ id: 'demo-user', name: 'Demo', email: 'demo@cosmo.app', avatar: '👤' });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priorityRange, setPriorityRange] = useState<[number, number]>([0, 5]);
+  const [priorityRange, setPriorityRange] = useState<[number, number]>([1, 5]);
 
   const markMessagesAsRead = () => {
     setMessages(prev => prev.map(msg => ({ ...msg, read: true })));
   };
 
-  // OKR CRUD operations (legacy)
-  const addOKR = (okr: any) => {
-    const newOKR = { ...okr, id: Date.now().toString(), progress: 0, completed: false };
+  // ═══════════════════════════════════════════════════════════════════
+  // OKR CRUD operations
+  // ═══════════════════════════════════════════════════════════════════
+  const addOKR = (okr: Partial<OKR>): OKR => {
+    const newOKR: OKR = {
+      id: crypto.randomUUID(),
+      title: okr.title || '',
+      description: okr.description || '',
+      category: okr.category || '',
+      progress: 0,
+      completed: false,
+      keyResults: okr.keyResults || [],
+      startDate: okr.startDate || new Date().toISOString(),
+      endDate: okr.endDate || new Date().toISOString(),
+    };
     setOkrs(prev => [...prev, newOKR]);
     return newOKR;
   };
 
-  const updateOKR = (id: string, updates: any) => {
+  const updateOKR = (id: string, updates: Partial<OKR>) => {
     setOkrs(prev => prev.map(o => o.id === id ? { ...o, ...updates } : o));
   };
 
@@ -331,12 +312,12 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOkrs(prev => prev.filter(o => o.id !== id));
   };
 
-  const updateKeyResult = (objectiveId: string, keyResultId: string, updates: any) => {
+  const updateKeyResult = (objectiveId: string, keyResultId: string, updates: Partial<KeyResult>) => {
     setOkrs(prev => prev.map(okr => {
       if (okr.id === objectiveId) {
         return {
           ...okr,
-          keyResults: okr.keyResults.map((kr: any) =>
+          keyResults: okr.keyResults.map((kr) =>
             kr.id === keyResultId ? { ...kr, ...updates } : kr
           ),
         };
@@ -345,14 +326,24 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
-  // Event CRUD operations (legacy)
-  const addEvent = (event: any) => {
-    const newEvent = { ...event, id: Date.now().toString() };
+  // ═══════════════════════════════════════════════════════════════════
+  // Event CRUD operations
+  // ═══════════════════════════════════════════════════════════════════
+  const addEvent = (event: Partial<CalendarEvent>): CalendarEvent => {
+    const newEvent: CalendarEvent = {
+      id: crypto.randomUUID(),
+      title: event.title || '',
+      start: event.start || new Date().toISOString(),
+      end: event.end || new Date().toISOString(),
+      color: event.color,
+      description: event.description,
+      taskId: event.taskId,
+    };
     setEvents(prev => [...prev, newEvent]);
     return newEvent;
   };
 
-  const updateEvent = (id: string, updates: any) => {
+  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
     setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   };
 
@@ -360,14 +351,21 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setEvents(prev => prev.filter(e => e.id !== id));
   };
 
-  // List operations (legacy)
-  const addList = (list: any) => {
-    const newList = { ...list, id: Date.now().toString(), taskIds: [] };
+  // ═══════════════════════════════════════════════════════════════════
+  // List operations
+  // ═══════════════════════════════════════════════════════════════════
+  const addList = (list: Partial<TaskList>): TaskList => {
+    const newList: TaskList = {
+      id: crypto.randomUUID(),
+      name: list.name || '',
+      color: list.color || 'blue',
+      taskIds: [],
+    };
     setLists(prev => [...prev, newList]);
     return newList;
   };
 
-  const updateList = (id: string, updates: any) => {
+  const updateList = (id: string, updates: Partial<TaskList>) => {
     setLists(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
   };
 
@@ -393,14 +391,20 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
-  // Category operations (legacy)
-  const addCategory = (category: any) => {
-    const newCategory = { ...category, id: Date.now().toString() };
+  // ═══════════════════════════════════════════════════════════════════
+  // Category operations
+  // ═══════════════════════════════════════════════════════════════════
+  const addCategory = (category: Partial<Category>): Category => {
+    const newCategory: Category = {
+      id: crypto.randomUUID(),
+      name: category.name || '',
+      color: category.color || '#3B82F6',
+    };
     setCategories(prev => [...prev, newCategory]);
     return newCategory;
   };
 
-  const updateCategory = (id: string, updates: any) => {
+  const updateCategory = (id: string, updates: Partial<Category>) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   };
 
@@ -408,9 +412,12 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
+  // ═══════════════════════════════════════════════════════════════════
+  // Utilities
+  // ═══════════════════════════════════════════════════════════════════
   const isPremium = () => true;
   const sendFriendRequest = (email: string) => console.log('Friend request sent to:', email);
-  const shareTask = (taskId: string, friendId: string) => console.log('Task shared:', taskId, friendId);
+  const shareTask = (taskId: string, friendId: string, _role?: string) => console.log('Task shared:', taskId, friendId);
 
   const colorSettings: Record<string, string> = {
     'cat-1': 'Travail',
@@ -420,7 +427,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     'cat-5': 'Projets',
   };
 
-  const value = {
+  // ═══════════════════════════════════════════════════════════════════
+  // CONTEXT VALUE - Domaines NON migrés uniquement
+  // ═══════════════════════════════════════════════════════════════════
+  const value: TaskContextType = {
     // User & Auth
     user,
     loading,
@@ -432,66 +442,44 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     messages,
     markMessagesAsRead,
     
-    // ═══════════════════════════════════════════════════════════════════
-    // TASKS - Legacy (mutations), READ via @/modules/tasks
-    // ═══════════════════════════════════════════════════════════════════
-    tasks,
-    addTask,
-    updateTask,
-    deleteTask,
-    toggleBookmark,
-    toggleComplete,
-    
-    // ═══════════════════════════════════════════════════════════════════
-    // HABITS - REMOVED (now in /modules/habits)
-    // Use: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
-    // ═══════════════════════════════════════════════════════════════════
-    
-    // Legacy domains (not migrated yet)
-    okrs,
-    events,
-    lists,
+    // Categories
     categories,
-    collaborators,
-    friends,
+    addCategory,
+    updateCategory,
+    deleteCategory,
     colorSettings,
     favoriteColors,
     setFavoriteColors,
     
-    // Filters (UI state)
-    searchTerm,
-    setSearchTerm,
-    selectedCategories,
-    setSelectedCategories,
-    priorityRange,
-    setPriorityRange,
-    
-    // OKRs
-    addOKR,
-    updateOKR,
-    deleteOKR,
-    updateKeyResult,
-    
-    // Events
-    addEvent,
-    updateEvent,
-    deleteEvent,
+    // Friends
+    friends,
+    sendFriendRequest,
+    shareTask,
     
     // Lists
+    lists,
     addList,
     updateList,
     deleteList,
     addTaskToList,
     removeTaskFromList,
     
-    // Categories
-    addCategory,
-    updateCategory,
-    deleteCategory,
+    // Priority Range (UI state)
+    priorityRange,
+    setPriorityRange,
     
-    // Social
-    sendFriendRequest,
-    shareTask,
+    // OKRs
+    okrs,
+    addOKR,
+    updateOKR,
+    deleteOKR,
+    updateKeyResult,
+    
+    // Events
+    events,
+    addEvent,
+    updateEvent,
+    deleteEvent,
     
     // Auth stubs
     login: async () => {},
@@ -507,7 +495,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useTasks = () => {
+export const useTasks = (): TaskContextType => {
   const context = useContext(TaskContext);
   if (context === undefined) {
     throw new Error('useTasks must be used within a TaskProvider');
