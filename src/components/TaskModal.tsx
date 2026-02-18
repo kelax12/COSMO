@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Users, AlertCircle, CheckCircle, Bookmark, BookmarkCheck, Trash2, Search, UserPlus, Mail, List, ChevronDown, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Task, useTasks } from '@/context/TaskContext';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -16,6 +15,21 @@ import CollaboratorAvatars from './CollaboratorAvatars';
 import ColorSettingsModal from './ColorSettingsModal';
 import ListModal from '../ListModal';
 
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { 
+  useUpdateTask, 
+  useDeleteTask, 
+  Task,
+  UpdateTaskInput 
+} from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '@/context/TaskContext';
+
 interface TaskModalProps {
   task?: Task;
   isOpen: boolean;
@@ -29,7 +43,16 @@ interface TaskModalProps {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, isCreating = false, showCollaborators = false, initialData }) => {
-  const { updateTask, deleteTask, colorSettings, categories, friends, isPremium, shareTask, sendFriendRequest, lists, addTaskToList, removeTaskFromList } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { colorSettings, categories, friends, isPremium, shareTask, sendFriendRequest, lists, addTaskToList, removeTaskFromList } = useTaskContext();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -55,7 +78,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
   const [emailInput, setEmailInput] = useState('');
   const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -239,56 +261,60 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
     if (!validateForm()) return;
     if (!isCreating && !task) return;
 
-    setIsLoading(true);
+    const taskData: UpdateTaskInput = {
+      name: formData.name,
+      priority: formData.priority,
+      category: formData.category,
+      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : (isCreating ? new Date().toISOString() : task!.deadline),
+      estimatedTime: Number(formData.estimatedTime),
+      completed: formData.completed,
+      bookmarked: formData.bookmarked,
+      isCollaborative: collaborators.length > 0,
+      collaborators: collaborators,
+      pendingInvites: pendingInvitesLocal,
+    };
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const taskData = {
-        ...formData,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : (isCreating ? new Date().toISOString() : task!.deadline),
-        isCollaborative: collaborators.length > 0,
-        collaborators: collaborators,
-        pendingInvites: pendingInvitesLocal,
-      };
-
-      if (isCreating && onSave) {
-        onSave(taskData);
-      } else if (task) {
-        updateTask(task.id, taskData);
-        
-        // Sync lists
-        const currentListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
-        
-        // Add to new lists
-        selectedListIds.forEach(listId => {
-            if (!currentListIds.includes(listId)) {
-                addTaskToList(task.id, listId);
-            }
-        });
-        
-        // Remove from deselected lists
-        currentListIds.forEach(listId => {
-            if (!currentListIds.includes(listId)) {
-                removeTaskFromList(task.id, listId);
-            }
-        });
-
-        if (isPremium()) {
-          collaborators.forEach(userId => {
-            if (!task.collaborators?.includes(userId)) {
-                shareTask(task.id, userId, 'editor');
-            }
-          });
-        }
-      }
-
+    if (isCreating && onSave) {
+      onSave(taskData);
       onClose();
-    } catch (err) {
-      console.error('Error saving task:', err);
-      setErrors({ general: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
-    } finally {
-      setIsLoading(false);
+    } else if (task) {
+      updateTaskMutation.mutate(
+        { id: task.id, updates: taskData },
+        {
+          onSuccess: () => {
+            // Sync lists
+            const currentListIds = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
+            
+            // Add to new lists
+            selectedListIds.forEach(listId => {
+              if (!currentListIds.includes(listId)) {
+                addTaskToList(task.id, listId);
+              }
+            });
+            
+            // Remove from deselected lists
+            currentListIds.forEach(listId => {
+              if (!selectedListIds.includes(listId)) {
+                removeTaskFromList(task.id, listId);
+              }
+            });
+
+            if (isPremium()) {
+              collaborators.forEach(userId => {
+                if (!task.collaborators?.includes(userId)) {
+                  shareTask(task.id, userId, 'editor');
+                }
+              });
+            }
+            
+            onClose();
+          },
+          onError: (err) => {
+            console.error('Error saving task:', err);
+            setErrors({ general: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
+          }
+        }
+      );
     }
   };
 
@@ -298,22 +324,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
     }
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (task) {
-      setIsLoading(true);
-
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        deleteTask(task.id);
-        setShowDeleteConfirm(false);
-        onClose();
-      } catch (err) {
-        console.error('Error deleting task:', err);
-        setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
-        setShowDeleteConfirm(false);
-      } finally {
-        setIsLoading(false);
-      }
+      deleteTaskMutation.mutate(task.id, {
+        onSuccess: () => {
+          setShowDeleteConfirm(false);
+          onClose();
+        },
+        onError: (err) => {
+          console.error('Error deleting task:', err);
+          setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+          setShowDeleteConfirm(false);
+        }
+      });
     }
   };
 
@@ -360,12 +383,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
       setCollaborators([...collaborators, value]);
       setPendingInvitesLocal([...pendingInvitesLocal, value]);
       if (task) {
-        updateTask(task.id, {
-          isCollaborative: true,
-          pendingInvites: [...pendingInvitesLocal, value],
-          collaboratorValidations: {
-            ...task.collaboratorValidations,
-            [value]: false
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: {
+            isCollaborative: true,
+            pendingInvites: [...pendingInvitesLocal, value],
+            collaboratorValidations: {
+              ...task.collaboratorValidations,
+              [value]: false
+            }
           }
         });
       }
@@ -383,11 +409,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
       const newValidations = { ...task.collaboratorValidations };
       delete newValidations[collaboratorName];
       
-      updateTask(task.id, {
-        collaborators: newCollaborators,
-        isCollaborative: newCollaborators.length > 0,
-        collaboratorValidations: newValidations,
-        pendingInvites: newPendingInvites
+      updateTaskMutation.mutate({
+        id: task.id,
+        updates: {
+          collaborators: newCollaborators,
+          isCollaborative: newCollaborators.length > 0,
+          collaboratorValidations: newValidations,
+          pendingInvites: newPendingInvites
+        }
       });
     }
   };
@@ -401,17 +430,23 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
     } else {
       setCollaborators((prev) => [...prev, name]);
       if (task) {
-        updateTask(task.id, {
-          isCollaborative: true,
-          collaborators: [...collaborators, name],
-          collaboratorValidations: {
-            ...task.collaboratorValidations,
-            [name]: false
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: {
+            isCollaborative: true,
+            collaborators: [...collaborators, name],
+            collaboratorValidations: {
+              ...task.collaboratorValidations,
+              [name]: false
+            }
           }
         });
       }
     }
   };
+
+  // Loading state derived from mutations
+  const isLoading = updateTaskMutation.isPending || deleteTaskMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
