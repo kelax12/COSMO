@@ -1,14 +1,11 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
 // Providers
-import { DataProvider } from '@/features/data';
+import { TaskProvider } from '@/context/TaskContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
-
-// Visual Edits
-import VisualEditsMessenger from "@/visual-edits/VisualEditsMessenger";
 
 // Lazy load pages for code splitting
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
@@ -56,30 +53,35 @@ const PageLoader = () => (
   </div>
 );
 
-// Route wrapper for Layout
-const LayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+// Layout wrapper with Suspense
+const LayoutWithSuspense = () => (
   <Suspense fallback={<LoadingSpinner />}>
-    <Layout>
-      <Suspense fallback={<PageLoader />}>
-        {children}
-      </Suspense>
-    </Layout>
+    <Layout />
+  </Suspense>
+);
+
+// Page wrapper with Suspense
+const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<PageLoader />}>
+    {children}
   </Suspense>
 );
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-    
-    <Route path="/dashboard" element={<LayoutWrapper><DashboardPage /></LayoutWrapper>} />
-    <Route path="/tasks" element={<LayoutWrapper><TasksPage /></LayoutWrapper>} />
-    <Route path="/agenda" element={<LayoutWrapper><AgendaPage /></LayoutWrapper>} />
-    <Route path="/habits" element={<LayoutWrapper><HabitsPage /></LayoutWrapper>} />
-    <Route path="/okr" element={<LayoutWrapper><OKRPage /></LayoutWrapper>} />
-    <Route path="/statistics" element={<LayoutWrapper><StatisticsPage /></LayoutWrapper>} />
-    <Route path="/settings" element={<LayoutWrapper><SettingsPage /></LayoutWrapper>} />
-    <Route path="/premium" element={<LayoutWrapper><PremiumPage /></LayoutWrapper>} />
-    <Route path="/messages" element={<LayoutWrapper><MessagingPage /></LayoutWrapper>} />
+    {/* Layout wrapper for all routes */}
+    <Route element={<LayoutWithSuspense />}>
+      <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="dashboard" element={<PageWithSuspense><DashboardPage /></PageWithSuspense>} />
+      <Route path="tasks" element={<PageWithSuspense><TasksPage /></PageWithSuspense>} />
+      <Route path="agenda" element={<PageWithSuspense><AgendaPage /></PageWithSuspense>} />
+      <Route path="habits" element={<PageWithSuspense><HabitsPage /></PageWithSuspense>} />
+      <Route path="okr" element={<PageWithSuspense><OKRPage /></PageWithSuspense>} />
+      <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
+      <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
+      <Route path="premium" element={<PageWithSuspense><PremiumPage /></PageWithSuspense>} />
+      <Route path="messages" element={<PageWithSuspense><MessagingPage /></PageWithSuspense>} />
+    </Route>
     
     {/* Fallback */}
     <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -90,7 +92,7 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <DataProvider>
+        <TaskProvider>
           <Toaster 
             position="top-right" 
             richColors 
@@ -100,9 +102,8 @@ const App: React.FC = () => {
               duration: 3000,
             }}
           />
-          <VisualEditsMessenger />
           <AppRoutes />
-        </DataProvider>
+        </TaskProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
