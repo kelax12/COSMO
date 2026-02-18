@@ -1,17 +1,41 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TaskTable from '../components/TaskTable';
 import TaskFilter from '../components/TaskFilter';
 import TaskModal from '../components/TaskModal';
 import TasksSummary from '../components/TasksSummary';
 import DeadlineCalendar from '../components/DeadlineCalendar';
 import ListManager from '../components/ListManager';
-import { useTasks } from '../context/TaskContext';
 import { CalendarDays, List, X, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
+
 const TasksPage: React.FC = () => {
-  const { tasks, lists, searchTerm, selectedCategories, priorityRange } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { lists, priorityRange, categories } = useTaskContext();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // État de filtrage LOCAL (migrés depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
   const location = useLocation();
   const [filter, setFilter] = useState('');
   const [showCompleted, setShowCompleted] = useState(false);
@@ -61,31 +85,42 @@ const TasksPage: React.FC = () => {
     setSelectedListId(null);
   };
 
-  let filteredTasks = tasks;
+  // ═══════════════════════════════════════════════════════════════════
+  // Filtrage mémoïsé des tâches (performance)
+  // ═══════════════════════════════════════════════════════════════════
+  const filteredTasks = useMemo(() => {
+    let result = tasks;
 
-  if (searchTerm) {
-    const lowerSearch = searchTerm.toLowerCase();
-    filteredTasks = filteredTasks.filter(task => 
-      task.name.toLowerCase().includes(lowerSearch)
-    );
-  }
-
-  if (selectedCategories.length > 0) {
-    filteredTasks = filteredTasks.filter(task => 
-      selectedCategories.includes(task.category)
-    );
-  }
-
-  filteredTasks = filteredTasks.filter(task => 
-    task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
-  );
-
-  if (selectedListId) {
-    const selectedList = lists.find(list => list.id === selectedListId);
-    if (selectedList) {
-      filteredTasks = filteredTasks.filter(task => selectedList.taskIds.includes(task.id));
+    // Filtre par terme de recherche
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      result = result.filter(task => 
+        task.name.toLowerCase().includes(lowerSearch)
+      );
     }
-  }
+
+    // Filtre par catégories sélectionnées
+    if (selectedCategories.length > 0) {
+      result = result.filter(task => 
+        selectedCategories.includes(task.category)
+      );
+    }
+
+    // Filtre par plage de priorité
+    result = result.filter(task => 
+      task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
+    );
+
+    // Filtre par liste sélectionnée
+    if (selectedListId) {
+      const selectedList = lists.find(list => list.id === selectedListId);
+      if (selectedList) {
+        result = result.filter(task => selectedList.taskIds.includes(task.id));
+      }
+    }
+
+    return result;
+  }, [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, lists]);
 
   const selectedList = selectedListId ? lists.find(list => list.id === selectedListId) : null;
 
@@ -99,6 +134,26 @@ const TasksPage: React.FC = () => {
     { value: 'pink', color: '#EC4899', name: 'Rose' },
     { value: 'indigo', color: '#6366F1', name: 'Indigo' },
   ];
+
+  // Loading state
+  if (isLoadingTasks) {
+    return (
+      <div className="p-4 sm:p-8 h-fit">
+        <div className="animate-pulse space-y-6">
+          <div className="h-10 w-48 bg-slate-200 dark:bg-slate-700 rounded"></div>
+          <div className="h-6 w-64 bg-slate-200 dark:bg-slate-700 rounded"></div>
+          <div className="card p-6">
+            <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded mb-4"></div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="h-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -316,6 +371,10 @@ const TasksPage: React.FC = () => {
                       currentFilter={filter}
                       showCompleted={showCompleted}
                       onShowCompletedChange={handleShowCompletedChange}
+                      searchTerm={searchTerm}
+                      onSearchTermChange={setSearchTerm}
+                      selectedCategories={selectedCategories}
+                      onSelectedCategoriesChange={setSelectedCategories}
                     />
                   </div>
                   {!showCompleted && (
