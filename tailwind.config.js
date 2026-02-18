@@ -1,5 +1,4 @@
-import type { Config } from "tailwindcss";
-
+/** @type {import('tailwindcss').Config} */
 export default {
 	darkMode: ["class"],
 	content: [
@@ -28,30 +27,10 @@ export default {
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					50: 'rgb(var(--color-primary) / 0.05)',
-					100: 'rgb(var(--color-primary) / 0.1)',
-					200: 'rgb(var(--color-primary) / 0.2)',
-					300: 'rgb(var(--color-primary) / 0.3)',
-					400: 'rgb(var(--color-primary) / 0.4)',
-					500: 'rgb(var(--color-primary) / 0.5)',
-					600: 'rgb(var(--color-primary) / 0.6)',
-					700: 'rgb(var(--color-primary) / 0.7)',
-					800: 'rgb(var(--color-primary) / 0.8)',
-					900: 'rgb(var(--color-primary) / 0.9)',
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))',
-					50: 'rgb(var(--color-secondary) / 0.05)',
-					100: 'rgb(var(--color-secondary) / 0.1)',
-					200: 'rgb(var(--color-secondary) / 0.2)',
-					300: 'rgb(var(--color-secondary) / 0.3)',
-					400: 'rgb(var(--color-secondary) / 0.4)',
-					500: 'rgb(var(--color-secondary) / 0.5)',
-					600: 'rgb(var(--color-secondary) / 0.6)',
-					700: 'rgb(var(--color-secondary) / 0.7)',
-					800: 'rgb(var(--color-secondary) / 0.8)',
-					900: 'rgb(var(--color-secondary) / 0.9)',
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -64,16 +43,6 @@ export default {
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))',
-					50: 'rgb(var(--color-accent) / 0.05)',
-					100: 'rgb(var(--color-accent) / 0.1)',
-					200: 'rgb(var(--color-accent) / 0.2)',
-					300: 'rgb(var(--color-accent) / 0.3)',
-					400: 'rgb(var(--color-accent) / 0.4)',
-					500: 'rgb(var(--color-accent) / 0.5)',
-					600: 'rgb(var(--color-accent) / 0.6)',
-					700: 'rgb(var(--color-accent) / 0.7)',
-					800: 'rgb(var(--color-accent) / 0.8)',
-					900: 'rgb(var(--color-accent) / 0.9)',
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
@@ -83,25 +52,6 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				success: {
-					50: 'rgb(var(--color-success) / 0.05)',
-					100: 'rgb(var(--color-success) / 0.1)',
-					500: 'rgb(var(--color-success) / 0.5)',
-					600: 'rgb(var(--color-success) / 0.6)',
-				},
-				warning: {
-					50: 'rgb(var(--color-warning) / 0.05)',
-					100: 'rgb(var(--color-warning) / 0.1)',
-					500: 'rgb(var(--color-warning) / 0.5)',
-					600: 'rgb(var(--color-warning) / 0.6)',
-				},
-				error: {
-					50: 'rgb(var(--color-error) / 0.05)',
-					100: 'rgb(var(--color-error) / 0.1)',
-					500: 'rgb(var(--color-error) / 0.5)',
-					600: 'rgb(var(--color-error) / 0.6)',
-				},
-				surface: 'rgb(var(--color-surface) / <alpha-value>)',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -129,20 +79,12 @@ export default {
 			},
 			keyframes: {
 				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
 				},
 				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
 				}
 			},
 			animation: {
@@ -152,4 +94,4 @@ export default {
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+};
