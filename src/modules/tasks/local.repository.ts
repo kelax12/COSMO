@@ -1,5 +1,5 @@
 import { ITasksRepository } from './tasks.repository';
-import { Task, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
 
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
@@ -135,7 +135,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // READ OPERATIONS
+  // READ OPERATIONS (Phase 1)
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<Task[]> {
@@ -185,5 +185,87 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     }
 
     return tasks;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WRITE OPERATIONS (Phase 2)
+  // ═══════════════════════════════════════════════════════════════════
+
+  async create(input: CreateTaskInput): Promise<Task> {
+    const tasks = this.getTasks();
+    const newTask: Task = {
+      ...input,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      bookmarked: input.bookmarked ?? false,
+      completed: input.completed ?? false,
+      isCollaborative: input.isCollaborative ?? false,
+      collaborators: input.collaborators ?? [],
+      pendingInvites: input.pendingInvites ?? [],
+    };
+    this.saveTasks([newTask, ...tasks]);
+    return newTask;
+  }
+
+  async update(id: string, updates: UpdateTaskInput): Promise<Task> {
+    const tasks = this.getTasks();
+    const index = tasks.findIndex(t => t.id === id);
+    
+    if (index === -1) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    
+    const updatedTask: Task = { ...tasks[index], ...updates };
+    tasks[index] = updatedTask;
+    this.saveTasks(tasks);
+    return updatedTask;
+  }
+
+  async delete(id: string): Promise<void> {
+    const tasks = this.getTasks();
+    const filtered = tasks.filter(t => t.id !== id);
+    
+    if (filtered.length === tasks.length) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    
+    this.saveTasks(filtered);
+  }
+
+  async toggleComplete(id: string): Promise<Task> {
+    const tasks = this.getTasks();
+    const index = tasks.findIndex(t => t.id === id);
+    
+    if (index === -1) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    
+    const task = tasks[index];
+    const updatedTask: Task = {
+      ...task,
+      completed: !task.completed,
+      completedAt: !task.completed ? new Date().toISOString() : undefined,
+    };
+    tasks[index] = updatedTask;
+    this.saveTasks(tasks);
+    return updatedTask;
+  }
+
+  async toggleBookmark(id: string): Promise<Task> {
+    const tasks = this.getTasks();
+    const index = tasks.findIndex(t => t.id === id);
+    
+    if (index === -1) {
+      throw new Error(`Task with id ${id} not found`);
+    }
+    
+    const task = tasks[index];
+    const updatedTask: Task = {
+      ...task,
+      bookmarked: !task.bookmarked,
+    };
+    tasks[index] = updatedTask;
+    this.saveTasks(tasks);
+    return updatedTask;
   }
 }
