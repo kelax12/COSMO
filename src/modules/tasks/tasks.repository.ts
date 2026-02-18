@@ -1,9 +1,9 @@
-import { Task, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
 
 /**
  * Interface for Tasks Repository
  * Phase 1: READ-ONLY operations
- * Phase 2: Will add create/update/delete
+ * Phase 2: WRITE operations (create/update/delete/toggle)
  */
 export interface ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
@@ -31,11 +31,31 @@ export interface ITasksRepository {
   getFiltered(filters: TaskFilters): Promise<Task[]>;
 
   // ═══════════════════════════════════════════════════════════════════
-  // WRITE OPERATIONS (Phase 2 - À implémenter plus tard)
+  // WRITE OPERATIONS (Phase 2)
   // ═══════════════════════════════════════════════════════════════════
-  // createTask(task: CreateTaskInput): Promise<Task>;
-  // updateTask(id: string, updates: UpdateTaskInput): Promise<Task>;
-  // deleteTask(id: string): Promise<void>;
-  // toggleComplete(id: string): Promise<Task>;
-  // toggleBookmark(id: string): Promise<Task>;
+  
+  /**
+   * Create a new task
+   */
+  create(input: CreateTaskInput): Promise<Task>;
+  
+  /**
+   * Update an existing task
+   */
+  update(id: string, updates: UpdateTaskInput): Promise<Task>;
+  
+  /**
+   * Delete a task
+   */
+  delete(id: string): Promise<void>;
+  
+  /**
+   * Toggle task completion status
+   */
+  toggleComplete(id: string): Promise<Task>;
+  
+  /**
+   * Toggle task bookmark status
+   */
+  toggleBookmark(id: string): Promise<Task>;
 }
