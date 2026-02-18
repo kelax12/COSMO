@@ -1,14 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Bookmark, Calendar, MoreHorizontal, Trash2, BookmarkCheck, UserPlus, CheckCircle2, AlertTriangle, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Task, useTasks } from '../context/TaskContext';
 import TaskCategoryIndicator from './TaskCategoryIndicator';
 import TaskModal from './TaskModal';
 import EventModal from './EventModal';
 import CollaboratorModal from './CollaboratorModal';
 import AddToListModal from './AddToListModal';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { 
+  useTasks, 
+  useDeleteTask, 
+  useToggleTaskComplete, 
+  useToggleTaskBookmark,
+  Task 
+} from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 type TaskTableProps = {
   tasks?: Task[];
@@ -25,7 +40,22 @@ const TaskTable: React.FC<TaskTableProps> = ({
   selectedTaskId: externalSelectedTaskId,
   onTaskModalClose
 }) => {
-  const { tasks: contextTasks, deleteTask, toggleBookmark, toggleComplete, addEvent, priorityRange, categories } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: moduleTasks = [], isLoading: isLoadingTasks } = useTasks();
+  const deleteMutation = useDeleteTask();
+  const toggleCompleteMutation = useToggleTaskComplete();
+  const toggleBookmarkMutation = useToggleTaskBookmark();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { addEvent, priorityRange, categories } = useTaskContext();
+
+  // Utiliser propTasks si fourni, sinon les tasks du module
+  const tasks = propTasks || moduleTasks;
+
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [localSortField, setLocalSortField] = useState<string | undefined>(propSortField);
 
@@ -46,8 +76,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [taskToEventModal, setTaskToEventModal] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'favoris' | 'terminées' | 'retard' | 'collaboration'>('none');
-
-  const tasks = propTasks || contextTasks;
 
   const toggleQuickFilter = (filter: 'favoris' | 'terminées' | 'retard' | 'collaboration') => {
     setActiveQuickFilter(prev => prev === filter ? 'none' : filter);
@@ -75,8 +103,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
-  let filteredTasksForView;
-  const now = new Date();
+  // ═══════════════════════════════════════════════════════════════════
+  // Handlers avec mutations (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const handleToggleComplete = (taskId: string) => {
+    toggleCompleteMutation.mutate(taskId);
+  };
+
+  const handleToggleBookmark = (taskId: string) => {
+    toggleBookmarkMutation.mutate(taskId);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    deleteMutation.mutate(taskId);
+    setTaskToDelete(null);
+  };
+
+  // Filtrage et tri mémoïsés
+  const filteredAndSortedTasks = useMemo(() => {
+    const now = new Date();
+    let filteredTasksForView: Task[];
 
     switch (activeQuickFilter) {
       case 'favoris':
@@ -92,43 +138,48 @@ const TaskTable: React.FC<TaskTableProps> = ({
         filteredTasksForView = tasks.filter(task => task.isCollaborative && !task.completed);
         break;
       default:
-      filteredTasksForView = showCompleted 
-        ? tasks.filter(task => task.completed)
-        : tasks.filter(task => !task.completed);
-  }
-
-  const filteredTasks = filteredTasksForView.filter(task => 
-    task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
-  );
-
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (localSortField) {
-      let comparison = 0;
-      if (localSortField === 'name') {
-        comparison = a.name.localeCompare(b.name);
-      } else if (localSortField === 'priority') {
-        comparison = a.priority - b.priority;
-      } else if (localSortField === 'deadline') {
-        comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-      } else if (localSortField === 'estimatedTime') {
-        comparison = a.estimatedTime - b.estimatedTime;
-      } else if (localSortField === 'createdAt') {
-        comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      } else if (localSortField === 'category') {
-        comparison = a.category.localeCompare(b.category);
-      } else if (localSortField === 'completedAt' && showCompleted) {
-        const aDate = a.completedAt ? new Date(a.completedAt).getTime() : 0;
-        const bDate = b.completedAt ? new Date(b.completedAt).getTime() : 0;
-        comparison = aDate - bDate;
-      }
-      return sortDirection === 'asc' ? comparison : -comparison;
+        filteredTasksForView = showCompleted 
+          ? tasks.filter(task => task.completed)
+          : tasks.filter(task => !task.completed);
     }
 
-    if (a.bookmarked && !b.bookmarked) return -1;
-    if (!a.bookmarked && b.bookmarked) return 1;
+    const filteredTasks = filteredTasksForView.filter(task => 
+      task.priority >= priorityRange[0] && task.priority <= priorityRange[1]
+    );
 
-    return 0;
-  });
+    const sorted = [...filteredTasks].sort((a, b) => {
+      if (localSortField) {
+        let comparison = 0;
+        if (localSortField === 'name') {
+          comparison = a.name.localeCompare(b.name);
+        } else if (localSortField === 'priority') {
+          comparison = a.priority - b.priority;
+        } else if (localSortField === 'deadline') {
+          comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        } else if (localSortField === 'estimatedTime') {
+          comparison = a.estimatedTime - b.estimatedTime;
+        } else if (localSortField === 'createdAt') {
+          comparison = new Date(a.createdAt || '').getTime() - new Date(b.createdAt || '').getTime();
+        } else if (localSortField === 'category') {
+          comparison = a.category.localeCompare(b.category);
+        } else if (localSortField === 'completedAt' && showCompleted) {
+          const aDate = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+          const bDate = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+          comparison = aDate - bDate;
+        }
+        return sortDirection === 'asc' ? comparison : -comparison;
+      }
+
+      if (a.bookmarked && !b.bookmarked) return -1;
+      if (!a.bookmarked && b.bookmarked) return 1;
+
+      return 0;
+    });
+
+    return sorted;
+  }, [tasks, activeQuickFilter, showCompleted, priorityRange, localSortField, sortDirection]);
+
+  const sortedTasks = filteredAndSortedTasks;
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
@@ -145,18 +196,39 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const confirmDelete = () => {
     if (taskToDelete) {
-      deleteTask(taskToDelete);
-      setTaskToDelete(null);
+      handleDeleteTask(taskToDelete);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
     try {
+      if (!dateString) return 'N/A';
       return format(new Date(dateString), 'dd/MM/yyyy', { locale: fr });
     } catch {
       return 'N/A';
     }
   };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Loading State
+  // ═══════════════════════════════════════════════════════════════════
+  if (isLoadingTasks && !propTasks) {
+    return (
+      <div className="animate-pulse">
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-10 w-24 bg-[rgb(var(--color-border))] rounded-lg"></div>
+          ))}
+        </div>
+        <div className="hidden md:block">
+          <div className="h-12 bg-[rgb(var(--color-border))] rounded-t-lg mb-1"></div>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="h-16 bg-[rgb(var(--color-border)/0.5)] mb-1 rounded"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const TaskCard = ({ task }: { task: Task }) => {
     const [isHovered, setIsHovered] = useState(false);
@@ -189,7 +261,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              toggleComplete(task.id);
+              handleToggleComplete(task.id);
             }}
             className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
               task.completed 
@@ -229,7 +301,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       <div className="flex justify-between items-center pt-2 border-t border-[rgb(var(--color-border))]">
         <div className="flex gap-1">
           <button 
-            onClick={(e) => { e.stopPropagation(); toggleBookmark(task.id); }} 
+            onClick={(e) => { e.stopPropagation(); handleToggleBookmark(task.id); }} 
             className={`p-2 rounded ${task.bookmarked ? 'text-amber-500' : 'text-slate-400'}`}
           >
             <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
@@ -402,7 +474,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               >
                 <td className="px-2 py-4 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                   <button
-                    onClick={() => toggleComplete(task.id)}
+                    onClick={() => handleToggleComplete(task.id)}
                     className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                       task.completed 
                         ? 'bg-blue-500 border-blue-500' 
@@ -437,7 +509,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <td onClick={e => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
                   <div className="flex justify-center items-center gap-1">
                       <button 
-                        onClick={() => toggleBookmark(task.id)} 
+                        onClick={() => handleToggleBookmark(task.id)} 
                         className={`p-2 rounded transition-colors ${task.bookmarked ? 'favorite-icon filled' : ''}`}
                         style={{ 
                           color: task.bookmarked ? '#EAB308' : 'rgb(var(--color-text-muted))'
@@ -588,7 +660,5 @@ const TaskTable: React.FC<TaskTableProps> = ({
     </>
   );
 };
-
-export default TaskTable;
 
 export default TaskTable;
