@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { SupabaseHabitsRepository } from './supabase.repository';
 import { LocalStorageHabitsRepository } from './local.repository';
 import { IHabitsRepository } from './habits.repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
@@ -13,15 +11,9 @@ export const habitKeys = {
   detail: (id: string) => [...habitKeys.all, 'detail', id] as const,
 };
 
-// Repository factory based on auth state
+// Repository factory - Default to Local Storage for demo mode
 const useHabitsRepository = (): IHabitsRepository => {
-  const { isDemo, isAuthenticated } = useAuth();
-  return useMemo(
-    () => (isDemo || !isAuthenticated 
-      ? new LocalStorageHabitsRepository() 
-      : new SupabaseHabitsRepository()),
-    [isDemo, isAuthenticated]
-  );
+  return useMemo(() => new LocalStorageHabitsRepository(), []);
 };
 
 /**
