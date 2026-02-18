@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LocalStorageTasksRepository } from './local.repository';
 import { ITasksRepository } from './tasks.repository';
-import { Task, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
 
 // ═══════════════════════════════════════════════════════════════════
-// Query Keys
+// Query Keys - Shared between read and write operations
 // ═══════════════════════════════════════════════════════════════════
 export const taskKeys = {
   all: ['tasks'] as const,
@@ -20,9 +20,9 @@ export const taskKeys = {
 // Repository Factory - Default to Local Storage for demo mode
 // ═══════════════════════════════════════════════════════════════════
 const useTasksRepository = (): ITasksRepository => {
-  // Use LocalStorage by default (demo mode)
   return useMemo(() => new LocalStorageTasksRepository(), []);
 };
+
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS (Phase 1)
 // ═══════════════════════════════════════════════════════════════════
@@ -108,5 +108,163 @@ export const useCompletedTasks = () => {
   return useFilteredTasks({ completed: true });
 };
 
-// Re-export types
-export type { Task, TaskFilters } from './tasks.types';
+// ═══════════════════════════════════════════════════════════════════
+// WRITE HOOKS (Phase 2) - Mutations
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Helper to invalidate all task-related queries
+ */
+const invalidateAllTaskQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
+  // Invalidate all queries that start with ['tasks']
+  queryClient.invalidateQueries({ queryKey: taskKeys.all });
+};
+
+/**
+ * Create a new task
+ */
+export const useCreateTask = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+
+  return useMutation({
+    mutationFn: (input: CreateTaskInput) => repository.create(input),
+    onSuccess: () => {
+      invalidateAllTaskQueries(queryClient);
+    },
+  });
+};
+
+/**
+ * Update an existing task
+ */
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) =>
+      repository.update(id, updates),
+    onSuccess: (updatedTask) => {
+      // Update specific task in cache
+      queryClient.setQueryData(taskKeys.detail(updatedTask.id), updatedTask);
+      // Invalidate all list queries
+      invalidateAllTaskQueries(queryClient);
+    },
+  });
+};
+
+/**
+ * Delete a task
+ */
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+
+  return useMutation({
+    mutationFn: (id: string) => repository.delete(id),
+    onSuccess: (_result, deletedId) => {
+      // Remove from detail cache
+      queryClient.removeQueries({ queryKey: taskKeys.detail(deletedId) });
+      // Invalidate all list queries
+      invalidateAllTaskQueries(queryClient);
+    },
+  });
+};
+
+/**
+ * Toggle task completion status with optimistic update
+ */
+export const useToggleTaskComplete = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+
+  return useMutation({
+    mutationFn: (id: string) => repository.toggleComplete(id),
+    
+    // Optimistic update
+    onMutate: async (id: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: taskKeys.all });
+
+      // Snapshot current state
+      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+
+      // Optimistically update
+      if (previousTasks) {
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+          old?.map((task) =>
+            task.id === id
+              ? {
+                  ...task,
+                  completed: !task.completed,
+                  completedAt: !task.completed ? new Date().toISOString() : undefined,
+                }
+              : task
+          )
+        );
+      }
+
+      return { previousTasks };
+    },
+
+    // Rollback on error
+    onError: (_error, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
+      }
+    },
+
+    // Refetch on settle
+    onSettled: () => {
+      invalidateAllTaskQueries(queryClient);
+    },
+  });
+};
+
+/**
+ * Toggle task bookmark status with optimistic update
+ */
+export const useToggleTaskBookmark = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+
+  return useMutation({
+    mutationFn: (id: string) => repository.toggleBookmark(id),
+    
+    // Optimistic update
+    onMutate: async (id: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: taskKeys.all });
+
+      // Snapshot current state
+      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
+
+      // Optimistically update
+      if (previousTasks) {
+        queryClient.setQueryData<Task[]>(taskKeys.lists(), (old) =>
+          old?.map((task) =>
+            task.id === id ? { ...task, bookmarked: !task.bookmarked } : task
+          )
+        );
+      }
+
+      return { previousTasks };
+    },
+
+    // Rollback on error
+    onError: (_error, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
+      }
+    },
+
+    // Refetch on settle
+    onSettled: () => {
+      invalidateAllTaskQueries(queryClient);
+    },
+  });
+};
+
+// Re-export types for convenience
+export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
