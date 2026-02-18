@@ -30,10 +30,12 @@ export {
 } from './tasks.hooks';
 
 // ═══════════════════════════════════════════════════════════════════
-// WRITE HOOKS (Phase 2 - À implémenter)
+// WRITE HOOKS (Phase 2)
 // ═══════════════════════════════════════════════════════════════════
-// export { useCreateTask } from './tasks.hooks';
-// export { useUpdateTask } from './tasks.hooks';
-// export { useDeleteTask } from './tasks.hooks';
-// export { useToggleTaskComplete } from './tasks.hooks';
-// export { useToggleTaskBookmark } from './tasks.hooks';
+export {
+  useCreateTask,
+  useUpdateTask,
+  useDeleteTask,
+  useToggleTaskComplete,
+  useToggleTaskBookmark,
+} from './tasks.hooks';
