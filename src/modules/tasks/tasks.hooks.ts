@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { SupabaseTasksRepository } from './supabase.repository';
 import { LocalStorageTasksRepository } from './local.repository';
 import { ITasksRepository } from './tasks.repository';
 import { Task, TaskFilters } from './tasks.types';
@@ -19,18 +17,12 @@ export const taskKeys = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Repository Factory
+// Repository Factory - Default to Local Storage for demo mode
 // ═══════════════════════════════════════════════════════════════════
 const useTasksRepository = (): ITasksRepository => {
-  const { isDemo, isAuthenticated } = useAuth();
-  return useMemo(
-    () => (isDemo || !isAuthenticated
-      ? new LocalStorageTasksRepository()
-      : new SupabaseTasksRepository()),
-    [isDemo, isAuthenticated]
-  );
+  // Use LocalStorage by default (demo mode)
+  return useMemo(() => new LocalStorageTasksRepository(), []);
 };
-
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS (Phase 1)
 // ═══════════════════════════════════════════════════════════════════
