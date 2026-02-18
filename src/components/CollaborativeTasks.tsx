@@ -1,14 +1,31 @@
 import React, { useState, useMemo } from 'react';
 import { Users, Lock, Plus, X, UserPlus, Check, Search, AlertTriangle, Mail } from 'lucide-react';
-import { useTasks, Task } from '../context/TaskContext';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import CollaboratorItem from './CollaboratorItem';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CollaborativeTasks: React.FC = () => {
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: tasks = [], isLoading } = useTasks();
+  const updateTaskMutation = useUpdateTask();
 
-  const { tasks, user, isPremium, friends, updateTask, categories, priorityRange, sendFriendRequest } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { user, isPremium, friends, categories, priorityRange, sendFriendRequest } = useTaskContext();
   
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -68,18 +85,21 @@ const CollaborativeTasks: React.FC = () => {
     if (!selectedTask) return;
     const currentCollaborators = selectedTask.collaborators || [];
     if (!currentCollaborators.includes(collaboratorName)) {
-      updateTask(selectedTask.id, {
-        isCollaborative: true,
-        collaborators: [...currentCollaborators, collaboratorName],
-        collaboratorValidations: {
-          ...selectedTask.collaboratorValidations,
-          [collaboratorName]: false
+      updateTaskMutation.mutate({
+        id: selectedTask.id,
+        updates: {
+          isCollaborative: true,
+          collaborators: [...currentCollaborators, collaboratorName],
+          collaboratorValidations: {
+            ...selectedTask.collaboratorValidations,
+            [collaboratorName]: false
+          }
         }
       });
     }
   };
 
-const handleRemoveCollaborator = (collaboratorName: string) => {
+  const handleRemoveCollaborator = (collaboratorName: string) => {
     if (!selectedTask) return;
     const currentCollaborators = selectedTask.collaborators || [];
     const newCollaborators = currentCollaborators.filter(c => c !== collaboratorName);
@@ -87,11 +107,14 @@ const handleRemoveCollaborator = (collaboratorName: string) => {
     delete newValidations[collaboratorName];
     const newPendingInvites = (selectedTask.pendingInvites || []).filter(e => e !== collaboratorName);
     
-    updateTask(selectedTask.id, {
-      collaborators: newCollaborators,
-      isCollaborative: newCollaborators.length > 0,
-      collaboratorValidations: newValidations,
-      pendingInvites: newPendingInvites
+    updateTaskMutation.mutate({
+      id: selectedTask.id,
+      updates: {
+        collaborators: newCollaborators,
+        isCollaborative: newCollaborators.length > 0,
+        collaboratorValidations: newValidations,
+        pendingInvites: newPendingInvites
+      }
     });
   };
 
@@ -109,13 +132,16 @@ const handleRemoveCollaborator = (collaboratorName: string) => {
       
       if (!currentCollaborators.includes(email) && !pendingInvites.includes(email)) {
         sendFriendRequest(email);
-        updateTask(selectedTask.id, {
-          isCollaborative: true,
-          collaborators: [...currentCollaborators, email],
-          pendingInvites: [...pendingInvites, email],
-          collaboratorValidations: {
-            ...selectedTask.collaboratorValidations,
-            [email]: false
+        updateTaskMutation.mutate({
+          id: selectedTask.id,
+          updates: {
+            isCollaborative: true,
+            collaborators: [...currentCollaborators, email],
+            pendingInvites: [...pendingInvites, email],
+            collaboratorValidations: {
+              ...selectedTask.collaboratorValidations,
+              [email]: false
+            }
           }
         });
       }
@@ -134,6 +160,19 @@ const handleRemoveCollaborator = (collaboratorName: string) => {
     }
     return { name: id, email: undefined, avatar: undefined, isPending };
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-8 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl animate-pulse">
+        <div className="h-8 w-48 bg-[rgb(var(--color-border))] rounded mb-4"></div>
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 bg-[rgb(var(--color-border))] rounded-xl"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!premium) {
     return (
