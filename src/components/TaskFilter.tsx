@@ -1,39 +1,62 @@
 import React, { useState } from 'react';
 import { ChevronDown, Filter, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTasks } from '../context/TaskContext';
 import { Slider } from './ui/slider';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
   currentFilter: string;
   showCompleted?: boolean;
   onShowCompletedChange?: (show: boolean) => void;
+  // Props contrôlés pour le filtrage (reçus de TasksPage)
+  searchTerm?: string;
+  onSearchTermChange?: (value: string) => void;
+  selectedCategories?: string[];
+  onSelectedCategoriesChange?: (categories: string[]) => void;
 };
 
 const TaskFilter: React.FC<TaskFilterProps> = ({ 
   onFilterChange, 
   currentFilter, 
   showCompleted = false,
-  onShowCompletedChange 
+  onShowCompletedChange,
+  // Props contrôlés avec valeurs par défaut
+  searchTerm: controlledSearchTerm,
+  onSearchTermChange,
+  selectedCategories: controlledSelectedCategories,
+  onSelectedCategoriesChange
 }) => {
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
   const { 
     categories = [], 
     priorityRange = [1, 5], 
-    setPriorityRange,
-    searchTerm,
-    setSearchTerm,
-    selectedCategories,
-    setSelectedCategories
-  } = useTasks();
+    setPriorityRange
+  } = useTaskContext();
+
+  // État local de secours si pas contrôlé (rétrocompatibilité)
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [localSelectedCategories, setLocalSelectedCategories] = useState<string[]>([]);
+
+  // Utiliser les props contrôlés si fournis, sinon l'état local
+  const searchTerm = controlledSearchTerm !== undefined ? controlledSearchTerm : localSearchTerm;
+  const setSearchTerm = onSearchTermChange || setLocalSearchTerm;
+  const selectedCategories = controlledSelectedCategories !== undefined ? controlledSelectedCategories : localSelectedCategories;
+  const setSelectedCategories = onSelectedCategoriesChange || setLocalSelectedCategories;
+
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
-    );
+    const newCategories = selectedCategories.includes(category) 
+      ? selectedCategories.filter(c => c !== category)
+      : [...selectedCategories, category];
+    setSelectedCategories(newCategories);
   };
 
   const clearAllFilters = () => {
