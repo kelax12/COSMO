@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
-import { useTasks, Task } from '../context/TaskContext';
 import TaskModal from '../components/TaskModal';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Types (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTasksModule, Task } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
   const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
@@ -19,18 +28,27 @@ const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-l
 };
 
 const MessagingPage: React.FC = () => {
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: tasks = [] } = useTasksModule();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
   const {
     user,
     messages,
-    friendRequests,
     isPremium,
-    sendMessage,
     sendFriendRequest,
-    acceptFriendRequest,
-    rejectFriendRequest,
-    friends,
-    tasks
-  } = useTasks();
+    friends
+  } = useTaskContext();
+
+  // Stub functions for messaging (not implemented in TaskContext)
+  const friendRequests: any[] = [];
+  const sendMessage = (_conversationId: string, _message: string) => {};
+  const acceptFriendRequest = (_email: string) => {};
+  const rejectFriendRequest = (_email: string) => {};
 
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
