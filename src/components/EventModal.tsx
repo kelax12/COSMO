@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Clock, Plus } from "lucide-react";
-import { Task, CalendarEvent, useTasks } from "../context/TaskContext";
 import { motion, AnimatePresence } from "framer-motion";
 import ColorSettingsModal from "./ColorSettingsModal";
 import { DatePicker } from "./ui/date-picker";
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Types (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { Task } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { CalendarEvent, useTasks } from "../context/TaskContext";
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
