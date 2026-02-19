@@ -19,9 +19,11 @@ import ListModal from '../ListModal';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { 
+  useCreateTask,
   useUpdateTask, 
   useDeleteTask, 
   Task,
+  CreateTaskInput,
   UpdateTaskInput 
 } from '@/modules/tasks';
 
@@ -46,6 +48,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
+  const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
 
@@ -261,23 +264,44 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
     if (!validateForm()) return;
     if (!isCreating && !task) return;
 
-    const taskData: UpdateTaskInput = {
-      name: formData.name,
-      priority: formData.priority,
-      category: formData.category,
-      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : (isCreating ? new Date().toISOString() : task!.deadline),
-      estimatedTime: Number(formData.estimatedTime),
-      completed: formData.completed,
-      bookmarked: formData.bookmarked,
-      isCollaborative: collaborators.length > 0,
-      collaborators: collaborators,
-      pendingInvites: pendingInvitesLocal,
-    };
+    if (isCreating) {
+      // Use createTaskMutation for new tasks
+      const createData: CreateTaskInput = {
+        name: formData.name,
+        priority: formData.priority,
+        category: formData.category,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : new Date().toISOString(),
+        estimatedTime: Number(formData.estimatedTime),
+        completed: formData.completed,
+        bookmarked: formData.bookmarked,
+        isCollaborative: collaborators.length > 0,
+        collaborators: collaborators,
+        pendingInvites: pendingInvitesLocal,
+      };
 
-    if (isCreating && onSave) {
-      onSave(taskData);
-      onClose();
+      createTaskMutation.mutate(createData, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (err) => {
+          console.error('Error creating task:', err);
+          setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+        }
+      });
     } else if (task) {
+      const taskData: UpdateTaskInput = {
+        name: formData.name,
+        priority: formData.priority,
+        category: formData.category,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : task.deadline,
+        estimatedTime: Number(formData.estimatedTime),
+        completed: formData.completed,
+        bookmarked: formData.bookmarked,
+        isCollaborative: collaborators.length > 0,
+        collaborators: collaborators,
+        pendingInvites: pendingInvitesLocal,
+      };
+
       updateTaskMutation.mutate(
         { id: task.id, updates: taskData },
         {
@@ -446,7 +470,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
   };
 
   // Loading state derived from mutations
-  const isLoading = updateTaskMutation.isPending || deleteTaskMutation.isPending;
+  const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending || deleteTaskMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
