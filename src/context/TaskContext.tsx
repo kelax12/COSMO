@@ -24,13 +24,13 @@ const DEMO_OKRS = [
     id: 'okr-1',
     title: 'Améliorer ma productivité',
     description: 'Devenir plus efficace dans mes tâches quotidiennes',
-    category: 'Personnel',
+    category: 'personal',
     progress: 65,
     completed: false,
     keyResults: [
-      { id: 'kr-1', title: 'Compléter 90% des tâches planifiées', progress: 75 },
-      { id: 'kr-2', title: 'Réduire les distractions de 50%', progress: 60 },
-      { id: 'kr-3', title: 'Utiliser la méthode Pomodoro quotidiennement', progress: 55 },
+      { id: 'kr-1', title: 'Compléter 90% des tâches planifiées', currentValue: 68, targetValue: 90, unit: '%', completed: false, estimatedTime: 30 },
+      { id: 'kr-2', title: 'Réduire les distractions de 50%', currentValue: 30, targetValue: 50, unit: '%', completed: false, estimatedTime: 15 },
+      { id: 'kr-3', title: 'Utiliser la méthode Pomodoro quotidiennement', currentValue: 11, targetValue: 20, unit: 'jours', completed: false, estimatedTime: 25 },
     ],
     startDate: getDate(-30),
     endDate: getDate(60),
@@ -39,13 +39,13 @@ const DEMO_OKRS = [
     id: 'okr-2',
     title: 'Apprendre React avancé',
     description: 'Maîtriser les concepts avancés de React',
-    category: 'Apprentissage',
+    category: 'learning',
     progress: 40,
     completed: false,
     keyResults: [
-      { id: 'kr-4', title: 'Terminer le cours sur les hooks', progress: 80 },
-      { id: 'kr-5', title: 'Créer 3 projets pratiques', progress: 33 },
-      { id: 'kr-6', title: 'Contribuer à un projet open source', progress: 10 },
+      { id: 'kr-4', title: 'Terminer le cours sur les hooks', currentValue: 8, targetValue: 10, unit: 'modules', completed: false, estimatedTime: 60 },
+      { id: 'kr-5', title: 'Créer 3 projets pratiques', currentValue: 1, targetValue: 3, unit: 'projets', completed: false, estimatedTime: 120 },
+      { id: 'kr-6', title: 'Contribuer à un projet open source', currentValue: 1, targetValue: 10, unit: 'PRs', completed: false, estimatedTime: 45 },
     ],
     startDate: getDate(-20),
     endDate: getDate(70),
@@ -54,13 +54,13 @@ const DEMO_OKRS = [
     id: 'okr-3',
     title: 'Améliorer ma santé',
     description: 'Adopter un mode de vie plus sain',
-    category: 'Santé',
+    category: 'health',
     progress: 55,
     completed: false,
     keyResults: [
-      { id: 'kr-7', title: 'Faire du sport 4x par semaine', progress: 70 },
-      { id: 'kr-8', title: 'Dormir 8h par nuit', progress: 45 },
-      { id: 'kr-9', title: 'Manger 5 fruits/légumes par jour', progress: 50 },
+      { id: 'kr-7', title: 'Faire du sport 4x par semaine', currentValue: 14, targetValue: 20, unit: 'séances', completed: false, estimatedTime: 60 },
+      { id: 'kr-8', title: 'Dormir 8h par nuit', currentValue: 9, targetValue: 20, unit: 'nuits', completed: false, estimatedTime: 0 },
+      { id: 'kr-9', title: 'Manger 5 fruits/légumes par jour', currentValue: 10, targetValue: 20, unit: 'jours', completed: false, estimatedTime: 10 },
     ],
     startDate: getDate(-15),
     endDate: getDate(75),
@@ -182,7 +182,12 @@ export interface OKR {
 export interface KeyResult {
   id: string;
   title: string;
-  progress: number;
+  currentValue: number;
+  targetValue: number;
+  unit: string;
+  completed: boolean;
+  estimatedTime: number;
+  history?: { date: string; increment: number }[];
 }
 
 // ═══════════════════════════════════════════════════════════════════
