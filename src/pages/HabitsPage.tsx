@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { Plus, Calendar, Grid3X3, List } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
 import HabitCard from '../components/HabitCard';
 import HabitForm from '../components/HabitForm';
 import HabitTable from '../components/HabitTable';
 
+// ═══════════════════════════════════════════════════════════════════
+// Module habits - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useHabits } from '@/modules/habits';
+
 const HabitsPage: React.FC = () => {
-  const { habits, toggleHabitCompletion } = useTasks();
+  // Use new module for habits
+  const { data: habits = [], isLoading } = useHabits();
   const [showAddForm, setShowAddForm] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
 
@@ -16,6 +21,23 @@ const HabitsPage: React.FC = () => {
       const completedToday = habits.filter(habit => habit.completions[today]).length;
       return Math.round((completedToday / habits.length) * 100);
     };
+
+    // Loading state
+    if (isLoading) {
+      return (
+        <div className="p-4 md:p-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 w-48 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div className="h-6 w-64 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="p-4 md:p-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
