@@ -1,4 +1,29 @@
-import { Category, Task, Habit, OKR, OKRCategory } from '../context/TaskContext';
+import { Category } from '../context/TaskContext';
+import { Task } from '@/modules/tasks';
+
+// Types supplémentaires non exportés par les modules
+interface Habit {
+  id: string;
+  name: string;
+  color: string;
+  completions: Record<string, boolean>;
+}
+
+interface OKR {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  progress: number;
+  keyResults: { id: string; title: string; progress: number }[];
+}
+
+interface OKRCategory {
+  id: string;
+  name: string;
+  color: string;
+  icon: string;
+}
 
 export const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat-1', name: 'Personnel', color: '#3B82F6' },
