@@ -1,7 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import { X, Users, UserPlus, Search } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
 import CollaboratorItem from './CollaboratorItem';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
 
 type CollaboratorModalProps = {
   isOpen: boolean;
@@ -12,7 +21,17 @@ type CollaboratorModalProps = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, taskId }) => {
-  const { tasks, updateTask, friends, sendFriendRequest } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: tasks = [] } = useTasks();
+  const updateTaskMutation = useUpdateTask();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { friends, sendFriendRequest } = useTaskContext();
+
   const task = tasks.find((t) => t.id === taskId);
 
   const [input, setInput] = useState('');
@@ -43,12 +62,15 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     
     if (friend) {
       if (!assignedCollaborators.includes(friend.name)) {
-        updateTask(task.id, {
-          isCollaborative: true,
-          collaborators: [...assignedCollaborators, friend.name],
-          collaboratorValidations: {
-            ...task.collaboratorValidations,
-            [friend.name]: false
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: {
+            isCollaborative: true,
+            collaborators: [...assignedCollaborators, friend.name],
+            collaboratorValidations: {
+              ...task.collaboratorValidations,
+              [friend.name]: false
+            }
           }
         });
       }
@@ -60,13 +82,16 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
       const pendingInvites = task.pendingInvites || [];
       if (!pendingInvites.includes(value)) {
         sendFriendRequest(value);
-        updateTask(task.id, {
-          isCollaborative: true,
-          collaborators: [...assignedCollaborators, value],
-          pendingInvites: [...pendingInvites, value],
-          collaboratorValidations: {
-            ...task.collaboratorValidations,
-            [value]: false
+        updateTaskMutation.mutate({
+          id: task.id,
+          updates: {
+            isCollaborative: true,
+            collaborators: [...assignedCollaborators, value],
+            pendingInvites: [...pendingInvites, value],
+            collaboratorValidations: {
+              ...task.collaboratorValidations,
+              [value]: false
+            }
           }
         });
       }
@@ -83,18 +108,24 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
       const newCollaborators = assignedCollaborators.filter((c) => c !== name);
       const newValidations = { ...task.collaboratorValidations };
       delete newValidations[name];
-      updateTask(task.id, {
-        collaborators: newCollaborators,
-        isCollaborative: newCollaborators.length > 0,
-        collaboratorValidations: newValidations
+      updateTaskMutation.mutate({
+        id: task.id,
+        updates: {
+          collaborators: newCollaborators,
+          isCollaborative: newCollaborators.length > 0,
+          collaboratorValidations: newValidations
+        }
       });
     } else {
-      updateTask(task.id, {
-        isCollaborative: true,
-        collaborators: [...assignedCollaborators, name],
-        collaboratorValidations: {
-          ...task.collaboratorValidations,
-          [name]: false
+      updateTaskMutation.mutate({
+        id: task.id,
+        updates: {
+          isCollaborative: true,
+          collaborators: [...assignedCollaborators, name],
+          collaboratorValidations: {
+            ...task.collaboratorValidations,
+            [name]: false
+          }
         }
       });
     }
@@ -107,11 +138,14 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
     delete newValidations[collaboratorName];
     const newPendingInvites = (task.pendingInvites || []).filter(e => e !== collaboratorName);
     
-    updateTask(task.id, {
-      collaborators: newCollaborators,
-      isCollaborative: newCollaborators.length > 0,
-      collaboratorValidations: newValidations,
-      pendingInvites: newPendingInvites
+    updateTaskMutation.mutate({
+      id: task.id,
+      updates: {
+        collaborators: newCollaborators,
+        isCollaborative: newCollaborators.length > 0,
+        collaboratorValidations: newValidations,
+        pendingInvites: newPendingInvites
+      }
     });
   };
 
@@ -180,7 +214,7 @@ const CollaboratorModal: React.FC<CollaboratorModalProps> = ({ isOpen, onClose, 
                   <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                     <Users className="w-6 h-6 text-slate-400" />
                   </div>
-                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l’instant.</p>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>Aucun collaborateur pour l'instant.</p>
                 </div>
               ) : (
                   <div className="grid grid-cols-1 gap-3">
