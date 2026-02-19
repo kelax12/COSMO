@@ -1,11 +1,33 @@
 import React, { useState } from 'react';
-import { useTasks, Task } from '../context/TaskContext';
 import { Search, Clock, Bookmark, Filter, X, CheckCircle2 } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 
+// ═══════════════════════════════════════════════════════════════════
+// Module tasks - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks, Task } from '@/modules/tasks';
+
+// ═══════════════════════════════════════════════════════════════════
+// TaskContext - uniquement pour domaines NON MIGRÉS
+// ═══════════════════════════════════════════════════════════════════
+import { useTasks as useTaskContext } from '../context/TaskContext';
+
+type TaskSidebarProps = {
+  onClose?: () => void;
+  onDragStart?: () => void;
+};
+
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
-  const { tasks, colorSettings, categories, events, priorityRange, friends } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // TASKS - Depuis le module tasks (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: tasks = [] } = useTasks();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { colorSettings, categories, events, priorityRange, friends } = useTaskContext();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
