@@ -21,6 +21,11 @@ import {
 } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module events - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCreateEvent } from '@/modules/events';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -49,9 +54,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const toggleBookmarkMutation = useToggleTaskBookmark();
 
   // ═══════════════════════════════════════════════════════════════════
+  // EVENTS - Depuis le module events (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const createEventMutation = useCreateEvent();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { addEvent, priorityRange, categories } = useTaskContext();
+  const { priorityRange, categories } = useTaskContext();
 
   // Utiliser propTasks si fourni, sinon les tasks du module
   const tasks = propTasks || moduleTasks;
@@ -186,7 +196,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleCreateEventFromTask = (eventData: any) => {
     if (taskToEventModal) {
-      addEvent({
+      createEventMutation.mutate({
         ...eventData,
         taskId: taskToEventModal.id
       });
