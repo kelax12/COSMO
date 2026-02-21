@@ -4,6 +4,7 @@ import CategoryManager, { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useTasks } from '../context/TaskContext';
+import { useCreateEvent } from '@/modules/events';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
@@ -40,7 +41,8 @@ type Category = {
 
 const OKRPage: React.FC = () => {
   const location = useLocation();
-  const { okrs: objectives, updateKeyResult: contextUpdateKR, addOKR, deleteOKR, addEvent, updateOKR } = useTasks();
+  const { okrs: objectives, updateKeyResult: contextUpdateKR, addOKR, deleteOKR, updateOKR } = useTasks();
+  const createEventMutation = useCreateEvent();
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
@@ -581,7 +583,7 @@ const OKRPage: React.FC = () => {
               notes: ''      // Added missing properties
             }}
           onAddEvent={(event) => {
-            addEvent(event);
+            createEventMutation.mutate(event);
             setShowAddEventModal(false);
           }}
         />
