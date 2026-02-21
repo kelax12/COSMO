@@ -2,15 +2,28 @@ import React, { useState, useRef, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { Draggable } from '@fullcalendar/interaction';
+import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
+import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
 import { useTasks } from '../context/TaskContext';
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput } from '@/modules/events';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AgendaPage: React.FC = () => {
-  const { events, addEvent, deleteEvent, updateEvent, categories } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // EVENTS - Depuis le module events (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: events = [] } = useEvents();
+  const createEventMutation = useCreateEvent();
+  const updateEventMutation = useUpdateEvent();
+  const deleteEventMutation = useDeleteEvent();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Domaines NON MIGRÉS (depuis TaskContext)
+  // ═══════════════════════════════════════════════════════════════════
+  const { categories } = useTasks();
   const [currentView, setCurrentView] = useState('timeGridWeek');
   const [showTaskSidebar, setShowTaskSidebar] = useState(() => window.innerWidth >= 768);
   const [isDraggingTask, setIsDraggingTask] = useState(false);
@@ -131,7 +144,7 @@ setShowTaskSidebar(false);
     }, 100);
   };
 
-  const handleDateSelect = (selectInfo: any) => {
+  const handleDateSelect = (selectInfo: DateSelectArg) => {
     const start = selectInfo.start;
     const end = selectInfo.end;
 
@@ -142,7 +155,7 @@ setShowTaskSidebar(false);
     setShowAddEventModal(true);
   };
 
-  const handleEventClick = (clickInfo: any) => {
+  const handleEventClick = (clickInfo: EventClickArg) => {
     const eventId = clickInfo.event.id;
     const taskId = clickInfo.event.extendedProps?.taskId;
     const event = events.find((e) => e.id === eventId || (taskId && e.taskId === taskId));
@@ -152,33 +165,37 @@ setShowTaskSidebar(false);
     }
   };
 
-  const handleEventDrop = (dropInfo: any) => {
+  const handleEventDrop = (dropInfo: EventDropArg) => {
     const eventId = dropInfo.event.id;
     const taskId = dropInfo.event.extendedProps?.taskId;
     const event = events.find((e) => e.id === eventId || (taskId && e.taskId === taskId));
     if (!event) return;
     
-    const newStart = dropInfo.event.start.toISOString();
-    const newEnd = dropInfo.event.end ? dropInfo.event.end.toISOString() : new Date(dropInfo.event.start.getTime() + 60 * 60 * 1000).toISOString();
+    const newStart = dropInfo.event.start?.toISOString();
+    const newEnd = dropInfo.event.end ? dropInfo.event.end.toISOString() : new Date((dropInfo.event.start?.getTime() ?? Date.now()) + 60 * 60 * 1000).toISOString();
 
-    updateEvent(event.id, {
-      start: newStart,
-      end: newEnd
+    if (!newStart) return;
+
+    updateEventMutation.mutate({
+      id: event.id,
+      updates: {
+        start: newStart,
+        end: newEnd
+      }
     });
   };
 
-  const handleEventReceive = (receiveInfo: any) => {
+  const handleEventReceive = (receiveInfo: EventReceiveArg) => {
     const eventData = receiveInfo.event;
-    const newEventId = `event_${Date.now()}`;
-    const newEvent = {
+    const newEvent: CreateEventInput = {
       title: eventData.title,
-      start: eventData.start?.toISOString(),
+      start: eventData.start?.toISOString() ?? new Date().toISOString(),
       end: eventData.end ?
         eventData.end.toISOString() :
-        new Date(eventData.start.getTime() + eventData.extendedProps.estimatedTime * 60 * 1000).toISOString(),
-      color: eventData.backgroundColor,
+        new Date((eventData.start?.getTime() ?? Date.now()) + (eventData.extendedProps.estimatedTime as number) * 60 * 1000).toISOString(),
+      color: eventData.backgroundColor ?? undefined,
       notes: `Priorité: ${eventData.extendedProps.priority} | Catégorie: ${eventData.extendedProps.categoryName}`,
-      taskId: eventData.extendedProps.taskId
+      taskId: eventData.extendedProps.taskId as string
     };
 
     const isDuplicate = events.some((e) =>
@@ -191,10 +208,7 @@ setShowTaskSidebar(false);
       return;
     }
 
-    receiveInfo.event.setProp('id', newEventId);
-    receiveInfo.event.setExtendedProp('notes', newEvent.notes);
-    
-    addEvent(newEvent);
+    createEventMutation.mutate(newEvent);
   };
 
   const getCategoryColor = (category: string) => {
@@ -215,8 +229,8 @@ setShowTaskSidebar(false);
     }
   }));
 
-  const handleAddEvent = (eventData: any) => {
-    addEvent({
+  const handleAddEvent = (eventData: CreateEventInput) => {
+    createEventMutation.mutate({
       ...eventData,
       taskId: eventData.taskId || ''
     });
@@ -231,14 +245,14 @@ setShowTaskSidebar(false);
     }, 100);
   };
 
-  const handleUpdateEvent = (eventId: string, eventData: any) => {
-    updateEvent(eventId, eventData);
+  const handleUpdateEvent = (eventId: string, eventData: UpdateEventInput) => {
+    updateEventMutation.mutate({ id: eventId, updates: eventData });
     setShowEditEventModal(false);
     setSelectedEvent(null);
   };
 
   const handleDeleteEvent = (eventId: string) => {
-    deleteEvent(eventId);
+    deleteEventMutation.mutate(eventId);
     setShowEditEventModal(false);
     setSelectedEvent(null);
   };
