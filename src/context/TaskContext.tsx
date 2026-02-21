@@ -67,41 +67,6 @@ const DEMO_OKRS = [
   },
 ];
 
-const DEMO_EVENTS = [
-  {
-    id: 'event-1',
-    title: 'Réunion d\'équipe',
-    start: new Date(new Date().setHours(10, 0, 0, 0)).toISOString(),
-    end: new Date(new Date().setHours(11, 0, 0, 0)).toISOString(),
-    color: '#3B82F6',
-    description: 'Point hebdomadaire avec l\'équipe',
-  },
-  {
-    id: 'event-2',
-    title: 'Déjeuner client',
-    start: new Date(new Date().setHours(12, 30, 0, 0)).toISOString(),
-    end: new Date(new Date().setHours(14, 0, 0, 0)).toISOString(),
-    color: '#10B981',
-    description: 'Restaurant Le Petit Bistrot',
-  },
-  {
-    id: 'event-3',
-    title: 'Formation React',
-    start: new Date(new Date().setHours(15, 0, 0, 0)).toISOString(),
-    end: new Date(new Date().setHours(17, 0, 0, 0)).toISOString(),
-    color: '#8B5CF6',
-    description: 'Module avancé sur les hooks',
-  },
-  {
-    id: 'event-4',
-    title: 'Sport',
-    start: new Date(new Date().setHours(18, 30, 0, 0)).toISOString(),
-    end: new Date(new Date().setHours(19, 30, 0, 0)).toISOString(),
-    color: '#EF4444',
-    description: 'Séance de running',
-  },
-];
-
 const DEMO_LISTS = [
   {
     id: 'list-1',
@@ -144,15 +109,8 @@ export interface TaskList {
   taskIds: string[];
 }
 
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  color?: string;
-  description?: string;
-  taskId?: string;
-}
+// CalendarEvent est maintenant défini dans @/modules/events/types.ts
+// import { CalendarEvent } from '@/modules/events';
 
 export interface Category {
   id: string;
@@ -239,12 +197,6 @@ interface TaskContextType {
   deleteOKR: (id: string) => void;
   updateKeyResult: (objectiveId: string, keyResultId: string, updates: Partial<KeyResult>) => void;
   
-  // Events
-  events: CalendarEvent[];
-  addEvent: (event: Partial<CalendarEvent>) => CalendarEvent;
-  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
-  deleteEvent: (id: string) => void;
-  
   // Auth stubs
   login: () => Promise<void>;
   register: () => Promise<void>;
@@ -261,6 +213,7 @@ export const TaskContext = createContext<TaskContextType | undefined>(undefined)
  * DOMAINES MIGRÉS (NE PLUS UTILISER ICI):
  * - TASKS: import { useTasks, useCreateTask, ... } from '@/modules/tasks'
  * - HABITS: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
+ * - EVENTS: import { useEvents, useCreateEvent, ... } from '@/modules/events'
  * ═══════════════════════════════════════════════════════════════════
  * 
  * DOMAINES RESTANTS (à migrer ultérieurement):
@@ -268,7 +221,6 @@ export const TaskContext = createContext<TaskContextType | undefined>(undefined)
  * - friends
  * - lists
  * - priorityRange
- * - events
  * - okrs
  */
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -278,7 +230,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [okrs, setOkrs] = useState<OKR[]>(DEMO_OKRS);
-  const [events, setEvents] = useState<CalendarEvent[]>(DEMO_EVENTS);
   const [lists, setLists] = useState<TaskList[]>(DEMO_LISTS);
   const [categories, setCategories] = useState<Category[]>(DEMO_CATEGORIES);
   const [friends] = useState<Friend[]>(DEMO_FRIENDS);
@@ -329,31 +280,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return okr;
     }));
-  };
-
-  // ═══════════════════════════════════════════════════════════════════
-  // Event CRUD operations
-  // ═══════════════════════════════════════════════════════════════════
-  const addEvent = (event: Partial<CalendarEvent>): CalendarEvent => {
-    const newEvent: CalendarEvent = {
-      id: crypto.randomUUID(),
-      title: event.title || '',
-      start: event.start || new Date().toISOString(),
-      end: event.end || new Date().toISOString(),
-      color: event.color,
-      description: event.description,
-      taskId: event.taskId,
-    };
-    setEvents(prev => [...prev, newEvent]);
-    return newEvent;
-  };
-
-  const updateEvent = (id: string, updates: Partial<CalendarEvent>) => {
-    setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-  };
-
-  const deleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -479,12 +405,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateOKR,
     deleteOKR,
     updateKeyResult,
-    
-    // Events
-    events,
-    addEvent,
-    updateEvent,
-    deleteEvent,
     
     // Auth stubs
     login: async () => {},
