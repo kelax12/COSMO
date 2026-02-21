@@ -5,6 +5,7 @@ import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquar
 import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
+import { useEvents } from '@/modules/events';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
@@ -13,8 +14,10 @@ type TimePeriod = 'day' | 'week' | 'month' | 'year';
 export default function StatisticsPage() {
   // Use new module for tasks (read-only)
   const { data: tasks = [] } = useTasks();
-  // Still need events, colorSettings, okrs from TaskContext
-  const { events, colorSettings, okrs } = useTasksContext();
+  // Use new module for events (read-only)
+  const { data: events = [] } = useEvents();
+  // Still need colorSettings, okrs from TaskContext
+  const { colorSettings, okrs } = useTasksContext();
   const { data: habits = [] } = useHabits();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
