@@ -10,9 +10,14 @@ import { DatePicker } from "./ui/date-picker";
 import { Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module events - Types (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { CalendarEvent } from '@/modules/events';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
-import { CalendarEvent, useTasks } from "../context/TaskContext";
+import { useTasks } from "../context/TaskContext";
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
