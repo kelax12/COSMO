@@ -9,6 +9,11 @@ import CollaboratorAvatars from './CollaboratorAvatars';
 import { useTasks, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module events - Hooks indépendants (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useEvents } from '@/modules/events';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -25,9 +30,14 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { data: tasks = [] } = useTasks();
 
   // ═══════════════════════════════════════════════════════════════════
+  // EVENTS - Depuis le module events (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: events = [] } = useEvents();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, categories, events, priorityRange, friends } = useTaskContext();
+  const { colorSettings, categories, priorityRange, friends } = useTaskContext();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
