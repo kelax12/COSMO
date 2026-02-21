@@ -4,6 +4,7 @@ import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
 import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
+import { useEvents } from '@/modules/events';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 const calculateWorkTimeForDate = (
@@ -20,8 +21,10 @@ const DashboardChart: React.FC = () => {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   // Use new module for tasks (read-only)
   const { data: tasks = [] } = useTasks();
-  // Still need events, okrs from TaskContext
-  const { events, okrs } = useTasksContext();
+  // Use new module for events (read-only)
+  const { data: events = [] } = useEvents();
+  // Still need okrs from TaskContext
+  const { okrs } = useTasksContext();
   const { data: habits = [] } = useHabits();
 
   const chartData = useMemo(() => {
