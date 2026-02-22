@@ -1,0 +1,126 @@
+// ═══════════════════════════════════════════════════════════════════
+// Repository Factory - Centralized repository selection
+// ═══════════════════════════════════════════════════════════════════
+
+import { isDemoMode } from './supabase';
+
+// Tasks
+import { ITasksRepository } from '@/modules/tasks/tasks.repository';
+import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
+import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
+
+// Habits
+import { IHabitsRepository } from '@/modules/habits/habits.repository';
+import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
+import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
+
+// Events
+import { IEventsRepository } from '@/modules/events/repository';
+import { LocalStorageEventsRepository } from '@/modules/events/repository';
+import { SupabaseEventsRepository } from '@/modules/events/supabase.repository';
+
+// Categories
+import { ICategoriesRepository } from '@/modules/categories/repository';
+import { LocalStorageCategoriesRepository } from '@/modules/categories/repository';
+import { SupabaseCategoriesRepository } from '@/modules/categories/supabase.repository';
+
+// Lists
+import { IListsRepository } from '@/modules/lists/repository';
+import { LocalStorageListsRepository } from '@/modules/lists/repository';
+import { SupabaseListsRepository } from '@/modules/lists/supabase.repository';
+
+// ═══════════════════════════════════════════════════════════════════
+// REPOSITORY SINGLETONS
+// ═══════════════════════════════════════════════════════════════════
+
+let tasksRepository: ITasksRepository | null = null;
+let habitsRepository: IHabitsRepository | null = null;
+let eventsRepository: IEventsRepository | null = null;
+let categoriesRepository: ICategoriesRepository | null = null;
+let listsRepository: IListsRepository | null = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// FACTORY FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Get the Tasks repository based on current mode
+ */
+export function getTasksRepository(): ITasksRepository {
+  if (!tasksRepository) {
+    tasksRepository = isDemoMode
+      ? new LocalStorageTasksRepository()
+      : new SupabaseTasksRepository();
+  }
+  return tasksRepository;
+}
+
+/**
+ * Get the Habits repository based on current mode
+ */
+export function getHabitsRepository(): IHabitsRepository {
+  if (!habitsRepository) {
+    habitsRepository = isDemoMode
+      ? new LocalStorageHabitsRepository()
+      : new SupabaseHabitsRepository();
+  }
+  return habitsRepository;
+}
+
+/**
+ * Get the Events repository based on current mode
+ */
+export function getEventsRepository(): IEventsRepository {
+  if (!eventsRepository) {
+    eventsRepository = isDemoMode
+      ? new LocalStorageEventsRepository()
+      : new SupabaseEventsRepository();
+  }
+  return eventsRepository;
+}
+
+/**
+ * Get the Categories repository based on current mode
+ */
+export function getCategoriesRepository(): ICategoriesRepository {
+  if (!categoriesRepository) {
+    categoriesRepository = isDemoMode
+      ? new LocalStorageCategoriesRepository()
+      : new SupabaseCategoriesRepository();
+  }
+  return categoriesRepository;
+}
+
+/**
+ * Get the Lists repository based on current mode
+ */
+export function getListsRepository(): IListsRepository {
+  if (!listsRepository) {
+    listsRepository = isDemoMode
+      ? new LocalStorageListsRepository()
+      : new SupabaseListsRepository();
+  }
+  return listsRepository;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UTILITY
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Check if app is running in demo mode
+ */
+export function isInDemoMode(): boolean {
+  return isDemoMode;
+}
+
+/**
+ * Reset all repository singletons (useful for testing)
+ */
+export function resetRepositories(): void {
+  tasksRepository = null;
+  habitsRepository = null;
+  eventsRepository = null;
+  categoriesRepository = null;
+  listsRepository = null;
+}
