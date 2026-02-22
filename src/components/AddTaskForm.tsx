@@ -19,6 +19,16 @@ import ListModal from './ListModal';
 import { useCreateTask, CreateTaskInput } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module lists - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useLists, useAddTaskToList } from '@/modules/lists';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -44,9 +54,20 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
   const createTaskMutation = useCreateTask();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: lists = [] } = useLists();
+  const addTaskToListMutation = useAddTaskToList();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, categories, friends, shareTask, isPremium, lists, addTaskToList } = useTaskContext();
+  const { colorSettings, friends, shareTask, isPremium } = useTaskContext();
 
   const [isFormOpen, setIsFormOpen] = useState(expanded);
   const [selectedListIds, setSelectedListIds] = useState<string[]>([]);
@@ -204,7 +225,9 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     createTaskMutation.mutate(taskInput, {
       onSuccess: (newTask) => {
         // Ajouter aux listes sélectionnées
-        selectedListIds.forEach(listId => addTaskToList(newTask.id, listId));
+        selectedListIds.forEach(listId => {
+          addTaskToListMutation.mutate({ taskId: newTask.id, listId });
+        });
         
         // Partager avec les collaborateurs si Premium
         if (collaborators.length > 0 && isPremium()) {
