@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Eye, EyeOff } from 'lucide-react';
-import { useTasks as useTasksContext } from '../context/TaskContext';
 import { usePendingTasks } from '@/modules/tasks';
+import { useCategories } from '@/modules/categories';
 import ColorSettingsModal from './ColorSettingsModal';
 
 interface TasksSummaryProps {
@@ -15,8 +15,8 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
 }) => {
   // Use new module for tasks (read-only)
   const { data: tasks = [], isLoading } = usePendingTasks();
-  // Still need categories from TaskContext
-  const { categories } = useTasksContext();
+  // Use new module for categories
+  const { data: categories = [] } = useCategories();
   const [showColorSettings, setShowColorSettings] = useState(false);
   
   const categoryCounts = categories.reduce((acc, cat) => {
