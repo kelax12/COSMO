@@ -1,11 +1,11 @@
 import React from 'react';
-import { User } from '../context/TaskContext';
+import { Friend } from '@/modules/friends';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 
 interface CollaboratorAvatarsProps {
   collaborators?: string[];
-  friends: User[];
+  friends: Friend[];
   className?: string;
   size?: 'sm' | 'md';
 }
