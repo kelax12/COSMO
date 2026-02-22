@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ColorSettingsModalProps = {
@@ -9,18 +9,27 @@ type ColorSettingsModalProps = {
   isNested?: boolean;
 };
 
-  const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) => {
-  const { categories, updateCategory, addCategory, deleteCategory } = useTasks();
-  const [localCategories, setLocalCategories] = useState(categories);
+const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) => {
+  const { data: categories = [] } = useCategories();
+  const createCategoryMutation = useCreateCategory();
+  const updateCategoryMutation = useUpdateCategory();
+  const deleteCategoryMutation = useDeleteCategory();
+  
+  const [localCategories, setLocalCategories] = useState<Category[]>([]);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Sync local state with fetched categories
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
+
   if (!isOpen) return null;
 
   const handleAddCategory = () => {
-    const newId = Date.now().toString();
-    const newCat = {
+    const newId = `temp-${Date.now()}`;
+    const newCat: Category = {
       id: newId,
       name: '',
       color: '#3B82F6'
@@ -47,27 +56,37 @@ type ColorSettingsModalProps = {
 
   const confirmDeleteLocal = () => {
     if (categoryToDelete) {
-    setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
+      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
       setCategoryToDelete(null);
-        }
-      };
+    }
+  };
   
-    const handleSave = async () => {
+  const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Delete categories that were removed
       const deletePromises = categories
         .filter(cat => !localCategories.find(lc => lc.id === cat.id))
-        .map(cat => deleteCategory(cat.id));
+        .map(cat => deleteCategoryMutation.mutateAsync(cat.id));
 
+      // Create or update categories
       const savePromises = localCategories.map(lc => {
         const existing = categories.find(cat => cat.id === lc.id);
         if (existing) {
+          // Update existing category
           if (existing.name !== lc.name || existing.color !== lc.color) {
-            return updateCategory(lc.id, { name: lc.name, color: lc.color });
+            return updateCategoryMutation.mutateAsync({ 
+              id: lc.id, 
+              updates: { name: lc.name, color: lc.color } 
+            });
           }
           return Promise.resolve();
         } else {
-          return addCategory(lc);
+          // Create new category (temp IDs start with 'temp-')
+          return createCategoryMutation.mutateAsync({ 
+            name: lc.name, 
+            color: lc.color 
+          });
         }
       });
 
