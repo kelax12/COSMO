@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
+import { useCategories } from '@/modules/categories';
+import { useCreateHabit } from '@/modules/habits';
 import ColorSettingsModal from './ColorSettingsModal';
 
 interface HabitFormProps {
@@ -8,30 +10,28 @@ interface HabitFormProps {
 }
 
 const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
-  const { addHabit, favoriteColors, categories } = useTasks();
-    const [formData, setFormData] = useState({
-      name: '',
-      estimatedTime: 30,
-      color: categories[0]?.color || favoriteColors[0] || '#3B82F6'
-    });
+  const { favoriteColors } = useTasks();
+  const { data: categories = [] } = useCategories();
+  const createHabitMutation = useCreateHabit();
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    estimatedTime: 30,
+    color: categories[0]?.color || favoriteColors[0] || '#3B82F6'
+  });
   const [isColorSettingsOpen, setIsColorSettingsOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
-    const habit = {
-      id: Date.now().toString(),
+    createHabitMutation.mutate({
       name: formData.name,
       estimatedTime: formData.estimatedTime,
-      completions: {},
-      streak: 0,
       color: formData.color,
-      createdAt: new Date().toISOString()
-    };
-
-    addHabit(habit);
-    onClose();
+    }, {
+      onSuccess: () => onClose()
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
