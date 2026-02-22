@@ -14,6 +14,11 @@ import { useTasks, Task } from '@/modules/tasks';
 import { useEvents } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -35,9 +40,14 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   const { data: events = [] } = useEvents();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, categories, priorityRange, friends } = useTaskContext();
+  const { colorSettings, priorityRange, friends } = useTaskContext();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
