@@ -4,8 +4,8 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
-import { useTasks } from '../context/TaskContext';
 import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput } from '@/modules/events';
+import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
 import EventModal from '../components/EventModal';
@@ -21,9 +21,10 @@ const AgendaPage: React.FC = () => {
   const deleteEventMutation = useDeleteEvent();
 
   // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
-  const { categories } = useTasks();
+  const { data: categories = [] } = useCategories();
+
   const [currentView, setCurrentView] = useState('timeGridWeek');
   const [showTaskSidebar, setShowTaskSidebar] = useState(() => window.innerWidth >= 768);
   const [isDraggingTask, setIsDraggingTask] = useState(false);
