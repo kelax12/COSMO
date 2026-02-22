@@ -28,6 +28,16 @@ import {
 } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module lists - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lists';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '@/context/TaskContext';
@@ -53,9 +63,21 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
   const deleteTaskMutation = useDeleteTask();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: lists = [] } = useLists();
+  const addTaskToListMutation = useAddTaskToList();
+  const removeTaskFromListMutation = useRemoveTaskFromList();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, categories, friends, isPremium, shareTask, sendFriendRequest, lists, addTaskToList, removeTaskFromList } = useTaskContext();
+  const { colorSettings, friends, isPremium, shareTask, sendFriendRequest } = useTaskContext();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -312,14 +334,14 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
             // Add to new lists
             selectedListIds.forEach(listId => {
               if (!currentListIds.includes(listId)) {
-                addTaskToList(task.id, listId);
+                addTaskToListMutation.mutate({ taskId: task.id, listId });
               }
             });
             
             // Remove from deselected lists
             currentListIds.forEach(listId => {
               if (!selectedListIds.includes(listId)) {
-                removeTaskFromList(task.id, listId);
+                removeTaskFromListMutation.mutate({ taskId: task.id, listId });
               }
             });
 
