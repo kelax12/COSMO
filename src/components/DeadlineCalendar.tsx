@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useTasks as useTasksContext } from '../context/TaskContext';
 import { usePendingTasks } from '@/modules/tasks';
+import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, LayoutGrid } from 'lucide-react';
 
 const DeadlineCalendar: React.FC = () => {
   // Use new module for tasks (read-only)
   const { data: tasks = [], isLoading } = usePendingTasks();
-  // Still need categories from TaskContext
-  const { categories } = useTasksContext();
+  // Use new module for categories
+  const { data: categories = [] } = useCategories();
   const [currentView, setCurrentView] = useState<'month' | 'week'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
 
