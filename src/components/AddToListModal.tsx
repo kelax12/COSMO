@@ -1,6 +1,10 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module lists - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useLists, useAddTaskToList, useRemoveTaskFromList } from '@/modules/lists';
 
 type AddToListModalProps = {
   isOpen: boolean;
@@ -9,18 +13,26 @@ type AddToListModalProps = {
 };
 
 const AddToListModal: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
-  const { lists, addTaskToList, removeTaskFromList } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: lists = [] } = useLists();
+  const addTaskToListMutation = useAddTaskToList();
+  const removeTaskFromListMutation = useRemoveTaskFromList();
 
   if (!isOpen) return null;
 
   const handleAddToList = (listId: string) => {
     const list = lists.find(l => l.id === listId);
     if (list?.taskIds.includes(taskId)) {
-      removeTaskFromList(taskId, listId);
+      removeTaskFromListMutation.mutate({ taskId, listId }, {
+        onSuccess: () => onClose()
+      });
     } else {
-      addTaskToList(taskId, listId);
+      addTaskToListMutation.mutate({ taskId, listId }, {
+        onSuccess: () => onClose()
+      });
     }
-    onClose();
   };
 
   const colorMap: Record<string, string> = {
