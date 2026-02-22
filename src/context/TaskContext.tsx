@@ -11,14 +11,6 @@ const getDate = (daysFromNow: number) => {
 // DONNÉES DE DÉMONSTRATION (domaines NON migrés)
 // ═══════════════════════════════════════════════════════════════════
 
-const DEMO_CATEGORIES = [
-  { id: 'cat-1', name: 'Travail', color: '#3B82F6' },
-  { id: 'cat-2', name: 'Personnel', color: '#10B981' },
-  { id: 'cat-3', name: 'Santé', color: '#EF4444' },
-  { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6' },
-  { id: 'cat-5', name: 'Projets', color: '#F97316' },
-];
-
 const DEMO_OKRS = [
   {
     id: 'okr-1',
@@ -67,27 +59,6 @@ const DEMO_OKRS = [
   },
 ];
 
-const DEMO_LISTS = [
-  {
-    id: 'list-1',
-    name: 'Urgent',
-    color: 'red',
-    taskIds: ['task-1', 'task-2'],
-  },
-  {
-    id: 'list-2',
-    name: 'Cette semaine',
-    color: 'blue',
-    taskIds: ['task-3', 'task-4', 'task-5'],
-  },
-  {
-    id: 'list-3',
-    name: 'Professionnel',
-    color: 'purple',
-    taskIds: ['task-1', 'task-2'],
-  },
-];
-
 const DEMO_FRIENDS = [
   { id: 'friend-1', name: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
   { id: 'friend-2', name: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
@@ -101,22 +72,6 @@ const DEMO_FAVORITE_COLORS = [
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
-
-export interface TaskList {
-  id: string;
-  name: string;
-  color: string;
-  taskIds: string[];
-}
-
-// CalendarEvent est maintenant défini dans @/modules/events/types.ts
-// import { CalendarEvent } from '@/modules/events';
-
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
 
 export interface Friend {
   id: string;
@@ -164,11 +119,7 @@ interface TaskContextType {
   messages: any[];
   markMessagesAsRead: () => void;
   
-  // Categories
-  categories: Category[];
-  addCategory: (category: Partial<Category>) => Category;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  // Colors (UI state only)
   colorSettings: Record<string, string>;
   favoriteColors: string[];
   setFavoriteColors: React.Dispatch<React.SetStateAction<string[]>>;
@@ -177,14 +128,6 @@ interface TaskContextType {
   friends: Friend[];
   sendFriendRequest: (email: string) => void;
   shareTask: (taskId: string, friendId: string, role?: string) => void;
-  
-  // Lists
-  lists: TaskList[];
-  addList: (list: Partial<TaskList>) => TaskList;
-  updateList: (id: string, updates: Partial<TaskList>) => void;
-  deleteList: (id: string) => void;
-  addTaskToList: (taskId: string, listId: string) => void;
-  removeTaskFromList: (taskId: string, listId: string) => void;
   
   // Priority Range (UI state)
   priorityRange: [number, number];
@@ -214,14 +157,14 @@ export const TaskContext = createContext<TaskContextType | undefined>(undefined)
  * - TASKS: import { useTasks, useCreateTask, ... } from '@/modules/tasks'
  * - HABITS: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
  * - EVENTS: import { useEvents, useCreateEvent, ... } from '@/modules/events'
+ * - CATEGORIES: import { useCategories, useCreateCategory, ... } from '@/modules/categories'
+ * - LISTS: import { useLists, useCreateList, ... } from '@/modules/lists'
  * ═══════════════════════════════════════════════════════════════════
  * 
  * DOMAINES RESTANTS (à migrer ultérieurement):
- * - categories
  * - friends
- * - lists
- * - priorityRange
  * - okrs
+ * - priorityRange (UI state)
  */
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════════
@@ -230,8 +173,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [okrs, setOkrs] = useState<OKR[]>(DEMO_OKRS);
-  const [lists, setLists] = useState<TaskList[]>(DEMO_LISTS);
-  const [categories, setCategories] = useState<Category[]>(DEMO_CATEGORIES);
   const [friends] = useState<Friend[]>(DEMO_FRIENDS);
   const [favoriteColors, setFavoriteColors] = useState<string[]>(DEMO_FAVORITE_COLORS);
   const [user] = useState({ id: 'demo-user', name: 'Demo', email: 'demo@cosmo.app', avatar: '👤' });
@@ -283,67 +224,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // List operations
-  // ═══════════════════════════════════════════════════════════════════
-  const addList = (list: Partial<TaskList>): TaskList => {
-    const newList: TaskList = {
-      id: crypto.randomUUID(),
-      name: list.name || '',
-      color: list.color || 'blue',
-      taskIds: [],
-    };
-    setLists(prev => [...prev, newList]);
-    return newList;
-  };
-
-  const updateList = (id: string, updates: Partial<TaskList>) => {
-    setLists(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
-  };
-
-  const deleteList = (id: string) => {
-    setLists(prev => prev.filter(l => l.id !== id));
-  };
-
-  const addTaskToList = (taskId: string, listId: string) => {
-    setLists(prev => prev.map(list => {
-      if (list.id === listId && !list.taskIds.includes(taskId)) {
-        return { ...list, taskIds: [...list.taskIds, taskId] };
-      }
-      return list;
-    }));
-  };
-
-  const removeTaskFromList = (taskId: string, listId: string) => {
-    setLists(prev => prev.map(list => {
-      if (list.id === listId) {
-        return { ...list, taskIds: list.taskIds.filter((id: string) => id !== taskId) };
-      }
-      return list;
-    }));
-  };
-
-  // ═══════════════════════════════════════════════════════════════════
-  // Category operations
-  // ═══════════════════════════════════════════════════════════════════
-  const addCategory = (category: Partial<Category>): Category => {
-    const newCategory: Category = {
-      id: crypto.randomUUID(),
-      name: category.name || '',
-      color: category.color || '#3B82F6',
-    };
-    setCategories(prev => [...prev, newCategory]);
-    return newCategory;
-  };
-
-  const updateCategory = (id: string, updates: Partial<Category>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-  };
-
-  const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-  };
-
-  // ═══════════════════════════════════════════════════════════════════
   // Utilities
   // ═══════════════════════════════════════════════════════════════════
   const isPremium = () => true;
@@ -373,11 +253,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     messages,
     markMessagesAsRead,
     
-    // Categories
-    categories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
+    // Colors (UI state only - categories now in @/modules/categories)
     colorSettings,
     favoriteColors,
     setFavoriteColors,
@@ -386,14 +262,6 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     friends,
     sendFriendRequest,
     shareTask,
-    
-    // Lists
-    lists,
-    addList,
-    updateList,
-    deleteList,
-    addTaskToList,
-    removeTaskFromList,
     
     // Priority Range (UI state)
     priorityRange,
