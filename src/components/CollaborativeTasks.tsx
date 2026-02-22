@@ -9,6 +9,11 @@ import CollaboratorItem from './CollaboratorItem';
 import { useTasks, useUpdateTask, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -23,9 +28,14 @@ const CollaborativeTasks: React.FC = () => {
   const updateTaskMutation = useUpdateTask();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { user, isPremium, friends, categories, priorityRange, sendFriendRequest } = useTaskContext();
+  const { user, isPremium, friends, priorityRange, sendFriendRequest } = useTaskContext();
   
   const getCategoryColor = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
