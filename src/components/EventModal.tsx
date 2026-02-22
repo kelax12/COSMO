@@ -15,6 +15,11 @@ import { Task } from '@/modules/tasks';
 import { CalendarEvent } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks } from "../context/TaskContext";
@@ -55,7 +60,8 @@ const EventModal: React.FC<EventModalProps> = ({
   onDeleteEvent,
   onConvert,
 }) => {
-  const { categories, favoriteColors } = useTasks();
+  const { favoriteColors } = useTasks();
+  const { data: categories = [] } = useCategories();
 
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
