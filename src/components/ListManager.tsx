@@ -1,13 +1,30 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Edit2, X, Check } from 'lucide-react';
-import { useTasks, TaskList } from '../context/TaskContext';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module lists - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { 
+  useLists, 
+  useCreateList, 
+  useUpdateList, 
+  useDeleteList,
+  TaskList 
+} from '@/modules/lists';
 
 interface ListManagerProps {
   isNested?: boolean;
 }
 
 const ListManager: React.FC<ListManagerProps> = ({ isNested }) => {
-  const { lists, addList, deleteList, updateList } = useTasks();
+  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: lists = [] } = useLists();
+  const createListMutation = useCreateList();
+  const updateListMutation = useUpdateList();
+  const deleteListMutation = useDeleteList();
+
   const [isCreating, setIsCreating] = useState(false);
   const [editingList, setEditingList] = useState<string | null>(null);
   const [newListName, setNewListName] = useState('');
@@ -30,17 +47,16 @@ const ListManager: React.FC<ListManagerProps> = ({ isNested }) => {
   const handleCreateList = () => {
     if (!newListName.trim()) return;
     
-    const newList: TaskList = {
-      id: Date.now().toString(),
+    createListMutation.mutate({
       name: newListName,
-      taskIds: [],
       color: newListColor
-    };
-    
-    addList(newList);
-    setNewListName('');
-    setNewListColor('blue');
-    setIsCreating(false);
+    }, {
+      onSuccess: () => {
+        setNewListName('');
+        setNewListColor('blue');
+        setIsCreating(false);
+      }
+    });
   };
 
   const handleEditList = (listId: string) => {
@@ -55,14 +71,19 @@ const ListManager: React.FC<ListManagerProps> = ({ isNested }) => {
   const handleSaveEdit = () => {
     if (!editName.trim() || !editingList) return;
     
-    updateList(editingList, {
-      name: editName,
-      color: editColor
+    updateListMutation.mutate({
+      id: editingList,
+      updates: {
+        name: editName,
+        color: editColor
+      }
+    }, {
+      onSuccess: () => {
+        setEditingList(null);
+        setEditName('');
+        setEditColor('blue');
+      }
     });
-    
-    setEditingList(null);
-    setEditName('');
-    setEditColor('blue');
   };
 
   const handleCancelEdit = () => {
@@ -73,8 +94,11 @@ const ListManager: React.FC<ListManagerProps> = ({ isNested }) => {
 
   const confirmDelete = () => {
     if (listToDelete) {
-      deleteList(listToDelete);
-      setListToDelete(null);
+      deleteListMutation.mutate(listToDelete, {
+        onSuccess: () => {
+          setListToDelete(null);
+        }
+      });
     }
   };
 
