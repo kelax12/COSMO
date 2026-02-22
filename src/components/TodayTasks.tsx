@@ -6,7 +6,10 @@ import CollaboratorAvatars from './CollaboratorAvatars';
 // Module tasks - Hooks indépendants
 import { useTasks, useToggleTaskComplete, useToggleTaskBookmark } from '@/modules/tasks';
 
-// TaskContext uniquement pour categories et friends (domaines non migrés)
+// Module categories - Migré
+import { useCategories } from '@/modules/categories';
+
+// TaskContext uniquement pour friends (domaine non migré)
 import { useTasks as useTaskContext } from '../context/TaskContext';
 
 const TodayTasks: React.FC = () => {
@@ -22,9 +25,14 @@ const TodayTasks: React.FC = () => {
   const toggleBookmarkMutation = useToggleTaskBookmark();
 
   // ═══════════════════════════════════════════════════════════════════
-  // CATEGORIES & FRIENDS - Depuis TaskContext (non migré)
+  // CATEGORIES - Depuis le module categories (migré)
   // ═══════════════════════════════════════════════════════════════════
-  const { categories, friends } = useTaskContext();
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FRIENDS - Depuis TaskContext (non migré)
+  // ═══════════════════════════════════════════════════════════════════
+  const { friends } = useTaskContext();
 
   // Tâches prioritaires pour aujourd'hui (mémoïsé pour performance)
   const todayTasks = useMemo(() => {
