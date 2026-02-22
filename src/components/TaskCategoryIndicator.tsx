@@ -1,13 +1,13 @@
 import React from 'react';
-import { useTasks } from '../context/TaskContext';
+import { useCategoryLookup } from '@/modules/categories';
 
 type TaskCategoryProps = {
   category: string;
 };
 
 const TaskCategoryIndicator: React.FC<TaskCategoryProps> = ({ category }) => {
-  const { categories } = useTasks();
-  const categoryData = categories.find(cat => cat.id === category);
+  const getCategoryById = useCategoryLookup();
+  const categoryData = getCategoryById(category);
   
   return (
     <div 
