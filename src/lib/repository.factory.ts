@@ -29,6 +29,11 @@ import { IListsRepository } from '@/modules/lists/repository';
 import { LocalStorageListsRepository } from '@/modules/lists/repository';
 import { SupabaseListsRepository } from '@/modules/lists/supabase.repository';
 
+// Friends
+import { IFriendsRepository } from '@/modules/friends/repository';
+import { LocalStorageFriendsRepository } from '@/modules/friends/repository';
+import { SupabaseFriendsRepository } from '@/modules/friends/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -38,6 +43,7 @@ let habitsRepository: IHabitsRepository | null = null;
 let eventsRepository: IEventsRepository | null = null;
 let categoriesRepository: ICategoriesRepository | null = null;
 let listsRepository: IListsRepository | null = null;
+let friendsRepository: IFriendsRepository | null = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // FACTORY FUNCTIONS
@@ -103,6 +109,18 @@ export function getListsRepository(): IListsRepository {
   return listsRepository;
 }
 
+/**
+ * Get the Friends repository based on current mode
+ */
+export function getFriendsRepository(): IFriendsRepository {
+  if (!friendsRepository) {
+    friendsRepository = isDemoMode
+      ? new LocalStorageFriendsRepository()
+      : new SupabaseFriendsRepository();
+  }
+  return friendsRepository;
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // UTILITY
 // ═══════════════════════════════════════════════════════════════════
@@ -123,4 +141,5 @@ export function resetRepositories(): void {
   eventsRepository = null;
   categoriesRepository = null;
   listsRepository = null;
+  friendsRepository = null;
 }
