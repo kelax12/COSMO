@@ -15,6 +15,16 @@ import { useLocation } from 'react-router-dom';
 import { useTasks } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
+// Module categories - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useCategories } from '@/modules/categories';
+
+// ═══════════════════════════════════════════════════════════════════
+// Module lists - (MIGRÉ)
+// ═══════════════════════════════════════════════════════════════════
+import { useLists } from '@/modules/lists';
+
+// ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
@@ -26,9 +36,19 @@ const TasksPage: React.FC = () => {
   const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
 
   // ═══════════════════════════════════════════════════════════════════
+  // CATEGORIES - Depuis le module categories (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: categories = [] } = useCategories();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LISTS - Depuis le module lists (MIGRÉ)
+  // ═══════════════════════════════════════════════════════════════════
+  const { data: lists = [] } = useLists();
+
+  // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { lists, priorityRange, categories } = useTaskContext();
+  const { priorityRange } = useTaskContext();
 
   // ═══════════════════════════════════════════════════════════════════
   // État de filtrage LOCAL (migrés depuis TaskContext)
