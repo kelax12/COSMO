@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { success: false, error: error.message || 'Erreur de connexion' };
       return { success: true };
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
