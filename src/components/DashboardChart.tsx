@@ -23,8 +23,8 @@ const DashboardChart: React.FC = () => {
   const { data: tasks = [] } = useTasks();
   // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
-  // Still need okrs from TaskContext
-  const { okrs } = useTasksContext();
+  // Use new module for okrs (read-only)
+  const { data: okrs = [] } = useOkrs();
   const { data: habits = [] } = useHabits();
 
   const chartData = useMemo(() => {
