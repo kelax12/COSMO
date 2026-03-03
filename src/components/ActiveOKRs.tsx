@@ -7,7 +7,7 @@ const ActiveOKRs: React.FC = () => {
   
   const activeOKRs = okrs.filter(okr => !okr.completed).slice(0, 3);
 
-  const getProgress = (keyResults: any[]) => {
+  const getProgress = (keyResults: KeyResult[]) => {
     if (keyResults.length === 0) return 0;
     const totalProgress = keyResults.reduce((sum, kr) => {
       return sum + Math.min((kr.currentValue / kr.targetValue) * 100, 100);
