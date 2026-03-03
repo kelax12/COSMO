@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LocalStorageHabitsRepository } from './local.repository';
+import { getHabitsRepository } from '@/lib/repository.factory';
 import { IHabitsRepository } from './habits.repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
 
@@ -11,9 +11,9 @@ export const habitKeys = {
   detail: (id: string) => [...habitKeys.all, 'detail', id] as const,
 };
 
-// Repository factory - Default to Local Storage for demo mode
+// Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
-  return useMemo(() => new LocalStorageHabitsRepository(), []);
+  return useMemo(() => getHabitsRepository(), []);
 };
 
 /**
