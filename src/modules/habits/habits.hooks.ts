@@ -52,8 +52,9 @@ export const useUpdateHabit = () => {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateHabitInput }) =>
       repository.updateHabit(id, updates),
-    onSuccess: (updatedHabit) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: habitKeys.all });
+    },
     },
   });
 };
