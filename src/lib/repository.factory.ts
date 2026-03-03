@@ -34,6 +34,11 @@ import { IFriendsRepository } from '@/modules/friends/repository';
 import { LocalStorageFriendsRepository } from '@/modules/friends/repository';
 import { SupabaseFriendsRepository } from '@/modules/friends/supabase.repository';
 
+// OKRs
+import { IOKRsRepository } from '@/modules/okrs/repository';
+import { LocalStorageOKRsRepository } from '@/modules/okrs/repository';
+import { SupabaseOKRsRepository } from '@/modules/okrs/supabase.repository';
+
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
 // ═══════════════════════════════════════════════════════════════════
@@ -44,6 +49,7 @@ let eventsRepository: IEventsRepository | null = null;
 let categoriesRepository: ICategoriesRepository | null = null;
 let listsRepository: IListsRepository | null = null;
 let friendsRepository: IFriendsRepository | null = null;
+let okrsRepository: IOKRsRepository | null = null;
 
 // ═══════════════════════════════════════════════════════════════════
 // FACTORY FUNCTIONS
