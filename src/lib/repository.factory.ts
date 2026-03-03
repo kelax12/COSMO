@@ -126,6 +126,17 @@ export function getFriendsRepository(): IFriendsRepository {
   }
   return friendsRepository;
 }
+/**
+ * Get the OKRs repository based on current mode
+ */
+export function getOKRsRepository(): IOKRsRepository {
+  if (!okrsRepository) {
+    okrsRepository = isDemoMode
+      ? new LocalStorageOKRsRepository()
+      : new SupabaseOKRsRepository();
+  }
+  return okrsRepository;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // UTILITY
