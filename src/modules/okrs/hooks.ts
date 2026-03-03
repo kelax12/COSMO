@@ -4,21 +4,21 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LocalStorageOKRsRepository, IOKRsRepository } from './repository';
+import { getOKRsRepository } from '@/lib/repository.factory';
+import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
-// REPOSITORY FACTORY
+// REPOSITORY - Via centralized factory (demo/production mode)
 // ═══════════════════════════════════════════════════════════════════
 
 /**
  * Factory hook to get the OKRs repository
- * Currently returns LocalStorage implementation
- * Can be swapped for Supabase or other implementations
+ * Uses centralized factory for demo/production mode switching
  */
 const useOKRsRepository = (): IOKRsRepository => {
-  return useMemo(() => new LocalStorageOKRsRepository(), []);
+  return useMemo(() => getOKRsRepository(), []);
 };
 
 // ═══════════════════════════════════════════════════════════════════
