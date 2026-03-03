@@ -111,7 +111,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-  private mapFromDb(row: any): Task {
+private mapFromDb(row: TaskRow): Task {
     return {
       id: row.id,
       name: row.name,
