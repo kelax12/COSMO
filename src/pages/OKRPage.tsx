@@ -107,8 +107,8 @@ const OKRPage: React.FC = () => {
       }
     };
 
-    const deleteObjective = (objectiveId: string) => {
-    deleteOKR(objectiveId);
+       const deleteObjective = (objectiveId: string) => {
+    deleteOkrMutation.mutate(objectiveId);
     setDeletingObjective(null);
   };
 
