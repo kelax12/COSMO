@@ -6,6 +6,7 @@ import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
+import { useOkrs } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
@@ -16,8 +17,10 @@ export default function StatisticsPage() {
   const { data: tasks = [] } = useTasks();
   // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
-  // Still need colorSettings, okrs from TaskContext
-  const { colorSettings, okrs } = useTasksContext();
+  // Use new module for okrs (read-only)
+  const { data: okrs = [] } = useOkrs();
+  // Still need colorSettings from TaskContext
+  const { colorSettings } = useTasksContext();
   const { data: habits = [] } = useHabits();
   const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
