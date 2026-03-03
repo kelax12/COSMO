@@ -41,7 +41,12 @@ type Category = {
 
 const OKRPage: React.FC = () => {
   const location = useLocation();
-  const { okrs: objectives, updateKeyResult: contextUpdateKR, addOKR, deleteOKR, updateOKR } = useTasks();
+  // Use new OKR module hooks
+  const { data: objectives = [] } = useOkrs();
+  const createOkrMutation = useCreateOkr();
+  const updateOkrMutation = useUpdateOkr();
+  const deleteOkrMutation = useDeleteOkr();
+  const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
