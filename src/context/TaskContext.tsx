@@ -1,10 +1,15 @@
-"import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+
+// ═══════════════════════════════════════════════════════════════════
+// TYPE IMPORTÉ DEPUIS MODULE FRIENDS (SOURCE UNIQUE)
+// ═══════════════════════════════════════════════════════════════════
+import { Friend } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // DONNÉES DE DÉMONSTRATION (domaines NON migrés)
 // ═══════════════════════════════════════════════════════════════════
 
-const DEMO_FRIENDS = [
+const DEMO_FRIENDS: Friend[] = [
   { id: 'friend-1', name: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
   { id: 'friend-2', name: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
   { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
@@ -13,17 +18,6 @@ const DEMO_FRIENDS = [
 const DEMO_FAVORITE_COLORS = [
   '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
 ];
-
-// ═══════════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════════
-
-export interface Friend {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
 
 // ═══════════════════════════════════════════════════════════════════
 // CONTEXT TYPE (domaines NON migrés uniquement)
