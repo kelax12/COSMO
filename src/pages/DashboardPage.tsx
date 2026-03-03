@@ -4,6 +4,8 @@ import { Repeat, Target, CheckSquare, Calendar, Zap, Award, Leaf } from 'lucide-
 import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
+import { useOkrs } from '@/modules/okrs';
+import { useEvents } from '@/modules/events';
 import DashboardChart from '../components/DashboardChart';
 import TodayHabits from '../components/TodayHabits';
 import TodayTasks from '../components/TodayTasks';
@@ -14,8 +16,12 @@ import TextType from '../components/TextType';
 const DashboardPage: React.FC = () => {
   // Use new module for tasks (read-only)
   const { data: tasks = [] } = useTasks();
-  // Still need user, okrs, events from TaskContext
-  const { user, okrs, events, isPremium } = useTasksContext();
+  // Use new module for okrs (read-only)
+  const { data: okrs = [] } = useOkrs();
+  // Use new module for events (read-only)
+  const { data: events = [] } = useEvents();
+  // Still need user from TaskContext
+  const { user, isPremium } = useTasksContext();
   const { data: habits = [] } = useHabits();
 
   // Default user for demo mode
