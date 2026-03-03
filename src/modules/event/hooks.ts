@@ -4,21 +4,21 @@
 
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LocalStorageEventsRepository, IEventsRepository } from './repository';
+import { getEventsRepository } from '@/lib/repository.factory';
+import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { eventsKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
-// REPOSITORY FACTORY
+// REPOSITORY - Via centralized factory (demo/production mode)
 // ═══════════════════════════════════════════════════════════════════
 
 /**
  * Factory hook to get the events repository
- * Currently returns LocalStorage implementation
- * Can be swapped for Supabase or other implementations
+ * Uses centralized factory for demo/production mode switching
  */
 const useEventsRepository = (): IEventsRepository => {
-  return useMemo(() => new LocalStorageEventsRepository(), []);
+  return useMemo(() => getEventsRepository(), []);
 };
 
 // ═══════════════════════════════════════════════════════════════════
