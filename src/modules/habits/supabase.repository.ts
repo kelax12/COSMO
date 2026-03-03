@@ -107,7 +107,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   // Map from Supabase snake_case to app camelCase
-  private mapFromDb(row: any): Habit {
+  private mapFromDb(row: HabitRow): Habit {
     return {
       id: row.id,
       name: row.name,
