@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { LocalStorageTasksRepository } from './local.repository';
+import { getTasksRepository } from '@/lib/repository.factory';
 import { ITasksRepository } from './tasks.repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
 
@@ -17,10 +17,10 @@ export const taskKeys = {
 };
 
 // ═══════════════════════════════════════════════════════════════════
-// Repository Factory - Default to Local Storage for demo mode
+// Repository - Via centralized factory (demo/production mode)
 // ═══════════════════════════════════════════════════════════════════
 const useTasksRepository = (): ITasksRepository => {
-  return useMemo(() => new LocalStorageTasksRepository(), []);
+  return useMemo(() => getTasksRepository(), []);
 };
 
 // ═══════════════════════════════════════════════════════════════════
