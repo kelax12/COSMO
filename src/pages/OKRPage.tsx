@@ -70,17 +70,20 @@ const OKRPage: React.FC = () => {
     return Math.round(totalProgress / keyResults.length);
   };
 
-  const updateKeyResult = (objectiveId: string, keyResultId: string, newValue: number) => {
+ updateKeyResult = (objectiveId: string, keyResultId: string, newValue: number) => {
     const obj = objectives.find((o) => o.id === objectiveId);
     const kr = obj?.keyResults.find((k) => k.id === keyResultId);
     if (kr) {
-      contextUpdateKR(objectiveId, keyResultId, {
-        currentValue: newValue,
-        completed: newValue >= kr.targetValue
+      updateKeyResultMutation.mutate({
+        okrId: objectiveId,
+        keyResultId: keyResultId,
+        updates: {
+          currentValue: newValue,
+          completed: newValue >= kr.targetValue
+        }
       });
     }
   };
-
   const addCategory = (category: Category) => {
     setCategories([...categories, category]);
   };
