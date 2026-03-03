@@ -91,9 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         },
       });
-      if (error) return { success: false, error: error.message || "Erreur lors de l'inscription" };
+            if (error) return { success: false, error: error.message || \"Erreur lors de l'inscription\" };
       return { success: true };
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Une erreur est survenue' };
     }
   };
