@@ -123,8 +123,8 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   // Map from app camelCase to Supabase snake_case
-  private mapToDb(input: Partial<Habit>): any {
-    const result: any = {};
+  private mapToDb(input: Partial<Habit>): HabitDbInput {
+    const result: HabitDbInput = {};
     if (input.name !== undefined) result.name = input.name;
     if (input.description !== undefined) result.description = input.description;
     if (input.frequency !== undefined) result.frequency = input.frequency;
