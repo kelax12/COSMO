@@ -3,6 +3,36 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './habits.repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
 
+/**
+ * Supabase DB row type for habits table (snake_case)
+ */
+interface HabitRow {
+  id: string;
+  name: string;
+  description?: string;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  estimated_time: number;
+  color: string;
+  icon: string;
+  completions?: Record<string, boolean>;
+  created_at?: string;
+  user_id?: string;
+}
+
+/**
+ * DB input type for insert/update operations (snake_case)
+ */
+interface HabitDbInput {
+  name?: string;
+  description?: string;
+  frequency?: 'daily' | 'weekly' | 'monthly';
+  estimated_time?: number;
+  color?: string;
+  icon?: string;
+  completions?: Record<string, boolean>;
+  user_id?: string;
+}
+
 export class SupabaseHabitsRepository implements IHabitsRepository {
   async fetchHabits(): Promise<Habit[]> {
     const { data, error } = await supabase
