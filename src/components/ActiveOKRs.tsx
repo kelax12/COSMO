@@ -55,7 +55,7 @@ const ActiveOKRs: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <Clock size={14} className="text-[rgb(var(--color-text-muted))]" />
                       <span>
-                        {okr.keyResults.reduce((sum: number, kr: any) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {okr.keyResults.reduce((sum: number, kr: any) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
+                         {okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.currentValue * kr.estimatedTime), 0)} / {okr.keyResults.reduce((sum: number, kr: KeyResult) => sum + (kr.estimatedTime * kr.targetValue), 0)} min
                       </span>
                     </div>
                     <p className="mb-1">{okr.keyResults.length} résultats clés</p>
