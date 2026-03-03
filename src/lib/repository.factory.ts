@@ -15,9 +15,9 @@ import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository'
 import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 
 // Events
-import { IEventsRepository } from '@/modules/events/repository';
-import { LocalStorageEventsRepository } from '@/modules/events/repository';
-import { SupabaseEventsRepository } from '@/modules/events/supabase.repository';
+import { IEventsRepository } from '@/modules/event/repository';
+import { LocalStorageEventsRepository } from '@/modules/event/repository';
+import { SupabaseEventsRepository } from '@/modules/event/supabase.repository';
 
 // Categories
 import { ICategoriesRepository } from '@/modules/categories/repository';
