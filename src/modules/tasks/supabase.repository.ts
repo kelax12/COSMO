@@ -3,6 +3,28 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository } from './tasks.repository';
 import { Task, TaskFilters } from './tasks.types';
 
+/**
+ * Supabase DB row type for tasks table (snake_case)
+ */
+interface TaskRow {
+  id: string;
+  name: string;
+  description?: string;
+  priority: number;
+  category: string;
+  deadline: string;
+  estimated_time: number;
+  created_at?: string;
+  bookmarked?: boolean;
+  completed?: boolean;
+  completed_at?: string;
+  is_collaborative?: boolean;
+  collaborators?: string[];
+  pending_invites?: string[];
+  collaborator_validations?: Record<string, boolean>;
+  user_id?: string;
+}
+
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
