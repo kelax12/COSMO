@@ -1,9 +1,9 @@
 import React from 'react';
 import { Target, TrendingUp, Clock } from 'lucide-react';
-import { useTasks } from '../context/TaskContext';
+import { useOkrs, KeyResult } from '@/modules/okrs';
 
 const ActiveOKRs: React.FC = () => {
-  const { okrs } = useTasks();
+  const { data: okrs = [] } = useOkrs();
   
   const activeOKRs = okrs.filter(okr => !okr.completed).slice(0, 3);
 
