@@ -3,22 +3,13 @@ import { Plus, TrendingUp, Calendar, Edit2, Trash2, CheckCircle, BarChart3, Cloc
 import CategoryManager, { getColorHex } from '../components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { useTasks } from '../context/TaskContext';
 import { useCreateEvent } from '@/modules/events';
+import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
 import OKRModal from '../components/OKRModal';
 
-type KeyResult = {
-  id: string;
-  title: string;
-  currentValue: number;
-  targetValue: number;
-  unit: string;
-  completed: boolean;
-  estimatedTime: number;
-  history?: {date: string;increment: number;}[];
-};
+type Objective = OKR & { estimatedTime?: number };
 
 type Objective = {
   id: string;
