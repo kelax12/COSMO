@@ -159,4 +159,5 @@ export function resetRepositories(): void {
   categoriesRepository = null;
   listsRepository = null;
   friendsRepository = null;
+  okrsRepository = null;
 }
