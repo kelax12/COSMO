@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getHabitsRepository } from '@/lib/repository.factory';
 import { IHabitsRepository } from './habits.repository';
-import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+import { CreateHabitInput, UpdateHabitInput } from './habits.types';
 
 // Query keys for cache management
 export const habitKeys = {
