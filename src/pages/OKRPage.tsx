@@ -120,11 +120,20 @@ const OKRPage: React.FC = () => {
     }
   };
 
-  const handleModalSubmit = (data: Omit<Objective, 'id'>, isEditing: boolean) => {
+    const handleModalSubmit = (data: Omit<Objective, 'id'>, isEditing: boolean) => {
     if (isEditing && editingObjective) {
-      updateOKR(editingObjective.id, data);
+      updateOkrMutation.mutate({ id: editingObjective.id, updates: data });
     } else {
-      addOKR({ ...data, id: Date.now().toString() });
+      createOkrMutation.mutate({
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        progress: data.progress || 0,
+        completed: data.completed || false,
+        keyResults: data.keyResults,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
     }
     setEditingObjective(null);
   };
