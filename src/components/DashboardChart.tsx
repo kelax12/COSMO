@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
-import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
+import { useOkrs } from '@/modules/okrs';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 const calculateWorkTimeForDate = (
