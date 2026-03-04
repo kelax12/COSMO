@@ -587,7 +587,7 @@ const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[], colorSe
   );
 };
 
-const TasksStatistics: React.FC<{ tasks: any[], colorSettings: any }> = ({ tasks, colorSettings }) => {
+const TasksStatistics: React.FC<{ tasks: Task[], colorSettings: Record<string, string> }> = ({ tasks, colorSettings }) => {
   const colorDistribution = Object.keys(colorSettings).map(color => ({
     color, name: colorSettings[color], count: tasks.filter(task => task.category === color).length
   }));
