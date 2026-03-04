@@ -97,7 +97,7 @@ const AgendaPage: React.FC = () => {
   // Robust cleanup effect that ensures drag survives sidebar unmounting
   useEffect(() => {
     if (!showTaskSidebar && !isDraggingTask && draggableRef.current) {
-      try { draggableRef.current.destroy(); } catch {}
+      try { draggableRef.current.destroy(); } catch { /* ignore destroy errors */ }
       draggableRef.current = null;
     }
   }, [showTaskSidebar, isDraggingTask]);
