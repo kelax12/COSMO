@@ -174,10 +174,47 @@ export class SupabaseTasksRepository implements ITasksRepository {
     if (error) throw normalizeApiError(error);
   }
 
+  async toggleComplete(id: string): Promise<Task> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const task = await this.getById(id);
+    if (!task) throw new Error(`Task ${id} not found`);
+
+    const newCompleted = !task.completed;
+    const updates: TaskDbInput = {
+      completed: newCompleted,
+      completed_at: newCompleted ? new Date().toISOString() : undefined,
+    };
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data);
+  }
+
+  async toggleBookmark(id: string): Promise<Task> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const task = await this.getById(id);
+    if (!task) throw new Error(`Task ${id} not found`);
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update({ bookmarked: !task.bookmarked })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data);
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
-
   private mapFromDb(row: TaskRow): Task {
     return {
       id: row.id,
