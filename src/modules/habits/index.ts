@@ -18,6 +18,7 @@ export { SupabaseHabitsRepository } from './supabase.repository';
 // React Query hooks
 export {
   useHabits,
+  useHabit,
   useCreateHabit,
   useUpdateHabit,
   useDeleteHabit,
