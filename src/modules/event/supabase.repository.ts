@@ -42,7 +42,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
- async getAll(): Promise<CalendarEvent[]> {
+  async getAll(): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('events')
@@ -53,7 +53,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     return (data || []).map(this.mapFromDb);
   }
 
-async getById(id: string): Promise<CalendarEvent | null> {
+  async getById(id: string): Promise<CalendarEvent | null> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('events')
@@ -114,7 +114,7 @@ async getById(id: string): Promise<CalendarEvent | null> {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-   async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
     const dbInput = this.mapToDb(input);
 
@@ -157,7 +157,7 @@ async getById(id: string): Promise<CalendarEvent | null> {
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-    private mapFromDb(row: EventRow): CalendarEvent {
+  private mapFromDb(row: EventRow): CalendarEvent {
     return {
       id: row.id,
       title: row.title,
@@ -182,3 +182,4 @@ async getById(id: string): Promise<CalendarEvent | null> {
     return result;
   }
 }
+"
