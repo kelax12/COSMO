@@ -86,6 +86,3 @@ export const useToggleHabitCompletion = () => {
 // Re-export types for convenience
 export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 "
-// Re-export types for convenience
-export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
-"
