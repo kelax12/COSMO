@@ -1,20 +1,9 @@
-import { useMemo } from 'react';
+"import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasksRepository } from '@/lib/repository.factory';
 import { ITasksRepository } from './tasks.repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
-
-// ═══════════════════════════════════════════════════════════════════
-// Query Keys - Shared between read and write operations
-// ═══════════════════════════════════════════════════════════════════
-export const taskKeys = {
-  all: ['tasks'] as const,
-  lists: () => [...taskKeys.all, 'list'] as const,
-  list: (filters: TaskFilters) => [...taskKeys.lists(), filters] as const,
-  details: () => [...taskKeys.all, 'detail'] as const,
-  detail: (id: string) => [...taskKeys.details(), id] as const,
-  byDate: (date: string) => [...taskKeys.all, 'date', date] as const,
-};
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { taskKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
 // Repository - Via centralized factory (demo/production mode)
@@ -265,6 +254,3 @@ export const useToggleTaskBookmark = () => {
     },
   });
 };
-
-// Re-export types for convenience
-export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
