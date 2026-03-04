@@ -106,7 +106,7 @@ export const useCompletedTasks = () => {
  */
 const invalidateAllTaskQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
   // Invalidate all queries that start with ['tasks']
-  queryClient.invalidateQueries({ queryKey: taskKeys.all });
+  queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
 };
 
 /**
