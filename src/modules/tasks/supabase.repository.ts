@@ -1,7 +1,7 @@
 "import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository } from './tasks.repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 
 /**
  * Supabase DB row type for tasks table (snake_case)
