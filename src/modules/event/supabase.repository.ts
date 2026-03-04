@@ -157,14 +157,15 @@ async getById(id: string): Promise<CalendarEvent | null> {
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-  private mapFromDb(row: EventRow): CalendarEvent {
+    private mapFromDb(row: EventRow): CalendarEvent {
     return {
       id: row.id,
       title: row.title,
-      start: row.start,
-      end: row.end,
+      start: row.start_time,
+      end: row.end_time,
       color: row.color,
       description: row.description,
+      notes: row.notes,
       taskId: row.task_id,
     };
   }
@@ -172,12 +173,12 @@ async getById(id: string): Promise<CalendarEvent | null> {
   private mapToDb(input: Partial<CalendarEvent>): EventDbInput {
     const result: EventDbInput = {};
     if (input.title !== undefined) result.title = input.title;
-    if (input.start !== undefined) result.start = input.start;
-    if (input.end !== undefined) result.end = input.end;
+    if (input.start !== undefined) result.start_time = input.start;
+    if (input.end !== undefined) result.end_time = input.end;
     if (input.color !== undefined) result.color = input.color;
     if (input.description !== undefined) result.description = input.description;
+    if (input.notes !== undefined) result.notes = input.notes;
     if (input.taskId !== undefined) result.task_id = input.taskId;
     return result;
   }
 }
-"
