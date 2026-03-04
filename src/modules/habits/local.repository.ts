@@ -111,6 +111,12 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     return this.getHabits();
   }
 
+  async getById(id: string): Promise<Habit | null> {
+    const habits = this.getHabits();
+    const habit = habits.find(h => h.id === id);
+    return habit || null;
+  }
+
   async createHabit(input: CreateHabitInput): Promise<Habit> {
     const habits = this.getHabits();
     const newHabit: Habit = {
