@@ -224,7 +224,7 @@ export const useToggleTaskBookmark = () => {
     // Optimistic update
     onMutate: async (id: string) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: taskKeys.all });
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
 
       // Snapshot current state
       const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.lists());
