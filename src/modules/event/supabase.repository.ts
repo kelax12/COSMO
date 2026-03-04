@@ -69,11 +69,12 @@ async getById(id: string): Promise<CalendarEvent | null> {
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('events')
       .select('*')
       .eq('task_id', taskId)
-      .order('start', { ascending: true });
+      .order('start_time', { ascending: true });
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);
