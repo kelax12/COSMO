@@ -5,7 +5,7 @@ import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquar
 import { useTasks as useTasksContext } from '../context/TaskContext';
 import { useTasks, Task } from '@/modules/tasks';
 import { useHabits, Habit } from '@/modules/habits';
-import { useEvents, CalendarEvent } from '@/modules/event';
+import { useEvents, CalendarEvent } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
