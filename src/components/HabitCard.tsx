@@ -115,8 +115,7 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExter
     return (
       <div 
         className="card p-4 md:p-6 hover:shadow-md transition-all cursor-pointer"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        
       >
         {isEditing ? (
           /* Mode édition */
