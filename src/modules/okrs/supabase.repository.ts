@@ -45,6 +45,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<OKR[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('okrs')
       .select('*')
@@ -55,6 +56,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   async getById(id: string): Promise<OKR | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('okrs')
       .select('*')
@@ -69,6 +71,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   async getByCategory(category: string): Promise<OKR[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('okrs')
       .select('*')
@@ -80,6 +83,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   async getFiltered(filters: OKRFilters): Promise<OKR[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     let query = supabase.from('okrs').select('*');
 
     if (filters.category) {
@@ -109,6 +113,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async create(input: CreateOKRInput): Promise<OKR> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbInput = this.mapToDb(input);
 
     const { data, error } = await supabase
@@ -122,6 +127,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   async update(id: string, updates: UpdateOKRInput): Promise<OKR> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -136,6 +142,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('okrs')
       .delete()
