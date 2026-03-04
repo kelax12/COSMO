@@ -1,3 +1,8 @@
+"import { Task } from '@/modules/tasks';
+import { CalendarEvent } from '@/modules/event';
+import { Habit } from '@/modules/habits';
+import { OKR, KeyResult } from '@/modules/okrs';
+
 export function parseLocalDate(dateString: string): Date {
   const date = new Date(dateString);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
@@ -10,10 +15,26 @@ export function getLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+interface WorkTimeData {
+  tasks: Task[];
+  events: CalendarEvent[];
+  habits: Habit[];
+  okrs: OKR[];
+}
+
+interface KeyResultHistory {
+  date: string;
+  increment: number;
+}
+
+interface HabitWithPeriodCompletions extends Habit {
+  periodCompletions: number;
+}
+
 export function calculateWorkTimeForPeriod(
   startDate: Date,
   endDate: Date,
-  data: { tasks: any[]; events: any[]; habits: any[]; okrs: any[] }
+  data: WorkTimeData
 ) {
   const { tasks, events, habits, okrs } = data;
 
@@ -37,7 +58,7 @@ export function calculateWorkTimeForPeriod(
   }, 0);
 
   let habitsTime = 0;
-  const filteredHabits: any[] = [];
+  const filteredHabits: HabitWithPeriodCompletions[] = [];
   
   habits.forEach((habit) => {
     let completionsCount = 0;
@@ -57,13 +78,15 @@ export function calculateWorkTimeForPeriod(
 
   let okrTime = 0;
   okrs.forEach((okr) => {
-    (okr.keyResults || []).forEach((kr: any) => {
-      const historyInRange = (kr.history || []).filter((h: any) => {
+    (okr.keyResults || []).forEach((kr: KeyResult) => {
+      const history = (kr as KeyResult & { history?: KeyResultHistory[] }).history || [];
+      const historyInRange = history.filter((h: KeyResultHistory) => {
         const hDate = parseLocalDate(h.date);
         return hDate >= startDate && hDate <= endDate;
       });
-      const totalIncrements = historyInRange.reduce((sum: number, h: any) => sum + h.increment, 0);
-      okrTime += totalIncrements * (kr.estimatedTime || 0);
+      const totalIncrements = historyInRange.reduce((sum: number, h: KeyResultHistory) => sum + h.increment, 0);
+      const estimatedTime = (kr as KeyResult & { estimatedTime?: number }).estimatedTime || 0;
+      okrTime += totalIncrements * estimatedTime;
     });
   });
 
@@ -80,3 +103,4 @@ export function calculateWorkTimeForPeriod(
     okrTime,
   };
 }
+"
