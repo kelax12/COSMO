@@ -1,144 +1,131 @@
-import React, { createContext, useContext, useState } from 'react';
+"import React, { createContext, useContext } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════
-// TYPE IMPORTÉ DEPUIS MODULE FRIENDS (SOURCE UNIQUE)
+// IMPORTS DEPUIS MODULES (SOURCE UNIQUE)
 // ═══════════════════════════════════════════════════════════════════
-import { Friend } from '@/modules/friends';
+import { useUser, useAuth, useMessages } from '@/modules/user';
+import { useUIState } from '@/modules/ui-state';
+import { useFriends, useSendFriendRequest, useShareTask, Friend } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
-// DONNÉES DE DÉMONSTRATION (domaines NON migrés)
+// CONTEXT TYPE - Façade pour rétrocompatibilité
 // ═══════════════════════════════════════════════════════════════════
 
-const DEMO_FRIENDS: Friend[] = [
-  { id: 'friend-1', name: 'Marie Dupont', email: 'marie.dupont@email.com', avatar: '👩' },
-  { id: 'friend-2', name: 'Jean Martin', email: 'jean.martin@email.com', avatar: '👨' },
-  { id: 'friend-3', name: 'Sophie Bernard', email: 'sophie.bernard@email.com', avatar: '👩‍💼' },
-];
-
-const DEMO_FAVORITE_COLORS = [
-  '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
-];
-
-// ═══════════════════════════════════════════════════════════════════
-// CONTEXT TYPE (domaines NON migrés uniquement)
-// ═══════════════════════════════════════════════════════════════════
-
-interface TaskContextType {
-  // User & Auth
+interface AppContextType {
+  // User & Auth (from @/modules/user)
   user: { id: string; name: string; email: string; avatar: string };
   loading: boolean;
   isAuthenticated: boolean;
   isDemo: boolean;
   isPremium: () => boolean;
   
-  // Messages
+  // Messages (from @/modules/user)
   messages: { id: string; read: boolean; content: string }[];
   markMessagesAsRead: () => void;
   
-  // Colors (UI state only)
+  // Colors (from @/modules/ui-state)
   colorSettings: Record<string, string>;
   favoriteColors: string[];
   setFavoriteColors: React.Dispatch<React.SetStateAction<string[]>>;
   
-  // Friends
+  // Friends (from @/modules/friends)
   friends: Friend[];
   sendFriendRequest: (email: string) => void;
   shareTask: (taskId: string, friendId: string, role?: string) => void;
   
-  // Priority Range (UI state)
+  // Priority Range (from @/modules/ui-state)
   priorityRange: [number, number];
   setPriorityRange: (range: [number, number]) => void;
   
-  // Auth stubs
+  // Auth stubs (from @/modules/user)
   login: () => Promise<void>;
   register: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
-export const TaskContext = createContext<TaskContextType | undefined>(undefined);
+export const TaskContext = createContext<AppContextType | undefined>(undefined);
 
 /**
- * TaskProvider - Provider pour domaines NON migrés
+ * TaskProvider - Façade Provider qui agrège les modules
  * 
  * ═══════════════════════════════════════════════════════════════════
- * DOMAINES MIGRÉS (NE PLUS UTILISER ICI):
- * - TASKS: import { useTasks, useCreateTask, ... } from '@/modules/tasks'
- * - HABITS: import { useHabits, useCreateHabit, ... } from '@/modules/habits'
- * - EVENTS: import { useEvents, useCreateEvent, ... } from '@/modules/events'
- * - CATEGORIES: import { useCategories, useCreateCategory, ... } from '@/modules/categories'
- * - LISTS: import { useLists, useCreateList, ... } from '@/modules/lists'
- * - OKRS: import { useOkrs, useCreateOkr, ... } from '@/modules/okrs'
+ * ARCHITECTURE MODULAIRE:
+ * - User/Auth: @/modules/user
+ * - UI State: @/modules/ui-state  
+ * - Friends: @/modules/friends
+ * - Tasks: @/modules/tasks
+ * - Events: @/modules/events
+ * - Categories: @/modules/categories
+ * - Lists: @/modules/lists
+ * - Habits: @/modules/habits
+ * - OKRs: @/modules/okrs
  * ═══════════════════════════════════════════════════════════════════
- * 
- * DOMAINES RESTANTS (à migrer ultérieurement):
- * - friends
- * - priorityRange (UI state)
  */
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ═══════════════════════════════════════════════════════════════════
-  // STATE - Domaines NON migrés uniquement
+  // HOOKS MODULES
   // ═══════════════════════════════════════════════════════════════════
-  const [loading] = useState(false);
-  const [messages, setMessages] = useState<{ id: string; read: boolean; content: string }[]>([]);
-  const [friends] = useState<Friend[]>(DEMO_FRIENDS);
-  const [favoriteColors, setFavoriteColors] = useState<string[]>(DEMO_FAVORITE_COLORS);
-  const [user] = useState({ id: 'demo-user', name: 'Demo', email: 'demo@cosmo.app', avatar: '👤' });
-  const [priorityRange, setPriorityRange] = useState<[number, number]>([1, 5]);
+  
+  // User module
+  const { user } = useUser();
+  const { isAuthenticated, isDemo, loading, isPremium, login, register, loginWithGoogle, logout } = useAuth();
+  const { messages, markMessagesAsRead } = useMessages();
+  
+  // UI State module
+  const { colorSettings, favoriteColors, setFavoriteColors, priorityRange, setPriorityRange } = useUIState();
+  
+  // Friends module (React Query)
+  const { data: friends = [] } = useFriends();
+  const sendFriendRequestMutation = useSendFriendRequest();
+  const shareTaskMutation = useShareTask();
 
-  const markMessagesAsRead = () => {
-    setMessages(prev => prev.map(msg => ({ ...msg, read: true })));
+  // ═══════════════════════════════════════════════════════════════════
+  // WRAPPER FUNCTIONS (pour rétrocompatibilité)
+  // ═══════════════════════════════════════════════════════════════════
+  
+  const sendFriendRequest = (email: string) => {
+    sendFriendRequestMutation.mutate({ email });
+  };
+
+  const shareTask = (taskId: string, friendId: string, role?: string) => {
+    shareTaskMutation.mutate({ taskId, friendId, role: role as 'viewer' | 'editor' });
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // Utilities
+  // CONTEXT VALUE
   // ═══════════════════════════════════════════════════════════════════
-  const isPremium = () => true;
-  const sendFriendRequest = (email: string) => console.log('Friend request sent to:', email);
-  const shareTask = (taskId: string, friendId: string, _role?: string) => console.log('Task shared:', taskId, friendId);
-
-  const colorSettings: Record<string, string> = {
-    'cat-1': 'Travail',
-    'cat-2': 'Personnel',
-    'cat-3': 'Santé',
-    'cat-4': 'Apprentissage',
-    'cat-5': 'Projets',
-  };
-
-  // ═══════════════════════════════════════════════════════════════════
-  // CONTEXT VALUE - Domaines NON migrés uniquement
-  // ═══════════════════════════════════════════════════════════════════
-  const value: TaskContextType = {
+  const value: AppContextType = {
     // User & Auth
     user,
     loading,
-    isAuthenticated: true,
-    isDemo: true,
+    isAuthenticated,
+    isDemo,
     isPremium,
     
     // Messages
     messages,
     markMessagesAsRead,
     
-    // Colors (UI state only - categories now in @/modules/categories)
+    // Colors
     colorSettings,
     favoriteColors,
-    setFavoriteColors,
+    setFavoriteColors: setFavoriteColors as React.Dispatch<React.SetStateAction<string[]>>,
     
     // Friends
     friends,
     sendFriendRequest,
     shareTask,
     
-    // Priority Range (UI state)
+    // Priority Range
     priorityRange,
     setPriorityRange,
     
-    // Auth stubs
-    login: async () => {},
-    register: async () => {},
-    loginWithGoogle: async () => {},
-    logout: async () => {},
+    // Auth
+    login,
+    register,
+    loginWithGoogle,
+    logout,
   };
 
   return (
@@ -148,10 +135,23 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useTasks = (): TaskContextType => {
+/**
+ * useAppContext - Hook principal pour accéder au contexte global
+ * @deprecated Préférer les hooks spécifiques des modules:
+ * - useUser, useAuth, useMessages from '@/modules/user'
+ * - useUIState, useFavoriteColors, usePriorityRange from '@/modules/ui-state'
+ * - useFriends from '@/modules/friends'
+ */
+export const useAppContext = (): AppContextType => {
   const context = useContext(TaskContext);
   if (context === undefined) {
-    throw new Error('useTasks must be used within a TaskProvider');
+    throw new Error('useAppContext must be used within a TaskProvider');
   }
   return context;
 };
+
+/**
+ * @deprecated Use useAppContext instead - kept for backward compatibility
+ */
+export const useTasks = useAppContext;
+"
