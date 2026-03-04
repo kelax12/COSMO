@@ -74,9 +74,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
             toast.error(result.error || 'Erreur lors de la création du compte');
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('[DEBUG] Unexpected error in handleSubmit:', error);
-        toast.error(error.message || 'Une erreur est survenue');
+        toast.error(error instanceof Error ? error.message : 'Une erreur est survenue');
       } finally {
         setIsLoading(false);
       }
