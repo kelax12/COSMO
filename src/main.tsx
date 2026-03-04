@@ -20,9 +20,9 @@ if (typeof window !== \"undefined\") {
   const sendToParent = (data: ParentMessage) => {
     try {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage(data, \"*\");
+window.parent.postMessage(data, \"*\");
       }
-    } catch {}
+    } catch { /* ignore postMessage errors */ }
   };
 
   window.addEventListener(\"error\", (event) => {
