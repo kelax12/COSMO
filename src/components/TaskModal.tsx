@@ -54,7 +54,7 @@ interface TaskModalProps {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, isCreating = false, showCollaborators = false, initialData }) => {
+const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave: _onSave, isCreating = false, showCollaborators = false, initialData }) => {
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
