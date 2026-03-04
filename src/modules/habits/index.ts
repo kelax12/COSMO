@@ -1,9 +1,9 @@
-"// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 // HABITS MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+export type { Habit, CreateHabitInput, UpdateHabitInput, HabitFrequency } from './types';
 
 // Constants
 export { habitKeys, HABITS_STORAGE_KEY } from './constants';
@@ -24,3 +24,15 @@ export {
   useDeleteHabit,
   useToggleHabitCompletion,
 } from './hooks';
+
+// ═══════════════════════════════════════════════════════════════════
+// DERIVED HOOKS (Performance Optimized)
+// ═══════════════════════════════════════════════════════════════════
+
+export {
+  useHabitsWithStats,
+  useHabitsByFrequency,
+  useHabitStats,
+  useHabitsNeedingAttention,
+  useTodaysHabitStatus,
+} from './hooks.derived';
