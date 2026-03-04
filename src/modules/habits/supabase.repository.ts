@@ -46,6 +46,20 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     return (data || []).map(this.mapFromDb);
   }
 
+  async getById(id: string): Promise<Habit | null> {
+    const { data, error } = await supabase
+      .from('habits')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw normalizeApiError(error);
+    }
+    return data ? this.mapFromDb(data) : null;
+  }
+
   async createHabit(input: CreateHabitInput): Promise<Habit> {
     const dbInput = this.mapToDb(input);
     
