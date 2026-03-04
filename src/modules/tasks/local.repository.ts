@@ -1,6 +1,5 @@
 import { ITasksRepository } from './tasks.repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
-
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
