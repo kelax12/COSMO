@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { Draggable, EventReceiveArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg } from '@fullcalendar/core';
-import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput } from '@/modules/events';
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/event';
 import { useCategories } from '@/modules/categories';
 import { ChevronLeft, ChevronRight, Calendar, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import TaskSidebar from '../components/TaskSidebar';
