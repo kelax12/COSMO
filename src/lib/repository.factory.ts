@@ -5,12 +5,12 @@
 import { isDemoMode } from './supabase';
 
 // Tasks
-import { ITasksRepository } from '@/modules/tasks/tasks.repository';
+import { ITasksRepository } from '@/modules/tasks/repository';
 import { LocalStorageTasksRepository } from '@/modules/tasks/local.repository';
 import { SupabaseTasksRepository } from '@/modules/tasks/supabase.repository';
 
 // Habits
-import { IHabitsRepository } from '@/modules/habits/habits.repository';
+import { IHabitsRepository } from '@/modules/habits/repository';
 import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository';
 import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 
