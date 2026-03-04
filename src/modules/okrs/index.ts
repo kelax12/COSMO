@@ -12,7 +12,8 @@ export type {
   CreateOKRInput, 
   UpdateOKRInput,
   UpdateKeyResultInput,
-  OKRFilters 
+  OKRFilters,
+  OKRStatus,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -51,3 +52,15 @@ export {
   useDeleteOkr,
   useUpdateKeyResult,
 } from './hooks';
+
+// ═══════════════════════════════════════════════════════════════════
+// DERIVED HOOKS (Performance Optimized)
+// ═══════════════════════════════════════════════════════════════════
+
+export {
+  useOkrsWithProgress,
+  useOkrsByStatus,
+  useOkrStats,
+  useOkrsEndingSoon,
+  useAtRiskOkrs,
+} from './hooks.derived';
