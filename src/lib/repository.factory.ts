@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
+"// ═══════════════════════════════════════════════════════════════════
 // Repository Factory - Centralized repository selection
 // ═══════════════════════════════════════════════════════════════════
 
@@ -15,9 +15,9 @@ import { LocalStorageHabitsRepository } from '@/modules/habits/local.repository'
 import { SupabaseHabitsRepository } from '@/modules/habits/supabase.repository';
 
 // Events
-import { IEventsRepository } from '@/modules/event/repository';
-import { LocalStorageEventsRepository } from '@/modules/event/repository';
-import { SupabaseEventsRepository } from '@/modules/event/supabase.repository';
+import { IEventsRepository } from '@/modules/events/repository';
+import { LocalStorageEventsRepository } from '@/modules/events/repository';
+import { SupabaseEventsRepository } from '@/modules/events/supabase.repository';
 
 // Categories
 import { ICategoriesRepository } from '@/modules/categories/repository';
@@ -126,6 +126,7 @@ export function getFriendsRepository(): IFriendsRepository {
   }
   return friendsRepository;
 }
+
 /**
  * Get the OKRs repository based on current mode
  */
@@ -161,3 +162,4 @@ export function resetRepositories(): void {
   friendsRepository = null;
   okrsRepository = null;
 }
+"
