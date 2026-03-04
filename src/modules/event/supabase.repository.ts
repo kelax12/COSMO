@@ -114,7 +114,8 @@ async getById(id: string): Promise<CalendarEvent | null> {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+   async create(input: CreateEventInput): Promise<CalendarEvent> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbInput = this.mapToDb(input);
 
     const { data, error } = await supabase
@@ -128,6 +129,7 @@ async getById(id: string): Promise<CalendarEvent | null> {
   }
 
   async update(id: string, updates: UpdateEventInput): Promise<CalendarEvent> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -142,6 +144,7 @@ async getById(id: string): Promise<CalendarEvent | null> {
   }
 
   async delete(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('events')
       .delete()
