@@ -180,7 +180,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onFormToggle, expanded = fals
     return nameValid && timeValid && priorityValid && categoryValid;
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setHasChanges(true);
     if (okrFields[field]) setOkrFields(prev => ({ ...prev, [field]: false }));
