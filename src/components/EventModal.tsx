@@ -20,9 +20,9 @@ import { CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 
 // ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
+// AppContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks } from "../context/TaskContext";
+import { useAppContext } from \"../context/TaskContext\";
 
 export type EventModalMode = 'add' | 'edit' | 'convert';
 
