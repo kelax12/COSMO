@@ -1,5 +1,12 @@
+"// ═══════════════════════════════════════════════════════════════════
+// HABITS MODULE - Public API
+// ═══════════════════════════════════════════════════════════════════
+
 // Types
-export type { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+
+// Constants
+export { habitKeys, HABITS_STORAGE_KEY } from './constants';
 
 // Repository interface
 export type { IHabitsRepository } from './habits.repository';
@@ -10,10 +17,10 @@ export { SupabaseHabitsRepository } from './supabase.repository';
 
 // React Query hooks
 export {
-  habitKeys,
   useHabits,
   useCreateHabit,
   useUpdateHabit,
   useDeleteHabit,
   useToggleHabitCompletion,
-} from './habits.hooks';
+} from './hooks';
+"
