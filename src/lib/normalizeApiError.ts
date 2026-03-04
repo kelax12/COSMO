@@ -18,7 +18,16 @@ const ERROR_MESSAGES: Record<string, string> = {
   'GENERIC_ERROR': 'Une erreur inattendue est survenue.',
 };
 
-export const normalizeApiError = (error: any): NormalizedError => {
+interface ApiErrorLike {
+  code?: string;
+  message?: string;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+}
+
+export const normalizeApiError = (error: ApiErrorLike | Error | string): NormalizedError => {
   let code = 'GENERIC_ERROR';
   let message = ERROR_MESSAGES.GENERIC_ERROR;
 
