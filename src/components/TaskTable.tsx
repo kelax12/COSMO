@@ -23,7 +23,7 @@ import {
 // ═══════════════════════════════════════════════════════════════════
 // Module events - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCreateEvent } from '@/modules/events';
+import { useCreateEvent, CreateEventInput } from '@/modules/event';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
