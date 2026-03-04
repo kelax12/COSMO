@@ -154,8 +154,10 @@ export const useUpdateCategory = () => {
     onSettled: (updatedCategory) => {
       if (updatedCategory) {
         queryClient.setQueryData(categoryKeys.detail(updatedCategory.id), updatedCategory);
+        // Invalidate only the specific detail and list
+        queryClient.invalidateQueries({ queryKey: categoryKeys.detail(updatedCategory.id) });
       }
-      invalidateAllCategoryQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
   });
 };
