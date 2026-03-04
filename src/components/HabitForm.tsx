@@ -37,10 +37,10 @@ const HabitForm: React.FC<HabitFormProps> = ({ onClose }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as any);
+      handleSubmit(e as React.FormEvent<HTMLFormElement>);
     }
   };
-
+  
   return (
     <div className="rounded-xl shadow-lg border p-6 transition-colors" style={{
       backgroundColor: 'rgb(var(--color-surface))',
