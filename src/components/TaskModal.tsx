@@ -168,10 +168,10 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave, is
         estimatedTime: task.estimatedTime || 30,
         completed: task.completed || false,
         bookmarked: task.bookmarked || false,
-        isFromOKR: (task as any).isFromOKR || false
+        isFromOKR: (task as Task & { isFromOKR?: boolean }).isFromOKR || false
       });
       
-      const isFromOKR = (task as any).isFromOKR || false;
+      const isFromOKR = (task as Task & { isFromOKR?: boolean }).isFromOKR || false;
       if (isFromOKR) {
         setOkrFields({
           name: true,
