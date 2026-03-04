@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase';
+"import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository } from './tasks.repository';
-import { Task, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
 
 /**
  * Supabase DB row type for tasks table (snake_case)
@@ -25,12 +25,33 @@ interface TaskRow {
   user_id?: string;
 }
 
+/**
+ * DB input type for insert/update operations (snake_case)
+ */
+interface TaskDbInput {
+  name?: string;
+  description?: string;
+  priority?: number;
+  category?: string;
+  deadline?: string;
+  estimated_time?: number;
+  bookmarked?: boolean;
+  completed?: boolean;
+  completed_at?: string;
+  is_collaborative?: boolean;
+  collaborators?: string[];
+  pending_invites?: string[];
+  collaborator_validations?: Record<string, boolean>;
+  user_id?: string;
+}
+
 export class SupabaseTasksRepository implements ITasksRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<Task[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -41,6 +62,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   }
 
   async getById(id: string): Promise<Task | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
@@ -48,13 +70,14 @@ export class SupabaseTasksRepository implements ITasksRepository {
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
+      if (error.code === 'PGRST116') return null;
       throw normalizeApiError(error);
     }
     return data ? this.mapFromDb(data) : null;
   }
 
   async getByDate(date: string): Promise<Task[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const targetDate = date.split('T')[0];
     const startOfDay = `${targetDate}T00:00:00.000Z`;
     const endOfDay = `${targetDate}T23:59:59.999Z`;
@@ -71,6 +94,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     let query = supabase.from('tasks').select('*');
 
     if (filters.completed !== undefined) {
@@ -108,10 +132,53 @@ export class SupabaseTasksRepository implements ITasksRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // WRITE OPERATIONS
+  // ═══════════════════════════════════════════════════════════════════
+
+  async create(input: CreateTaskInput): Promise<Task> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const dbInput = this.mapToDb(input);
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert([dbInput])
+      .select()
+      .single();
+
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data);
+  }
+
+  async update(id: string, updates: UpdateTaskInput): Promise<Task> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const dbUpdates = this.mapToDb(updates);
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw normalizeApiError(error);
+    return this.mapFromDb(data);
+  }
+
+  async delete(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-private mapFromDb(row: TaskRow): Task {
+  private mapFromDb(row: TaskRow): Task {
     return {
       id: row.id,
       name: row.name,
@@ -131,4 +198,24 @@ private mapFromDb(row: TaskRow): Task {
       userId: row.user_id,
     };
   }
+
+  private mapToDb(input: Partial<Task>): TaskDbInput {
+    const result: TaskDbInput = {};
+    if (input.name !== undefined) result.name = input.name;
+    if (input.description !== undefined) result.description = input.description;
+    if (input.priority !== undefined) result.priority = input.priority;
+    if (input.category !== undefined) result.category = input.category;
+    if (input.deadline !== undefined) result.deadline = input.deadline;
+    if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
+    if (input.bookmarked !== undefined) result.bookmarked = input.bookmarked;
+    if (input.completed !== undefined) result.completed = input.completed;
+    if (input.completedAt !== undefined) result.completed_at = input.completedAt;
+    if (input.isCollaborative !== undefined) result.is_collaborative = input.isCollaborative;
+    if (input.collaborators !== undefined) result.collaborators = input.collaborators;
+    if (input.pendingInvites !== undefined) result.pending_invites = input.pendingInvites;
+    if (input.collaboratorValidations !== undefined) result.collaborator_validations = input.collaboratorValidations;
+    if (input.userId !== undefined) result.user_id = input.userId;
+    return result;
+  }
 }
+"
