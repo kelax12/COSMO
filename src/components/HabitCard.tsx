@@ -19,7 +19,11 @@ const colorOptions = [
 ];
 
 const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExternalEditingChange }) => {
-  const { toggleHabitCompletion, deleteHabit, updateHabit } = useTasks();
+  // Mutations from habits module
+  const updateHabitMutation = useUpdateHabit();
+  const deleteHabitMutation = useDeleteHabit();
+  const toggleCompletionMutation = useToggleHabitCompletion();
+  
   const [showDetails, setShowDetails] = useState(false);
   const [internalIsEditing, setInternalIsEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -35,7 +39,7 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExter
   const setIsEditing = onExternalEditingChange || setInternalIsEditing;
 
   const handleDelete = () => {
-    deleteHabit(habit.id);
+    deleteHabitMutation.mutate(habit.id);
     setIsDeleting(false);
   };
 
