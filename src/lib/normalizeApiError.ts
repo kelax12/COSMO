@@ -31,10 +31,10 @@ export const normalizeApiError = (error: ApiErrorLike | Error | string): Normali
   let code = 'GENERIC_ERROR';
   let message = ERROR_MESSAGES.GENERIC_ERROR;
 
-  if (error?.code && typeof error.code === 'string') {
+  if (typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string') {
     code = error.code;
     message = ERROR_MESSAGES[code] || error.message || message;
-  } else if (error?.error?.code) {
+  } else if (typeof error === 'object' && error !== null && 'error' in error && error.error?.code) {
     code = error.error.code;
     message = ERROR_MESSAGES[code] || error.error.message || message;
   } else if (error instanceof Error) {
@@ -46,6 +46,11 @@ export const normalizeApiError = (error: ApiErrorLike | Error | string): Normali
   } else if (typeof error === 'string') {
     message = error;
   }
+
+  toast.error(message);
+
+  return { code, message };
+};
 
   toast.error(message);
 
