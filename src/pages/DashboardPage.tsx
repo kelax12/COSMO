@@ -37,9 +37,10 @@ const DashboardPage: React.FC = () => {
   
   const totalHabitsTime = todayHabits.reduce((sum, habit) => sum + habit.estimatedTime, 0);
   const totalTasksTime = todayTasks.reduce((sum, task) => sum + task.estimatedTime, 0);
-  const totalWorkTime = totalHabitsTime + totalTasksTime;
+  // Total work time calculated but not displayed in current UI
+  void (totalHabitsTime + totalTasksTime);
 
-  const completedTasksToday = tasks.filter(task => 
+  const completedTasksToday = tasks.filter(task =>
     task.completed && 
     task.completedAt &&
     new Date(task.completedAt).toDateString() === new Date().toDateString()
