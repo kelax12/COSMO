@@ -691,7 +691,7 @@ const AgendaStatistics: React.FC<{ events: CalendarEvent[], colorSettings: Recor
   );
 };
 
-const OKRStatistics: React.FC<{ objectives: any[], rollingRange: { start: Date, end: Date } }> = ({ objectives, rollingRange }) => {
+const OKRStatistics: React.FC<{ objectives: OKR[], rollingRange: { start: Date, end: Date } }> = ({ objectives, rollingRange }) => {
   const okrWorkTime = objectives.map(okr => {
     let workedTime = 0;
     okr.keyResults.forEach((kr: any) => {
