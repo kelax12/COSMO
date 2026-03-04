@@ -1,12 +1,9 @@
-"use client"
+\"use client\"
 
-import * as React from "react"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import * as React from \"react\"
+import { CalendarIcon, ChevronLeft, ChevronRight } from \"lucide-react\"
+import { cn } from \"@/lib/utils\"
+import { Popover, PopoverContent, PopoverTrigger } from \"@/components/ui/popover\"
 
 interface DatePickerProps {
   value?: string
@@ -14,7 +11,6 @@ interface DatePickerProps {
   placeholder?: string
   className?: string
 }
-
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
