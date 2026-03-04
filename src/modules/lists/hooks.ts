@@ -29,7 +29,7 @@ const useListsRepository = (): IListsRepository => {
  * Invalidate all list-related queries
  */
 const invalidateAllListQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
-  queryClient.invalidateQueries({ queryKey: listKeys.all });
+  queryClient.invalidateQueries({ queryKey: listKeys.lists() });
 };
 
 // ═══════════════════════════════════════════════════════════════════
