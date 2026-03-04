@@ -18,7 +18,7 @@ const MONTHS = [
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
 
-export function DatePicker({ value, onChange, placeholder = "Sélectionner une date", className }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder: _placeholder = \"Sélectionner une date\", className }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
   const [viewDate, setViewDate] = React.useState(() => {
     if (value) return new Date(value)
