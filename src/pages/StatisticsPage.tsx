@@ -694,8 +694,9 @@ const AgendaStatistics: React.FC<{ events: CalendarEvent[], colorSettings: Recor
 const OKRStatistics: React.FC<{ objectives: OKR[], rollingRange: { start: Date, end: Date } }> = ({ objectives, rollingRange }) => {
   const okrWorkTime = objectives.map(okr => {
     let workedTime = 0;
-    okr.keyResults.forEach((kr: any) => {
-      const totalIncrements = (kr.history || []).reduce((sum: number, h: any) => {
+    okr.keyResults.forEach((kr: KeyResult) => {
+      const history = (kr as KeyResult & { history?: KeyResultHistory[] }).history || [];
+      const totalIncrements = history.reduce((sum: number, h: KeyResultHistory) => {
         const hDate = parseLocalDate(h.date);
         const hDateNormalized = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
         
