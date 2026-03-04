@@ -1,9 +1,9 @@
-"// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 // TASKS MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus } from './types';
 
 // Constants
 export { taskKeys, TASKS_STORAGE_KEY } from './constants';
@@ -16,7 +16,7 @@ export { LocalStorageTasksRepository } from './local.repository';
 export { SupabaseTasksRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════
-// READ HOOKS (Phase 1)
+// READ HOOKS
 // ═══════════════════════════════════════════════════════════════════
 export {
   useTasks,
@@ -30,7 +30,7 @@ export {
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
-// WRITE HOOKS (Phase 2)
+// WRITE HOOKS
 // ═══════════════════════════════════════════════════════════════════
 export {
   useCreateTask,
@@ -39,4 +39,17 @@ export {
   useToggleTaskComplete,
   useToggleTaskBookmark,
 } from './hooks';
-"
+
+// ═══════════════════════════════════════════════════════════════════
+// DERIVED HOOKS (Performance Optimized)
+// ═══════════════════════════════════════════════════════════════════
+export {
+  useTasksByStatus,
+  useTasksByCategory,
+  useTasksByPriority,
+  useTaskStats,
+  useSearchTasks,
+  useTasksInPriorityRange,
+  useTasksDueWithinDays,
+  useTaskLookup,
+} from './hooks.derived';
