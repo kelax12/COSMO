@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, X, Save } from 'lucide-react';
+import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Circle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTasks, Habit } from '../context/TaskContext';
+import { Habit, useUpdateHabit, useDeleteHabit, useToggleHabitCompletion } from '@/modules/habits';
 
 interface HabitCardProps {
   habit: Habit;
