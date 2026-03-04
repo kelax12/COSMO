@@ -89,11 +89,11 @@ const MessagingPage: React.FC = () => {
     friends
   } = useTaskContext();
 
-  // Stub functions for messaging (not implemented in TaskContext)
+    // Stub functions for messaging (not implemented in TaskContext)
   const friendRequests: FriendRequest[] = [];
-  const sendMessage = (_conversationId: string, _message: string) => {};
-  const acceptFriendRequest = (_email: string) => {};
-  const rejectFriendRequest = (_email: string) => {};
+  const sendMessage = (conversationId: string, message: string) => { void conversationId; void message; };
+  const acceptFriendRequest = (email: string) => { void email; };
+  const rejectFriendRequest = (email: string) => { void email; };
 
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
