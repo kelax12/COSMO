@@ -204,7 +204,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
 
-  const handleCreateEventFromTask = (eventData: any) => {
+  const handleCreateEventFromTask = (eventData: CreateEventInput) => {
     if (taskToEventModal) {
       createEventMutation.mutate({
         ...eventData,
