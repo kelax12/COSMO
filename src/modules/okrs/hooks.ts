@@ -135,7 +135,7 @@ export const useUpdateOkr = () => {
     // Optimistic update
     onMutate: async ({ id, updates }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: okrsKeys.all });
+      await queryClient.cancelQueries({ queryKey: okrsKeys.lists() });
 
       // Snapshot current state
       const previousOKRs = queryClient.getQueryData<OKR[]>(okrsKeys.lists());
