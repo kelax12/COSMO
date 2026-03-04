@@ -29,7 +29,7 @@ const useOKRsRepository = (): IOKRsRepository => {
  * Invalidate all OKR-related queries
  */
 const invalidateAllOKRQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
-  queryClient.invalidateQueries({ queryKey: okrsKeys.all });
+  queryClient.invalidateQueries({ queryKey: okrsKeys.lists() });
 };
 
 // ═══════════════════════════════════════════════════════════════════
