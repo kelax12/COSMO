@@ -628,7 +628,7 @@ const TasksStatistics: React.FC<{ tasks: Task[], colorSettings: Record<string, s
   );
 };
 
-const AgendaStatistics: React.FC<{ events: any[], colorSettings: any }> = ({ events, colorSettings }) => {
+const AgendaStatistics: React.FC<{ events: CalendarEvent[], colorSettings: Record<string, string> }> = ({ events, colorSettings }) => {
   const timeByColor = Object.keys(colorSettings).map(color => {
     const colorEvents = events.filter(e => e.color === color);
     const totalMinutes = colorEvents.reduce((sum, event) => sum + (new Date(event.end).getTime() - new Date(event.start).getTime()) / 60000, 0);
