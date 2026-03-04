@@ -21,7 +21,7 @@ const DashboardPage: React.FC = () => {
   // Use new module for events (read-only)
   const { data: events = [] } = useEvents();
   // Still need user from TaskContext
-  const { user, isPremium } = useTasksContext();
+  const { user } = useTasksContext();
   const { data: habits = [] } = useHabits();
 
   // Default user for demo mode
