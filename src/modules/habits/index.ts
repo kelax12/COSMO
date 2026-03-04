@@ -9,7 +9,7 @@ export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 export { habitKeys, HABITS_STORAGE_KEY } from './constants';
 
 // Repository interface
-export type { IHabitsRepository } from './habits.repository';
+export type { IHabitsRepository } from './repository';
 
 // Repository implementations
 export { LocalStorageHabitsRepository } from './local.repository';
