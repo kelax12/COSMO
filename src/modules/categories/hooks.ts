@@ -106,7 +106,8 @@ export const useCreateCategory = () => {
   return useMutation({
     mutationFn: (input: CreateCategoryInput) => repository.create(input),
     onSuccess: () => {
-      invalidateAllCategoryQueries(queryClient);
+      // Only invalidate the list, not all queries
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
   });
 };
