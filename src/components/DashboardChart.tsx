@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
 import { useTasks, Task } from '@/modules/tasks';
 import { useHabits, Habit } from '@/modules/habits';
-import { useEvents, CalendarEvent } from '@/modules/event';
+import { useEvents, CalendarEvent } from '@/modules/events';
 import { useOkrs, OKR } from '@/modules/okrs';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
