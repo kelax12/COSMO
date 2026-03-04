@@ -1,7 +1,7 @@
-"import { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasksRepository } from '@/lib/repository.factory';
-import { ITasksRepository } from './tasks.repository';
+import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { taskKeys } from './constants';
 
