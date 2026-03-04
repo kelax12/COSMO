@@ -1,4 +1,4 @@
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 
 /**
  * Interface for Tasks Repository
