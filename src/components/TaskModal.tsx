@@ -48,9 +48,8 @@ interface TaskModalProps {
   onClose: () => void;
   isCreating?: boolean;
   showCollaborators?: boolean;
-  initialData?: Partial<Task>;
+  initialData?: Partial<Task> & { isFromOKR?: boolean };
 }
-
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, isCreating = false, showCollaborators = false, initialData }) => {
