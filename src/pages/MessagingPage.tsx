@@ -7,13 +7,39 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
+import { Friend } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // TaskContext - uniquement pour domaines NON MIGRÉS
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTaskContext } from '../context/TaskContext';
 
-const RenderAvatar = ({ avatar, className = "w-10 h-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
+// Types pour MessagingPage
+interface FriendRequest {
+  id: string;
+  email: string;
+  status: 'pending' | 'accepted' | 'rejected';
+}
+
+interface GroupMember {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+interface GroupConversation {
+  id: string;
+  name: string;
+  avatar?: string;
+  isGroup: true;
+  ownerId: string;
+  members: GroupMember[];
+  unread: number;
+  lastMessage?: string;
+  timestamp?: string;
+}
+
+const RenderAvatar = ({ avatar, className = \"w-10 h-10\", textClassName = \"text-lg\" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
   const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
   
   return (
