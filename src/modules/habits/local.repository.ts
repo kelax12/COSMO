@@ -1,5 +1,5 @@
 import { IHabitsRepository } from './habits.repository';
-import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
