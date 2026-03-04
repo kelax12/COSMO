@@ -1,11 +1,52 @@
-// ═══════════════════════════════════════════════════════════════════
+"// ═══════════════════════════════════════════════════════════════════
 // FRIENDS MODULE - Supabase Repository Implementation
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IFriendsRepository } from './repository';
-import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest } from './types';
+import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus } from './types';
+
+// ═══════════════════════════════════════════════════════════════════
+// DB ROW TYPES (snake_case - matches Supabase table schema)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Supabase DB row type for friends table
+ */
+interface FriendRow {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  user_id?: string;
+  created_at?: string;
+}
+
+/**
+ * Supabase DB row type for friend_requests table
+ */
+interface FriendRequestRow {
+  id: string;
+  email: string;
+  status: FriendRequestStatus;
+  sent_at: string;
+  user_id?: string;
+}
+
+/**
+ * DB input type for friend insert/update operations
+ */
+interface FriendDbInput {
+  name?: string;
+  email?: string;
+  avatar?: string;
+  user_id?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// REPOSITORY IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════
 
 export class SupabaseFriendsRepository implements IFriendsRepository {
   // ═══════════════════════════════════════════════════════════════════
@@ -13,6 +54,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<Friend[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friends')
       .select('*')
@@ -23,6 +65,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async getById(id: string): Promise<Friend | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friends')
       .select('*')
@@ -37,6 +80,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async getByEmail(email: string): Promise<Friend | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friends')
       .select('*')
@@ -51,6 +95,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async getPendingRequests(): Promise<PendingFriendRequest[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friend_requests')
       .select('*')
@@ -66,6 +111,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('friend_requests')
       .insert([{ email: input.email, status: 'pending', sent_at: new Date().toISOString() }])
@@ -77,6 +123,8 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async acceptFriendRequest(requestId: string): Promise<Friend> {
+    if (!supabase) throw new Error('Supabase not configured');
+    
     // Update request status
     const { data: request, error: requestError } = await supabase
       .from('friend_requests')
@@ -103,6 +151,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async rejectFriendRequest(requestId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('friend_requests')
       .update({ status: 'rejected' })
@@ -112,6 +161,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async removeFriend(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('friends')
       .delete()
@@ -125,6 +175,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async shareTask(input: ShareTaskInput): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('shared_tasks')
       .upsert([{ 
@@ -137,6 +188,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('shared_tasks')
       .delete()
@@ -147,24 +199,25 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // MAPPING
+  // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-  private mapFromDb(row: Record<string, unknown>): Friend {
+  private mapFromDb(row: FriendRow): Friend {
     return {
-      id: row.id as string,
-      name: row.name as string,
-      email: row.email as string,
-      avatar: row.avatar as string | undefined,
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      avatar: row.avatar,
     };
   }
 
-  private mapRequestFromDb(row: Record<string, unknown>): PendingFriendRequest {
+  private mapRequestFromDb(row: FriendRequestRow): PendingFriendRequest {
     return {
-      id: row.id as string,
-      email: row.email as string,
-      status: row.status as PendingFriendRequest['status'],
-      sentAt: row.sent_at as string,
+      id: row.id,
+      email: row.email,
+      status: row.status,
+      sentAt: row.sent_at,
     };
   }
 }
+"
