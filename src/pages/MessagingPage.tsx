@@ -37,7 +37,26 @@ interface GroupConversation {
   unread: number;
   lastMessage?: string;
   timestamp?: string;
+  time?: string;
 }
+
+interface IndividualConversation {
+  id: string;
+  name: string;
+  avatar?: string;
+  type: 'individual';
+  lastMessage: string;
+  time: string;
+  timestamp: number;
+  unread: number;
+}
+
+type Conversation = GroupConversation | IndividualConversation;
+
+// Type guard pour vérifier si c'est un groupe
+const isGroupConversation = (conv: Conversation | GroupConversation | undefined): conv is GroupConversation => {
+  return conv !== undefined && 'isGroup' in conv && conv.isGroup === true;
+};
 
 const RenderAvatar = ({ avatar, className = \"w-10 h-10\", textClassName = \"text-lg\" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
   const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
