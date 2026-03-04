@@ -133,7 +133,7 @@ export const useUpdateList = () => {
 
     // Optimistic update
     onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: listKeys.all });
+      await queryClient.cancelQueries({ queryKey: listKeys.lists() });
 
       const previousLists = queryClient.getQueryData<TaskList[]>(listKeys.lists());
 
