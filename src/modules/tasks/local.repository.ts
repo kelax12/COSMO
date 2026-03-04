@@ -1,4 +1,4 @@
-import { ITasksRepository } from './tasks.repository';
+import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
