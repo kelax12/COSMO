@@ -3,14 +3,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
 import { useTasks as useTasksContext } from '../context/TaskContext';
-import { useTasks } from '@/modules/tasks';
-import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
-import { useOkrs } from '@/modules/okrs';
+import { useTasks, Task } from '@/modules/tasks';
+import { useHabits, Habit } from '@/modules/habits';
+import { useEvents, CalendarEvent } from '@/modules/event';
+import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
 
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
+
+// Interfaces pour les composants de statistiques
+interface WorkTimePeriodData {
+  label: string;
+  totalTime: number;
+  details: {
+    tasksTime: number;
+    eventsTime: number;
+    habitsTime: number;
+    okrTime: number;
+  };
+}
+
+interface KeyResultHistory {
+  date: string;
+  increment: number;
+}
 
 export default function StatisticsPage() {
   // Use new module for tasks (read-only)
