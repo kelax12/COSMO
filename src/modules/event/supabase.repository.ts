@@ -81,6 +81,7 @@ async getById(id: string): Promise<CalendarEvent | null> {
   }
 
   async getFiltered(filters: EventFilters): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     let query = supabase.from('events').select('*');
 
     if (filters.taskId) {
@@ -88,22 +89,22 @@ async getById(id: string): Promise<CalendarEvent | null> {
     }
 
     if (filters.startAfter) {
-      query = query.gte('start', filters.startAfter);
+      query = query.gte('start_time', filters.startAfter);
     }
 
     if (filters.startBefore) {
-      query = query.lte('start', filters.startBefore);
+      query = query.lte('start_time', filters.startBefore);
     }
 
     if (filters.endAfter) {
-      query = query.gte('end', filters.endAfter);
+      query = query.gte('end_time', filters.endAfter);
     }
 
     if (filters.endBefore) {
-      query = query.lte('end', filters.endBefore);
+      query = query.lte('end_time', filters.endBefore);
     }
 
-    const { data, error } = await query.order('start', { ascending: true });
+    const { data, error } = await query.order('start_time', { ascending: true });
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);
