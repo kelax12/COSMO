@@ -1,5 +1,5 @@
 "import { Task } from '@/modules/tasks';
-import { CalendarEvent } from '@/modules/event';
+import { CalendarEvent } from '@/modules/events';
 import { Habit } from '@/modules/habits';
 import { OKR, KeyResult } from '@/modules/okrs';
 
