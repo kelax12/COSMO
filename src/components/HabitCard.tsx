@@ -107,7 +107,6 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExter
     }
   };
 
-  const [isHovered, setIsHovered] = useState(false);
 
   const habitColor = habit.color.startsWith('#') 
     ? habit.color 
