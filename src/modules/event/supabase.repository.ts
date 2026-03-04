@@ -42,11 +42,12 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async getAll(): Promise<CalendarEvent[]> {
+ async getAll(): Promise<CalendarEvent[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('events')
       .select('*')
-      .order('start', { ascending: true });
+      .order('start_time', { ascending: true });
 
     if (error) throw normalizeApiError(error);
     return (data || []).map(this.mapFromDb);
