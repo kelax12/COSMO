@@ -1,22 +1,33 @@
 // ═══════════════════════════════════════════════════════════════════
-// UI-STATE MODULE - Type Definitions
+// USER MODULE - Type Definitions
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Color settings mapping category IDs to display names
+ * User - Represents the current authenticated user
  */
-export type ColorSettings = Record<string, string>;
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}
 
 /**
- * Priority range filter [min, max]
+ * Message - User notification/message
  */
-export type PriorityRange = [number, number];
+export interface Message {
+  id: string;
+  read: boolean;
+  content: string;
+  senderId?: string;
+  timestamp?: string;
+}
 
 /**
- * UI State configuration
+ * Auth state
  */
-export interface UIState {
-  favoriteColors: string[];
-  priorityRange: PriorityRange;
-  colorSettings: ColorSettings;
+export interface AuthState {
+  isAuthenticated: boolean;
+  isDemo: boolean;
+  loading: boolean;
 }
