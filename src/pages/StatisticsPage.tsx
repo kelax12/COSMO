@@ -501,7 +501,7 @@ export default function StatisticsPage() {
   );
 }
 
-const OverviewStatistics: React.FC<{ workTimeData: any[], colorSettings: any }> = ({ workTimeData, colorSettings }) => {
+const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[], colorSettings: Record<string, string> }> = ({ workTimeData, colorSettings }) => {
   const totalDetails = workTimeData.reduce((acc, period) => {
     acc.tasksTime += period.details.tasksTime;
     acc.eventsTime += period.details.eventsTime;
