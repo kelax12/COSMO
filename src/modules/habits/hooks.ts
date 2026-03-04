@@ -3,13 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getHabitsRepository } from '@/lib/repository.factory';
 import { IHabitsRepository } from './habits.repository';
 import { CreateHabitInput, UpdateHabitInput } from './types';
-
-// Query keys for cache management
-export const habitKeys = {
-  all: ['habits'] as const,
-  lists: () => [...habitKeys.all, 'list'] as const,
-  detail: (id: string) => [...habitKeys.all, 'detail', id] as const,
-};
+import { habitKeys } from './constants';
 
 // Repository - Via centralized factory (demo/production mode)
 const useHabitsRepository = (): IHabitsRepository => {
@@ -89,6 +83,9 @@ export const useToggleHabitCompletion = () => {
   });
 };
 
+// Re-export types for convenience
+export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+"
 // Re-export types for convenience
 export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 "
