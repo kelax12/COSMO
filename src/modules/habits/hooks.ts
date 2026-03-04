@@ -42,7 +42,8 @@ export const useCreateHabit = () => {
   return useMutation({
     mutationFn: (input: CreateHabitInput) => repository.createHabit(input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: habitKeys.all });
+      // Only invalidate the list, not all queries
+      queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
   });
 };
@@ -57,8 +58,10 @@ export const useUpdateHabit = () => {
   return useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateHabitInput }) =>
       repository.updateHabit(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: habitKeys.all });
+    onSuccess: (_, { id }) => {
+      // Invalidate both the list and the specific detail
+      queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
     },
   });
 };
@@ -72,8 +75,10 @@ export const useDeleteHabit = () => {
   
   return useMutation({
     mutationFn: (id: string) => repository.deleteHabit(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: habitKeys.all });
+    onSuccess: (_, id) => {
+      // Invalidate the list and remove the specific detail from cache
+      queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+      queryClient.removeQueries({ queryKey: habitKeys.detail(id) });
     },
   });
 };
@@ -88,12 +93,10 @@ export const useToggleHabitCompletion = () => {
   return useMutation({
     mutationFn: ({ id, date }: { id: string; date: string }) =>
       repository.toggleCompletion(id, date),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: habitKeys.all });
+    onSuccess: (_, { id }) => {
+      // Only invalidate the specific habit and the list
+      queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
   });
 };
-
-// Re-export types for convenience
-export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
-"
