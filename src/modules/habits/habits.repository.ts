@@ -1,4 +1,4 @@
-import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 
 export interface IHabitsRepository {
   fetchHabits(): Promise<Habit[]>;
