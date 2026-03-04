@@ -80,11 +80,11 @@ const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExter
   const detailedDays = generateDays(30, true);
 
   const handleDayClick = (date: string) => {
-    toggleHabitCompletion(habit.id, date);
+    toggleCompletionMutation.mutate({ habitId: habit.id, date });
   };
 
   const handleSaveEdit = () => {
-    updateHabit(habit.id, editData);
+    updateHabitMutation.mutate({ id: habit.id, updates: editData });
     setIsEditing(false);
   };
 
