@@ -1,31 +1,36 @@
 // ═══════════════════════════════════════════════════════════════════
-// USER MODULE - Constants
+// UI-STATE MODULE - Constants
 // ═══════════════════════════════════════════════════════════════════
 
-import { User } from './types';
+import { ColorSettings, PriorityRange } from './types';
 
 /**
- * LocalStorage key for user data
+ * LocalStorage keys
  */
-export const USER_STORAGE_KEY = 'cosmo_user';
-export const MESSAGES_STORAGE_KEY = 'cosmo_messages';
+export const UI_STATE_STORAGE_KEY = 'cosmo_ui_state';
+export const FAVORITE_COLORS_KEY = 'cosmo_favorite_colors';
+export const PRIORITY_RANGE_KEY = 'cosmo_priority_range';
 
 /**
- * Demo user for development/demo mode
+ * Default favorite colors
  */
-export const DEMO_USER: User = {
-  id: 'demo-user',
-  name: 'Demo',
-  email: 'demo@cosmo.app',
-  avatar: '👤',
-};
+export const DEFAULT_FAVORITE_COLORS: string[] = [
+  '#3B82F6', '#10B981', '#EF4444', '#8B5CF6', '#F97316', '#EC4899'
+];
 
 /**
- * React Query keys for user
+ * Default priority range
  */
-export const userKeys = {
-  all: ['user'] as const,
-  current: () => [...userKeys.all, 'current'] as const,
-  messages: () => [...userKeys.all, 'messages'] as const,
-  settings: () => [...userKeys.all, 'settings'] as const,
+export const DEFAULT_PRIORITY_RANGE: PriorityRange = [1, 5];
+
+/**
+ * Default color settings (category ID -> display name)
+ * Note: This maps to categories for backward compatibility
+ */
+export const DEFAULT_COLOR_SETTINGS: ColorSettings = {
+  'cat-1': 'Travail',
+  'cat-2': 'Personnel',
+  'cat-3': 'Santé',
+  'cat-4': 'Apprentissage',
+  'cat-5': 'Projets',
 };
