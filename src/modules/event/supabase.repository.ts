@@ -53,7 +53,8 @@ export class SupabaseEventsRepository implements IEventsRepository {
     return (data || []).map(this.mapFromDb);
   }
 
-  async getById(id: string): Promise<CalendarEvent | null> {
+async getById(id: string): Promise<CalendarEvent | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('events')
       .select('*')
