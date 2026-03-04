@@ -735,7 +735,7 @@ const OKRStatistics: React.FC<{ objectives: OKR[], rollingRange: { start: Date, 
   );
 };
 
-const HabitsStatistics: React.FC<{ habits: any[], rollingRange: { start: Date, end: Date }, selectedPeriod: string, now: Date }> = ({ habits, rollingRange, selectedPeriod, now }) => {
+const HabitsStatistics: React.FC<{ habits: Habit[], rollingRange: { start: Date, end: Date }, selectedPeriod: string, now: Date }> = ({ habits, rollingRange, selectedPeriod, now }) => {
   const habitsStats = habits.map(habit => {
       let completionsCount = 0;
       let relevantDaysCount = 0;
