@@ -77,7 +77,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, isOpen, onClose, onSave: _o
   // ═══════════════════════════════════════════════════════════════════
   // Domaines NON MIGRÉS (depuis TaskContext)
   // ═══════════════════════════════════════════════════════════════════
-  const { colorSettings, friends, isPremium, shareTask, sendFriendRequest } = useTaskContext();
+  const { friends, isPremium, shareTask, sendFriendRequest } = useTaskContext();
 
   // Form state
   const [formData, setFormData] = useState({
