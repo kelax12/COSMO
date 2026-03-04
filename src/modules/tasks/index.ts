@@ -9,7 +9,7 @@ export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './type
 export { taskKeys, TASKS_STORAGE_KEY } from './constants';
 
 // Repository interface
-export type { ITasksRepository } from './tasks.repository';
+export type { ITasksRepository } from './repository';
 
 // Repository implementations
 export { LocalStorageTasksRepository } from './local.repository';
