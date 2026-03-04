@@ -1,15 +1,22 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, Calendar, Clock, Flame } from 'lucide-react';
-import { useTasks } from '@/modules/tasks';
-import { useHabits } from '@/modules/habits';
-import { useEvents } from '@/modules/events';
-import { useOkrs } from '@/modules/okrs';
+import { useTasks, Task } from '@/modules/tasks';
+import { useHabits, Habit } from '@/modules/habits';
+import { useEvents, CalendarEvent } from '@/modules/event';
+import { useOkrs, OKR } from '@/modules/okrs';
 import { calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+
+interface WorkTimeData {
+  tasks: Task[];
+  events: CalendarEvent[];
+  habits: Habit[];
+  okrs: OKR[];
+}
 
 const calculateWorkTimeForDate = (
   date: Date,
-  data: { tasks: any[]; events: any[]; habits: any[]; okrs: any[] }
+  data: WorkTimeData
 ): number => {
   const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
   const endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
