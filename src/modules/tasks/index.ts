@@ -1,9 +1,12 @@
-// ═══════════════════════════════════════════════════════════════════
+"// ═══════════════════════════════════════════════════════════════════
 // TASKS MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './tasks.types';
+export type { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+
+// Constants
+export { taskKeys, TASKS_STORAGE_KEY } from './constants';
 
 // Repository interface
 export type { ITasksRepository } from './tasks.repository';
@@ -11,9 +14,6 @@ export type { ITasksRepository } from './tasks.repository';
 // Repository implementations
 export { LocalStorageTasksRepository } from './local.repository';
 export { SupabaseTasksRepository } from './supabase.repository';
-
-// Query keys (for cache management)
-export { taskKeys } from './tasks.hooks';
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS (Phase 1)
@@ -27,7 +27,7 @@ export {
   usePendingTasks,
   useBookmarkedTasks,
   useCompletedTasks,
-} from './tasks.hooks';
+} from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
 // WRITE HOOKS (Phase 2)
@@ -38,4 +38,5 @@ export {
   useDeleteTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
-} from './tasks.hooks';
+} from './hooks';
+"
