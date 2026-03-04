@@ -37,12 +37,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, mode, onSwitch
       console.log('[DEBUG] Submit mode:', mode);
       
       const timeout = 20000; // 20s timeout
-      const withTimeout = (promise: Promise<any>) => 
+      const withTimeout = <T,>(promise: Promise<T>): Promise<T> => 
         Promise.race([
           promise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Le serveur ne répond pas. Veuillez réessayer.')), timeout))
+          new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Le serveur ne répond pas. Veuillez réessayer.')), timeout))
         ]);
-
+            
       try {
         if (mode === 'login') {
           console.log('[DEBUG] Calling login function...');
