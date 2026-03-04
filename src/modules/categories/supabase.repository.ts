@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
+"// ═══════════════════════════════════════════════════════════════════
 // CATEGORIES MODULE - Supabase Repository Implementation
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,12 +7,41 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ICategoriesRepository } from './repository';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 
+// ═══════════════════════════════════════════════════════════════════
+// DB ROW TYPES (snake_case - matches Supabase table schema)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Supabase DB row type for categories table
+ */
+interface CategoryRow {
+  id: string;
+  name: string;
+  color: string;
+  user_id?: string;
+  created_at?: string;
+}
+
+/**
+ * DB input type for insert/update operations
+ */
+interface CategoryDbInput {
+  name?: string;
+  color?: string;
+  user_id?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// REPOSITORY IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════
+
 export class SupabaseCategoriesRepository implements ICategoriesRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<Category[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -23,6 +52,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   }
 
   async getById(id: string): Promise<Category | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -41,6 +71,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async create(input: CreateCategoryInput): Promise<Category> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbInput = this.mapToDb(input);
 
     const { data, error } = await supabase
@@ -54,6 +85,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   }
 
   async update(id: string, updates: UpdateCategoryInput): Promise<Category> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -68,6 +100,7 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('categories')
       .delete()
@@ -80,18 +113,19 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-  private mapFromDb(row: Record<string, unknown>): Category {
+  private mapFromDb(row: CategoryRow): Category {
     return {
-      id: row.id as string,
-      name: row.name as string,
-      color: row.color as string,
+      id: row.id,
+      name: row.name,
+      color: row.color,
     };
   }
 
-  private mapToDb(input: Partial<Category>): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+  private mapToDb(input: Partial<Category>): CategoryDbInput {
+    const result: CategoryDbInput = {};
     if (input.name !== undefined) result.name = input.name;
     if (input.color !== undefined) result.color = input.color;
     return result;
   }
 }
+"
