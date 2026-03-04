@@ -46,10 +46,9 @@ interface TaskModalProps {
   task?: Task;
   isOpen: boolean;
   onClose: () => void;
-  onSave?: (taskData: Partial<Task>) => void;
   isCreating?: boolean;
   showCollaborators?: boolean;
-  initialData?: Partial<Task> & { isFromOKR?: boolean };
+  initialData?: Partial<Task>;
 }
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
