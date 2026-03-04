@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+"import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getHabitsRepository } from '@/lib/repository.factory';
 import { IHabitsRepository } from './habits.repository';
-import { CreateHabitInput, UpdateHabitInput } from './habits.types';
+import { CreateHabitInput, UpdateHabitInput } from './types';
 
 // Query keys for cache management
 export const habitKeys = {
@@ -55,7 +55,6 @@ export const useUpdateHabit = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: habitKeys.all });
     },
-    },
   });
 };
 
@@ -91,4 +90,5 @@ export const useToggleHabitCompletion = () => {
 };
 
 // Re-export types for convenience
-export type { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+export type { Habit, CreateHabitInput, UpdateHabitInput } from './types';
+"
