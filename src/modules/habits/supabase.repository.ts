@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './habits.repository';
-import { Habit, CreateHabitInput, UpdateHabitInput } from './habits.types';
+import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 
 /**
  * Supabase DB row type for habits table (snake_case)
