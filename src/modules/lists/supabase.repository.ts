@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════
+"// ═══════════════════════════════════════════════════════════════════
 // LISTS MODULE - Supabase Repository Implementation
 // ═══════════════════════════════════════════════════════════════════
 
@@ -7,12 +7,43 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 
+// ═══════════════════════════════════════════════════════════════════
+// DB ROW TYPES (snake_case - matches Supabase table schema)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Supabase DB row type for lists table
+ */
+interface ListRow {
+  id: string;
+  name: string;
+  color: string;
+  task_ids: string[];
+  user_id?: string;
+  created_at?: string;
+}
+
+/**
+ * DB input type for insert/update operations
+ */
+interface ListDbInput {
+  name?: string;
+  color?: string;
+  task_ids?: string[];
+  user_id?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// REPOSITORY IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════
+
 export class SupabaseListsRepository implements IListsRepository {
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
   async getAll(): Promise<TaskList[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('lists')
       .select('*')
@@ -23,6 +54,7 @@ export class SupabaseListsRepository implements IListsRepository {
   }
 
   async getById(id: string): Promise<TaskList | null> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('lists')
       .select('*')
@@ -37,6 +69,7 @@ export class SupabaseListsRepository implements IListsRepository {
   }
 
   async getByTaskId(taskId: string): Promise<TaskList[]> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase
       .from('lists')
       .select('*')
@@ -51,7 +84,8 @@ export class SupabaseListsRepository implements IListsRepository {
   // ═══════════════════════════════════════════════════════════════════
 
   async create(input: CreateListInput): Promise<TaskList> {
-    const dbInput = {
+    if (!supabase) throw new Error('Supabase not configured');
+    const dbInput: ListDbInput = {
       ...this.mapToDb(input),
       task_ids: [],
     };
@@ -67,6 +101,7 @@ export class SupabaseListsRepository implements IListsRepository {
   }
 
   async update(id: string, updates: UpdateListInput): Promise<TaskList> {
+    if (!supabase) throw new Error('Supabase not configured');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -81,6 +116,7 @@ export class SupabaseListsRepository implements IListsRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase
       .from('lists')
       .delete()
@@ -125,20 +161,21 @@ export class SupabaseListsRepository implements IListsRepository {
   // MAPPING (snake_case <-> camelCase)
   // ═══════════════════════════════════════════════════════════════════
 
-  private mapFromDb(row: Record<string, unknown>): TaskList {
+  private mapFromDb(row: ListRow): TaskList {
     return {
-      id: row.id as string,
-      name: row.name as string,
-      color: row.color as string,
-      taskIds: (row.task_ids as string[]) || [],
+      id: row.id,
+      name: row.name,
+      color: row.color,
+      taskIds: row.task_ids || [],
     };
   }
 
-  private mapToDb(input: Partial<TaskList>): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+  private mapToDb(input: Partial<TaskList>): ListDbInput {
+    const result: ListDbInput = {};
     if (input.name !== undefined) result.name = input.name;
     if (input.color !== undefined) result.color = input.color;
     if (input.taskIds !== undefined) result.task_ids = input.taskIds;
     return result;
   }
 }
+"
