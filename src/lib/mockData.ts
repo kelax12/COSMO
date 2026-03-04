@@ -1,22 +1,16 @@
-import { Category } from '../context/TaskContext';
+"// ═══════════════════════════════════════════════════════════════════
+// MOCK DATA - Données de démonstration
+// Types importés depuis les modules (source unique de vérité)
+// ═══════════════════════════════════════════════════════════════════
+
 import { Task } from '@/modules/tasks';
+import { Habit } from '@/modules/habits';
+import { OKR } from '@/modules/okrs';
+import { Category } from '@/modules/categories';
 
-// Types supplémentaires non exportés par les modules
-interface Habit {
-  id: string;
-  name: string;
-  color: string;
-  completions: Record<string, boolean>;
-}
-
-interface OKR {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  progress: number;
-  keyResults: { id: string; title: string; progress: number }[];
-}
+// ═══════════════════════════════════════════════════════════════════
+// Types locaux (non exportés par les modules)
+// ═══════════════════════════════════════════════════════════════════
 
 interface OKRCategory {
   id: string;
@@ -24,6 +18,10 @@ interface OKRCategory {
   color: string;
   icon: string;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════════════
 
 export const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat-1', name: 'Personnel', color: '#3B82F6' },
@@ -39,6 +37,10 @@ export const INITIAL_OKR_CATEGORIES: OKRCategory[] = [
   { id: 'okrcat-3', name: 'Apprentissage', color: '#8B5CF6', icon: 'Book' },
   { id: 'okrcat-4', name: 'Finance', color: '#F59E0B', icon: 'TrendingUp' },
 ];
+
+// ═══════════════════════════════════════════════════════════════════
+// TASKS
+// ═══════════════════════════════════════════════════════════════════
 
 export const INITIAL_TASKS: Task[] = [
   {
@@ -88,7 +90,7 @@ export const INITIAL_TASKS: Task[] = [
   },
   {
     id: 'task-5',
-    name: 'Lecture : "Atomic Habits"',
+    name: 'Lecture : \"Atomic Habits\"',
     priority: 2,
     category: 'cat-1',
     deadline: new Date().toISOString().split('T')[0],
@@ -99,62 +101,101 @@ export const INITIAL_TASKS: Task[] = [
   }
 ];
 
+// ═══════════════════════════════════════════════════════════════════
+// HABITS - Conformes au type Habit du module
+// ═══════════════════════════════════════════════════════════════════
+
 export const INITIAL_HABITS: Habit[] = [
   {
     id: 'habit-1',
     name: 'Méditation Matinale',
+    description: '15 minutes de méditation guidée',
+    frequency: 'daily',
     estimatedTime: 15,
-    completions: { [new Date().toISOString().split('T')[0]]: true },
-    streak: 12,
     color: '#3B82F6',
+    icon: '🧘',
+    completions: { [new Date().toISOString().split('T')[0]]: true },
     createdAt: new Date().toISOString()
   },
   {
     id: 'habit-2',
     name: 'Lecture du soir',
+    description: '30 minutes de lecture avant de dormir',
+    frequency: 'daily',
     estimatedTime: 30,
-    completions: { [new Date().toISOString().split('T')[0]]: false },
-    streak: 8,
     color: '#8B5CF6',
+    icon: '📚',
+    completions: { [new Date().toISOString().split('T')[0]]: false },
     createdAt: new Date().toISOString()
   },
   {
     id: 'habit-3',
     name: 'Hydratation (2L/jour)',
+    description: 'Boire au moins 2 litres d'eau par jour',
+    frequency: 'daily',
     estimatedTime: 5,
-    completions: { [new Date().toISOString().split('T')[0]]: true },
-    streak: 25,
     color: '#10B981',
+    icon: '💧',
+    completions: { [new Date().toISOString().split('T')[0]]: true },
     createdAt: new Date().toISOString()
   }
 ];
+
+// ═══════════════════════════════════════════════════════════════════
+// OKRS - Conformes au type OKR du module
+// ═══════════════════════════════════════════════════════════════════
 
 export const INITIAL_OKRS: OKR[] = [
   {
     id: 'okr-1',
     title: 'Devenir Senior Developer Cosmo',
-    description: 'Atteindre un niveau d\'expertise exceptionnel sur la stack technique.',
+    description: 'Atteindre un niveau d'expertise exceptionnel sur la stack technique.',
     category: 'okrcat-3',
+    progress: 45,
+    completed: false,
     startDate: '2026-01-01',
     endDate: '2026-06-30',
-    completed: false,
     keyResults: [
-      { id: 'kr-1', title: 'Maîtriser TypeScript & Design Patterns', currentValue: 80, targetValue: 100, unit: '%', completed: false, estimatedTime: 40 },
-      { id: 'kr-2', title: 'Lancer 2 features majeures', currentValue: 1, targetValue: 2, unit: 'features', completed: false, estimatedTime: 80 }
-    ],
-    estimatedTime: 120
+      { 
+        id: 'kr-1', 
+        title: 'Maîtriser TypeScript & Design Patterns', 
+        currentValue: 80, 
+        targetValue: 100, 
+        unit: '%', 
+        completed: false, 
+        estimatedTime: 40 
+      },
+      { 
+        id: 'kr-2', 
+        title: 'Lancer 2 features majeures', 
+        currentValue: 1, 
+        targetValue: 2, 
+        unit: 'features', 
+        completed: false, 
+        estimatedTime: 80 
+      }
+    ]
   },
   {
     id: 'okr-2',
     title: 'Liberté Financière',
     description: 'Optimiser les investissements et épargner pour le futur.',
     category: 'okrcat-4',
+    progress: 25,
+    completed: false,
     startDate: '2026-01-01',
     endDate: '2026-12-31',
-    completed: false,
     keyResults: [
-      { id: 'kr-3', title: 'Épargner 10k€', currentValue: 2500, targetValue: 10000, unit: '€', completed: false, estimatedTime: 0 }
-    ],
-    estimatedTime: 0
+      { 
+        id: 'kr-3', 
+        title: 'Épargner 10k€', 
+        currentValue: 2500, 
+        targetValue: 10000, 
+        unit: '€', 
+        completed: false, 
+        estimatedTime: 0 
+      }
+    ]
   }
 ];
+"
