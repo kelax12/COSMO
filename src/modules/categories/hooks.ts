@@ -200,7 +200,8 @@ export const useDeleteCategory = () => {
     // Cleanup on settle
     onSettled: (_result, _error, deletedId) => {
       queryClient.removeQueries({ queryKey: categoryKeys.detail(deletedId) });
-      invalidateAllCategoryQueries(queryClient);
+      // Only invalidate the list
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
   });
 };
