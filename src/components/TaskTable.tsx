@@ -124,19 +124,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // Handlers avec mutations (MIGRÉ)
+  // Handlers avec mutations (MIGRÉ) - MÉMOÏSÉS pour performance
   // ═══════════════════════════════════════════════════════════════════
-  const handleToggleComplete = (taskId: string) => {
+  const handleToggleComplete = useCallback((taskId: string) => {
     toggleCompleteMutation.mutate(taskId);
-  };
+  }, [toggleCompleteMutation]);
 
-  const handleToggleBookmark = (taskId: string) => {
+  const handleToggleBookmark = useCallback((taskId: string) => {
     toggleBookmarkMutation.mutate(taskId);
-  };
+  }, [toggleBookmarkMutation]);
 
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = useCallback((taskId: string) => {
     deleteMutation.mutate(taskId);
     setTaskToDelete(null);
+  }, [deleteMutation]);
   };
 
   // Filtrage et tri mémoïsés
