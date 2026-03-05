@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { BarChart3, Clock, TrendingUp, Calendar, ChevronDown, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
-import { useTasks as useTasksContext } from '../context/TaskContext';
+import { useAppContext } from '../context/TaskContext';
 import { useTasks, Task } from '@/modules/tasks';
 import { useHabits, Habit } from '@/modules/habits';
 import { useEvents, CalendarEvent } from '@/modules/events';
 import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
 import { parseLocalDate, getLocalDateString, calculateWorkTimeForPeriod } from '../lib/workTimeCalculator';
+import { useVisibilityInterval } from '../lib/hooks/usePerformance';
 
 type StatSection = 'all' | 'tasks' | 'agenda' | 'okr' | 'habits';
 type TimePeriod = 'day' | 'week' | 'month' | 'year';
