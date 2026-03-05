@@ -49,12 +49,14 @@ export default function StatisticsPage() {
   const [chartWidth, setChartWidth] = useState(800);
   const [now, setNow] = useState(new Date());
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setNow(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+  // ═══════════════════════════════════════════════════════════════════
+  // PERFORMANCE: Utilise visibility-aware interval (pause quand onglet caché)
+  // ═══════════════════════════════════════════════════════════════════
+  useVisibilityInterval(
+    useCallback(() => setNow(new Date()), []),
+    60000,
+    true
+  );
 
   useEffect(() => {
     const updateWidth = () => {
