@@ -18,7 +18,7 @@ const colorOptions = [
   { value: 'pink', color: '#EC4899' },
 ];
 
-const HabitCard: React.FC<HabitCardProps> = ({ habit, externalIsEditing, onExternalEditingChange }) => {
+const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditing, onExternalEditingChange }) => {
   // Mutations from habits module
   const updateHabitMutation = useUpdateHabit();
   const deleteHabitMutation = useDeleteHabit();
