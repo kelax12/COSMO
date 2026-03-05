@@ -358,7 +358,19 @@ const TaskTable: React.FC<TaskTableProps> = ({
       </div>
     </div>
     );
-  };
+  }, (prevProps, nextProps) => {
+    // Comparaison optimisée pour éviter les re-renders inutiles
+    return (
+      prevProps.task.id === nextProps.task.id &&
+      prevProps.task.name === nextProps.task.name &&
+      prevProps.task.completed === nextProps.task.completed &&
+      prevProps.task.bookmarked === nextProps.task.bookmarked &&
+      prevProps.task.priority === nextProps.task.priority &&
+      prevProps.task.deadline === nextProps.task.deadline &&
+      prevProps.task.estimatedTime === nextProps.task.estimatedTime &&
+      prevProps.task.category === nextProps.task.category
+    );
+  });
 
   return (
     <>
