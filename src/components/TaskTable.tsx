@@ -250,7 +250,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     );
   }
 
-  const TaskCard = ({ task }: { task: Task }) => {
+  const TaskCard = React.memo(({ task }: { task: Task }) => {
     const [isHovered, setIsHovered] = useState(false);
     const category = categories.find(c => c.id === task.category);
     const categoryColor = category?.color || '#3B82F6';
