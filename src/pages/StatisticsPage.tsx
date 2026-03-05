@@ -30,6 +30,62 @@ interface KeyResultHistory {
   increment: number;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// COMPOSANT MÉMOÏSÉ - Habit Stat Item (évite re-renders inutiles)
+// ═══════════════════════════════════════════════════════════════════
+interface HabitStatItemProps {
+  habit: {
+    id: string;
+    name: string;
+    periodCompletions: number;
+    periodTime: number;
+    relevantDaysCount: number;
+  };
+  formatTime: (minutes: number) => string;
+}
+
+const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => {
+  const rate = habit.relevantDaysCount > 0 
+    ? Math.min(100, Math.round((habit.periodCompletions / habit.relevantDaysCount) * 100)) 
+    : 0;
+  
+  return (
+    <div className=\"space-y-2\">
+      <div className=\"flex justify-between items-center\">
+        <div className=\"flex items-center gap-2\">
+          <span className=\"font-medium\" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            {habit.name}
+          </span>
+          <span className=\"text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400\">
+            {habit.periodCompletions} fois
+          </span>
+        </div>
+        <div className=\"flex items-center gap-3\">
+          <span className=\"text-sm font-bold text-emerald-600\">{formatTime(habit.periodTime)}</span>
+          <span className=\"text-xs font-bold\" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            {rate}%
+          </span>
+        </div>
+      </div>
+      <div className=\"w-full h-2 rounded-full bg-muted overflow-hidden\">
+        <div 
+          className=\"h-full bg-emerald-500 transition-all duration-1000\" 
+          style={{ width: `${rate}%` }} 
+        />
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  // Ne re-render que si les données de l'habitude changent réellement
+  return (
+    prevProps.habit.id === nextProps.habit.id &&
+    prevProps.habit.name === nextProps.habit.name &&
+    prevProps.habit.periodCompletions === nextProps.habit.periodCompletions &&
+    prevProps.habit.periodTime === nextProps.habit.periodTime &&
+    prevProps.habit.relevantDaysCount === nextProps.habit.relevantDaysCount
+  );
+});
+
 export default function StatisticsPage() {
   // Use new module for tasks (read-only)
   const { data: tasks = [] } = useTasks();
