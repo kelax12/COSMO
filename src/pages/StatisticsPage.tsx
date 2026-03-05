@@ -783,6 +783,28 @@ const HabitsStatistics: React.FC<{ habits: Habit[], rollingRange: { start: Date,
   
   const avgRate = totalRelevantDays > 0 ? Math.round((totalCompletions / totalRelevantDays) * 100) : 0;
   
+  // ═══════════════════════════════════════════════════════════════════
+  // PERFORMANCE: Mémorisation des filtres pour éviter re-calculs
+  // ═══════════════════════════════════════════════════════════════════
+  const activeHabitsCount = useMemo(
+    () => habitsStats.filter(h => h.periodCompletions > 0).length,
+    [habitsStats]
+  );
+  
+  const relevantHabitsCount = useMemo(
+    () => habitsStats.filter(h => h.relevantDaysCount > 0).length,
+    [habitsStats]
+  );
+  
+  const sortedRelevantHabits = useMemo(
+    () => habitsStats
+      .filter(h => h.relevantDaysCount > 0)
+      .sort((a, b) => b.periodTime - a.periodTime),
+    [habitsStats]
+  );
+
+  const periodSuffix =
+  
   const periodSuffix = 
     selectedPeriod === 'day' ? "aujourd'hui" :
     selectedPeriod === 'week' ? "(7 derniers jours)" :
