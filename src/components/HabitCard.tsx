@@ -375,7 +375,18 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit, externalIsEditi
           </>
         )}
       </div>
-    );
-};
+        );
+}, (prevProps, nextProps) => {
+  // Custom comparison: ne re-render que si l'habitude change réellement
+  return (
+    prevProps.habit.id === nextProps.habit.id &&
+    prevProps.habit.name === nextProps.habit.name &&
+    prevProps.habit.estimatedTime === nextProps.habit.estimatedTime &&
+    prevProps.habit.color === nextProps.habit.color &&
+    prevProps.habit.streak === nextProps.habit.streak &&
+    JSON.stringify(prevProps.habit.completions) === JSON.stringify(nextProps.habit.completions) &&
+    prevProps.externalIsEditing === nextProps.externalIsEditing
+  );
+});
 
 export default HabitCard;
