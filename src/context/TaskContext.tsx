@@ -154,4 +154,3 @@ export const useAppContext = (): AppContextType => {
  * @deprecated Use useAppContext instead - kept for backward compatibility
  */
 export const useTasks = useAppContext;
-"
