@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Avatar, AvatarFallback, AvatarImage, AvatarGroup } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, MessageSquare, Search, MoreHorizontal, Send, Smile, Plus, Check, X, UserPlus, Trash2, ChevronLeft, ChevronRight, Pin, PinOff, Users } from 'lucide-react';
 import TaskModal from '../components/TaskModal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,18 +9,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 // Module tasks - Types (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks as useTasksModule, Task } from '@/modules/tasks';
-import { Friend } from '@/modules/friends';
+import { Friend, useAcceptFriendRequest, useRejectFriendRequest, useFriendRequests, useFriends, useSendFriendRequest } from '@/modules/friends';
+
 
 // ═══════════════════════════════════════════════════════════════════
-// TaskContext - uniquement pour domaines NON MIGRÉS
+// Messaging hooks (MIGRÉ Supabase)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks as useTaskContext } from '../context/TaskContext';
+import { useSendChatMessage, useConversationMessages, useMessagingRealtime } from '@/modules/messaging/messaging.hooks';
+
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useMessages } from '@/modules/user';
+
+// ═══════════════════════════════════════════════════════════════════
+// BillingContext — vérification premium côté serveur
+// ═══════════════════════════════════════════════════════════════════
+import { useBilling } from '@/modules/billing/billing.context';
 
 // Types pour MessagingPage
 interface FriendRequest {
   id: string;
   email: string;
   status: 'pending' | 'accepted' | 'rejected';
+  senderId?: string;
+  senderEmail?: string;
 }
 
 interface GroupMember {
@@ -58,43 +71,36 @@ function isGroupConversation(conv: Conversation | GroupConversation | undefined)
   return conv !== undefined && 'isGroup' in conv && conv.isGroup === true;
 }
 
-const RenderAvatar = ({ avatar, className = \"w-10 h-10\", textClassName = \"text-lg\" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
+const RenderAvatar = ({ avatar, className = "size-10", textClassName = "text-lg" }: { avatar: string | undefined, className?: string, textClassName?: string }) => {
   const isUrl = avatar && (avatar.startsWith('http') || avatar.startsWith('data:image') || avatar.startsWith('/'));
-  
   return (
-    <div className={`rounded-full flex items-center justify-center overflow-hidden shrink-0 transition-colors ${className}`}>
-      {isUrl ? (
-        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-      ) : (
+    <Avatar className={className}>
+      {isUrl && <AvatarImage src={avatar} alt="Avatar" />}
+      <AvatarFallback className="bg-gray-100 dark:bg-slate-700 text-muted-foreground">
         <span className={textClassName}>{avatar || '👤'}</span>
-      )}
-    </div>
+      </AvatarFallback>
+    </Avatar>
   );
 };
 
 const MessagingPage: React.FC = () => {
-  // ═══════════════════════════════════════════════════════════════════
+ // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [] } = useTasksModule();
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Domaines NON MIGRÉS (depuis TaskContext)
-  // ═══════════════════════════════════════════════════════════════════
-  const {
-    user,
-    messages,
-    isPremium,
-    sendFriendRequest,
-    friends
-  } = useTaskContext();
+  const { user } = useAuth();
+  const { messages } = useMessages();
+  const { data: friends = [] } = useFriends();
+  const sendFriendRequestMutation = useSendFriendRequest();
 
-    // Stub functions for messaging (not implemented in TaskContext)
-  const friendRequests: FriendRequest[] = [];
-  const sendMessage = (conversationId: string, message: string) => { void conversationId; void message; };
-  const acceptFriendRequest = (email: string) => { void email; };
-  const rejectFriendRequest = (email: string) => { void email; };
+  // ═══════════════════════════════════════════════════════════════════
+  // Premium — vérification côté serveur via BillingContext
+  // ═══════════════════════════════════════════════════════════════════
+  const { isPremium } = useBilling();
+  const navigate = useNavigate();
 
+  // State — déclaré avant les hooks qui en dépendent
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -105,6 +111,29 @@ const MessagingPage: React.FC = () => {
   const [showAddFriendForm, setShowAddFriendForm] = useState(false);
   const [addFriendEmail, setAddFriendEmail] = useState('');
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Messaging — hooks Supabase (persistance + realtime)
+  // ═══════════════════════════════════════════════════════════════════
+  const sendMessageMutation = useSendChatMessage();
+  const { data: conversationMessages = [] } = useConversationMessages(selectedConversation);
+  useMessagingRealtime(selectedConversation);
+
+  const { data: rawFriendRequests = [] } = useFriendRequests();
+  const friendRequests: FriendRequest[] = rawFriendRequests.map(r => ({
+    id: r.id,
+    email: r.email,
+    status: r.status as 'pending' | 'accepted' | 'rejected',
+    senderId: r.senderId,
+    senderEmail: r.senderEmail,
+  }));
+  const sendMessage = (conversationId: string, message: string) => {
+    sendMessageMutation.mutate({ receiverId: conversationId, content: message });
+  };
+  const acceptMutation = useAcceptFriendRequest();
+  const rejectMutation = useRejectFriendRequest();
+  const acceptFriendRequest = (id: string) => acceptMutation.mutate(id);
+  const rejectFriendRequest = (id: string) => rejectMutation.mutate(id);
   const [showLeftSidebar, setShowLeftSidebar] = useState(true);
   const [mobileShowChat, setMobileShowChat] = useState(false);
   const [pinnedConversations, setPinnedConversations] = useState<string[]>(['equipe-design']);
@@ -312,7 +341,7 @@ const MessagingPage: React.FC = () => {
     if (foundFriend) {
       alert('Cet utilisateur est déjà votre ami');
     } else {
-      sendFriendRequest(email);
+      sendFriendRequestMutation.mutate({ email });
     }
     setAddFriendEmail('');
     setShowAddFriendForm(false);
@@ -321,17 +350,16 @@ const MessagingPage: React.FC = () => {
   const currentConversation = allConversations.find(c => c.id === selectedConversation);
   const totalUnreadCount = sortedConversations.reduce((acc, conv) => acc + (conv.unread || 0), 0);
 
-  const currentConversationMessages = messages
-    .filter(m => m.senderId === selectedConversation || m.receiverId === selectedConversation)
-    .map(m => ({
-      id: m.id,
-      sender: m.senderId === user.id ? user.name : (friends.find(f => f.id === m.senderId)?.name || 'Inconnu'),
-      content: m.content,
-      time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: m.senderId === user.id,
-      avatar: m.senderId === user.id ? user.avatar : friends.find(f => f.id === m.senderId)?.avatar,
-      taskId: m.taskId
-    }));
+  // Messages Supabase (persistants) mappés pour le JSX
+  const currentConversationMessages = conversationMessages.map(m => ({
+    id: m.id,
+    sender: m.senderId === user?.id ? user.name : (friends.find(f => f.id === m.senderId)?.name || 'Inconnu'),
+    content: m.content,
+    time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    isOwn: m.senderId === user?.id,
+    avatar: m.senderId === user?.id ? user.avatar : friends.find(f => f.id === m.senderId)?.avatar,
+    taskId: m.taskId
+  }));
 
   const switchToFriendsTab = () => setActiveTab('friends');
   const switchToMessagesTab = () => setActiveTab('messages');
@@ -348,7 +376,7 @@ const MessagingPage: React.FC = () => {
           <p className="text-xl text-slate-600 mb-8">
             Débloquez Premium pour accéder à la messagerie et aux fonctionnalités collaboratives
           </p>
-          <button className="btn-primary text-lg px-8 py-4">
+          <button onClick={() => navigate('/premium')} className="btn-primary text-lg px-8 py-4">
             Débloquer Premium
           </button>
         </div>
@@ -444,19 +472,19 @@ const MessagingPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                         <div className="relative">
                           {conv.type === 'group' ? (
-                            <div className="flex -space-x-2">
-                              {conv.members?.slice(0, 2).map((member: any, index: number) => (
-                                <RenderAvatar 
-                                  key={index} 
-                                  avatar={member.avatar} 
-                                  className="w-10 h-10 bg-gray-100 dark:bg-slate-700 border-2 border-white dark:border-slate-800" 
+                            <AvatarGroup>
+                              {conv.members?.slice(0, 2).map((member: GroupMember, index: number) => (
+                                <RenderAvatar
+                                  key={index}
+                                  avatar={member.avatar}
+                                  className="size-10"
                                 />
                               ))}
-                            </div>
+                            </AvatarGroup>
                           ) : (
-                            <RenderAvatar 
-                              avatar={conv.avatar} 
-                              className="w-10 h-10 bg-gray-100 dark:bg-slate-700 relative" 
+                            <RenderAvatar
+                              avatar={conv.avatar}
+                              className="size-10"
                             />
                           )}
                         </div>
@@ -577,20 +605,20 @@ const MessagingPage: React.FC = () => {
                         onClick={() => currentConversation.type === 'group' && setShowGroupSettings(true)}
                       >
                         {currentConversation.type === 'group' ? (
-                          <div className="flex -space-x-2">
-                            {(currentConversation as any).members?.slice(0, 3).map((member: any, index: number) => (
-                              <RenderAvatar 
-                                key={index} 
-                                avatar={member.avatar} 
-                                className="w-8 h-8 bg-gray-100 dark:bg-slate-600 border-2 border-white dark:border-slate-800" 
+                          <AvatarGroup>
+                            {(currentConversation as GroupConversation).members?.slice(0, 3).map((member: GroupMember, index: number) => (
+                              <RenderAvatar
+                                key={index}
+                                avatar={member.avatar}
+                                className="size-8"
                                 textClassName="text-xs"
                               />
                             ))}
-                          </div>
+                          </AvatarGroup>
                         ) : (
-                          <RenderAvatar 
-                            avatar={currentConversation.avatar} 
-                            className="w-8 h-8 bg-gray-100 dark:bg-slate-600 relative" 
+                          <RenderAvatar
+                            avatar={currentConversation.avatar}
+                            className="size-8"
                             textClassName="text-sm"
                           />
                         )}
@@ -598,7 +626,7 @@ const MessagingPage: React.FC = () => {
                           <h3 className="font-semibold text-gray-900 dark:text-white">{currentConversation.name}</h3>
                           <div className="flex items-center gap-2">
                             {currentConversation.type === 'group' && (
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{(currentConversation as any).members?.length} membres</span>
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{(currentConversation as GroupConversation).members?.length} membres</span>
                             )}
                             {pinnedConversations.includes(currentConversation.id) &&
                               <div className="flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full text-[10px] font-medium w-fit">
@@ -725,19 +753,17 @@ const MessagingPage: React.FC = () => {
               <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Demandes d'amis ({pendingRequests.length})</h3>
               <div className="space-y-3">
                     {pendingRequests.map((request) => {
-                      const sender = request.sender;
                       return (
                         <div key={request.id} className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3 transition-colors">
                           <div className="flex items-center gap-3 mb-3">
-                            <RenderAvatar 
-                              avatar={sender?.avatar} 
-                              className="w-10 h-10 bg-gray-100 dark:bg-slate-600" 
-                            />
+                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-lg">
+                              👤
+                            </div>
                             <div className="flex-1">
-                            <h4 className="font-medium text-gray-900 dark:text-white text-sm">{sender?.name || 'Inconnu'}</h4>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{sender?.email || request.senderId}</p>
+                              <h4 className="font-medium text-gray-900 dark:text-white text-sm">{request.senderEmail?.split('@')[0] || 'Inconnu'}</h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{request.senderEmail || request.senderId}</p>
+                            </div>
                           </div>
-                        </div>
                       <div className="flex gap-2">
                         <button onClick={() => handleAcceptRequest(request.id)} className="flex-1 bg-blue-500 dark:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors">Accepter</button>
                         <button onClick={() => handleRejectRequest(request.id)} className="flex-1 bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-slate-500 transition-colors">Refuser</button>
@@ -902,10 +928,10 @@ const MessagingPage: React.FC = () => {
             <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                  <Users size={16} /> Membres actuels ({(currentConversation as any).members.length})
+                  <Users size={16} /> Membres actuels ({(currentConversation as GroupConversation).members.length})
                 </h3>
                 <div className="space-y-3">
-                    {(currentConversation as any).members.map((member: any) => (
+                    {(currentConversation as GroupConversation).members.map((member: GroupMember) => (
                       <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900/50 rounded-xl border border-gray-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <RenderAvatar 
@@ -916,7 +942,7 @@ const MessagingPage: React.FC = () => {
                           <div>
                           <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                             {member.name}
-                            {member.id === (currentConversation as any).ownerId && (
+                            {member.id === (currentConversation as GroupConversation).ownerId && (
                               <span className="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Chef</span>
                             )}
                           </div>
@@ -924,7 +950,7 @@ const MessagingPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      {user.id === (currentConversation as any).ownerId && member.id !== user.id && (
+                      {user.id === (currentConversation as GroupConversation).ownerId && member.id !== user.id && (
                         <button 
                           onClick={() => {
                             if (window.confirm(`Voulez-vous vraiment retirer ${member.name} du groupe ?`)) {
@@ -932,7 +958,7 @@ const MessagingPage: React.FC = () => {
                                 if (c.id === currentConversation.id) {
                                   return {
                                     ...c,
-                                    members: (c as any).members.filter((m: any) => m.id !== member.id)
+                                    members: (c as GroupConversation).members.filter((m: GroupMember) => m.id !== member.id)
                                   };
                                 }
                                 return c;
@@ -969,7 +995,7 @@ const MessagingPage: React.FC = () => {
                   {friends
                     .filter(f => 
                       (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
-                      !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                      !(currentConversation as GroupConversation).members.some((m: GroupMember) => m.id === f.id)
                     )
                     .map((friend) => (
                         <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors">
@@ -987,7 +1013,7 @@ const MessagingPage: React.FC = () => {
                               if (c.id === currentConversation.id) {
                                 return {
                                   ...c,
-                                  members: [...(c as any).members, { id: friend.id, name: friend.name, avatar: friend.avatar }]
+                                  members: [...(c as GroupConversation).members, { id: friend.id, name: friend.name, avatar: friend.avatar }]
                                 };
                               }
                               return c;
@@ -1003,7 +1029,7 @@ const MessagingPage: React.FC = () => {
                   
                   {friends.filter(f => 
                     (f.name.toLowerCase().includes(searchFriend.toLowerCase()) || f.email.toLowerCase().includes(searchFriend.toLowerCase())) &&
-                    !(currentConversation as any).members.some((m: any) => m.id === f.id)
+                    !(currentConversation as GroupConversation).members.some((m: GroupMember) => m.id === f.id)
                   ).length === 0 && (
                     <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400 italic">
                       Aucun autre ami trouvé
